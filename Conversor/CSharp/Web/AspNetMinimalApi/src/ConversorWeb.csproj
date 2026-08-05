@@ -6,6 +6,6 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**\*</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cli\ConversorCli.csproj" />
+    <ProjectReference Include="..\..\..\Cli\ConversorCli.csproj" />
   </ItemGroup>
 </Project>

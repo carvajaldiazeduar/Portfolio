@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
 namespace PasswordGeneratorWeb.Tests;
 
@@ -11,7 +12,9 @@ public class PasswordGeneratorWebTests : IClassFixture<WebApplicationFactory<Pro
 
     public PasswordGeneratorWebTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        Environment.SetEnvironmentVariable("DB_DRIVER", "sqlite");
+        Environment.SetEnvironmentVariable("DB_FILE", $"passwords-test-{Guid.NewGuid():N}.db");
+        _factory = factory.WithWebHostBuilder(_ => { });
     }
 
     [Fact]

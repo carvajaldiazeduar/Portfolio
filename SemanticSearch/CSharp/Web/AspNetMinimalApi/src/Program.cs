@@ -11,7 +11,7 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 
-app.MapGet("/", () => Results.File("wwwroot/index.html", "text/html"));
+app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.MapPost("/api/upload", async (HttpContext context, VectorStoreAdapter vectorStore, CacheAdapter cache) => {
     var form = await context.Request.ReadFormAsync();

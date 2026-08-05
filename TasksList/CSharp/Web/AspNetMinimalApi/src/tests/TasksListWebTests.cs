@@ -1,4 +1,7 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
 namespace TasksListWeb.Tests;
 
@@ -8,7 +11,9 @@ public class TasksListWebTests : IClassFixture<WebApplicationFactory<Program>>
 
     public TasksListWebTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        Environment.SetEnvironmentVariable("DB_DRIVER", "sqlite");
+        Environment.SetEnvironmentVariable("DB_FILE", $"tasks-test-{Guid.NewGuid():N}.db");
+        _factory = factory.WithWebHostBuilder(_ => { });
     }
 
     [Fact]
@@ -33,8 +38,8 @@ public class TasksListWebTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _factory.CreateClient();
         var post = await client.PostAsJsonAsync("/api/tasks", new { Title = "Test", Description = "" });
-        var result = await post.Content.ReadFromJsonAsync<Dictionary<string, int>>();
-        var id = result!["id"];
+        var result = await post.Content.ReadFromJsonAsync<Dictionary<string, JsonElement>>();
+        var id = result!["id"].GetInt32();
         var response = await client.PutAsync($"/api/tasks/{id}/complete", null);
         response.EnsureSuccessStatusCode();
     }

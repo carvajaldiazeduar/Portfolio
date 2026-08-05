@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<PasswordGeneratorDbContext>(options => DatabaseConfig.Configure(options, driver, "passwords"));
 builder.Services.AddSingleton<ICacheAdapter>(CacheFactory.Create());
 builder.Services.AddScoped<PwGenService>();
+builder.Services.AddCors();
 
 var app = builder.Build();
 

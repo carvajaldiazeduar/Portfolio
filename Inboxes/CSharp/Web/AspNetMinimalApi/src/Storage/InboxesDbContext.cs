@@ -1,8 +1,10 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 public class Message
 {
     public int Id { get; set; }
+    [JsonPropertyName("from")]
     public string Sender { get; set; } = "";
     public string Subject { get; set; } = "";
     public string Body { get; set; } = "";

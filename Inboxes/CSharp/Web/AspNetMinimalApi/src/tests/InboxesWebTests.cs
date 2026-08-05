@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
 namespace InboxesWeb.Tests;
 
@@ -11,8 +12,10 @@ public class InboxesWebTests : IClassFixture<WebApplicationFactory<Program>>
 
     public InboxesWebTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = factory.CreateClient();
+        Environment.SetEnvironmentVariable("DB_DRIVER", "sqlite");
+        Environment.SetEnvironmentVariable("DB_FILE", $"inboxes-test-{Guid.NewGuid():N}.db");
+        _factory = factory.WithWebHostBuilder(_ => { });
+        _client = _factory.CreateClient();
     }
 
     [Fact]

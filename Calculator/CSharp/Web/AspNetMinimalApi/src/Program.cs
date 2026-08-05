@@ -1,11 +1,9 @@
-using CalculatorWeb;
-
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 app.UseStaticFiles();
 
-app.MapGet("/", () => Results.File("wwwroot/index.html", "text/html"));
+app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.MapPost("/calculate", (CalculateRequest request) =>
 {
@@ -45,3 +43,5 @@ app.MapPost("/calculate", (CalculateRequest request) =>
 app.Run();
 
 public record CalculateRequest(string A, string B, string Operator);
+
+public partial class Program { }

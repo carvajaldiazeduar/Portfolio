@@ -32,7 +32,7 @@ app.MapPost("/api/messages", (JsonElement body, MessageService service) =>
 {
     var subject = body.GetProperty("subject").GetString();
     if (string.IsNullOrWhiteSpace(subject)) return Results.BadRequest(new { error = "Subject is required" });
-    var sender = body.TryGetProperty("sender", out var s) ? s.GetString() ?? "" : "";
+    var sender = body.TryGetProperty("from", out var s) ? s.GetString() ?? "" : "";
     var msgBody = body.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "";
     var msg = service.Create(sender, subject, msgBody);
     return Results.Created($"/api/messages/{msg.Id}", msg);

@@ -18,7 +18,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseStaticFiles();
 
-app.MapGet("/", () => Results.File("wwwroot/index.html", "text/html"));
+app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.MapGet("/api/tasks", (TaskService service, ICacheAdapter cache) =>
 {

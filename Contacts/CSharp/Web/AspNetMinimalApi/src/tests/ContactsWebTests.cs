@@ -18,8 +18,10 @@ public class ContactsWebTests : IClassFixture<WebApplicationFactory<Program>>
 
     public ContactsWebTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = factory.CreateClient();
+        Environment.SetEnvironmentVariable("DB_DRIVER", "sqlite");
+        Environment.SetEnvironmentVariable("DB_FILE", $"contacts-test-{Guid.NewGuid():N}.db");
+        _factory = factory.WithWebHostBuilder(_ => { });
+        _client = _factory.CreateClient();
     }
 
     [Fact]
@@ -68,8 +70,9 @@ public class ContactsWebTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task DeleteContact_ValidIndex_RemovesContact()
     {
-        await _client.PostAsJsonAsync("/api/contacts", new ContactDto { Name = "Alice", Phone = "123", Email = "a@b.com" });
-        var response = await _client.DeleteAsync("/api/contacts/0");
+        var post = await _client.PostAsJsonAsync("/api/contacts", new ContactDto { Name = "Alice", Phone = "123", Email = "a@b.com" });
+        var created = await post.Content.ReadFromJsonAsync<Contact>();
+        var response = await _client.DeleteAsync($"/api/contacts/{created!.Id}");
         response.EnsureSuccessStatusCode();
         var getResponse = await _client.GetAsync("/api/contacts");
         var contacts = await getResponse.Content.ReadFromJsonAsync<List<Contact>>();
