@@ -1,0 +1,17 @@
+{
+  "name": "conversor-web",
+  "version": "1.0.0",
+  "description": "Unit Converter Web App",
+  "main": "server.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}

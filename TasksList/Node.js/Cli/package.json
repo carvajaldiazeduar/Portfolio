@@ -1,0 +1,13 @@
+{
+  "name": "tasks-cli",
+  "version": "1.0.0",
+  "description": "Tasks list CLI",
+  "main": "tasks.js",
+  "scripts": {
+    "start": "node tasks.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

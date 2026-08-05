@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Processor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Event Processor</h1>
+    <p>Async Job Queue with Retry & DLQ Support</p>
+    
+    <div class="section">
+      <h2>Submit Job</h2>
+      <select id="job-type">
+        <option value="image.process">Image Processing</option>
+        <option value="email.bulk">Bulk Email</option>
+        <option value="report.generate">PDF Report Generation</option>
+      </select>
+      <textarea id="job-data" placeholder='{"imageUrl": "https://example.com/image.jpg", "operations": ["resize", "optimize"]}'></textarea>
+      <button onclick="submitJob()">Submit Job</button>
+      <button onclick="submitBatch()">Submit Batch (3 jobs)</button>
+    </div>
+
+    <div class="section">
+      <h2>Available Job Types</h2>
+      <div id="queue-list" class="queue-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>Response</h2>
+      <div id="response" class="response-box hidden"></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

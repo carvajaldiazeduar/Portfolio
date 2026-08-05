@@ -1,0 +1,84 @@
+@page "/generate"
+@inject PwGenService PwGen
+
+<PageTitle>Password Generator</PageTitle>
+
+<h3>Generate Password</h3>
+
+@if (errorMsg != null)
+{
+    <div class="alert alert-danger">@errorMsg</div>
+}
+
+<div class="mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Length</label>
+            <input type="number" @bind="length" class="form-control" min="4" max="128" />
+        </div>
+    </div>
+    <div class="form-check">
+        <input type="checkbox" @bind="useUpper" class="form-check-input" id="upper" />
+        <label class="form-check-label" for="upper">Uppercase</label>
+    </div>
+    <div class="form-check">
+        <input type="checkbox" @bind="useLower" class="form-check-input" id="lower" />
+        <label class="form-check-label" for="lower">Lowercase</label>
+    </div>
+    <div class="form-check">
+        <input type="checkbox" @bind="useDigits" class="form-check-input" id="digits" />
+        <label class="form-check-label" for="digits">Digits</label>
+    </div>
+    <div class="form-check mb-2">
+        <input type="checkbox" @bind="useSymbols" class="form-check-input" id="symbols" />
+        <label class="form-check-label" for="symbols">Symbols</label>
+    </div>
+    <button class="btn btn-primary" @onclick="GeneratePassword">Generate</button>
+</div>
+
+@if (generatedPassword != null)
+{
+    <div class="alert alert-success">Generated: <strong>@generatedPassword</strong></div>
+}
+
+<h4>History</h4>
+<table class="table">
+    <thead>
+        <tr><th>ID</th><th>Password</th><th>Length</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var e in history)
+        {
+            <tr><td>@e.Id</td><td>@e.Password</td><td>@e.Length</td><td>@e.CreatedAt</td></tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private int length = 16;
+    private bool useUpper = true;
+    private bool useLower = true;
+    private bool useDigits = true;
+    private bool useSymbols = false;
+    private string? generatedPassword;
+    private List<PasswordEntry> history = new();
+    private string? errorMsg;
+
+    protected override void OnInitialized() { LoadHistory(); }
+
+    private void LoadHistory()
+    {
+        try { history = PwGen.GetHistory(); errorMsg = null; } catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void GeneratePassword()
+    {
+        try
+        {
+            generatedPassword = PwGen.Generate(length, useUpper, useLower, useDigits, useSymbols);
+            errorMsg = null;
+            LoadHistory();
+        }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+}

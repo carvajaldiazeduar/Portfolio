@@ -1,0 +1,123 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.chronometer {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  text-align: center;
+}
+
+.chronometer h1 {
+  margin-bottom: 24px;
+  font-size: 24px;
+  color: #333;
+}
+
+.display {
+  font-size: 36px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #333;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.btn {
+  padding: 10px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.start {
+  background: #4caf50;
+  color: #fff;
+}
+
+.start:hover {
+  background: #43a047;
+}
+
+.stop {
+  background: #f44336;
+  color: #fff;
+}
+
+.stop:hover {
+  background: #e53935;
+}
+
+.reset {
+  background: #ff9800;
+  color: #fff;
+}
+
+.reset:hover {
+  background: #fb8c00;
+}
+
+.lap {
+  background: #2196f3;
+  color: #fff;
+}
+
+.lap:hover {
+  background: #1e88e5;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.laps {
+  text-align: left;
+}
+
+.laps h2 {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.laps ul {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.laps li {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #555;
+}

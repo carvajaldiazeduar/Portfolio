@@ -1,0 +1,24 @@
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+.container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 500px; }
+h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+.form-row form { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.form-row input, .form-row textarea { flex: 1; padding: .5rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: .9rem; font-family: inherit; }
+.form-row input:focus, .form-row textarea:focus { outline: none; border-color: #4a6cf7; }
+.form-row button { padding: .5rem 1rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.form-row button:hover { background: #3b5de7; }
+.tasks-list { list-style: none; padding: 0; margin: 0; }
+.tasks-list li { padding: .75rem; border-bottom: 1px solid #eee; }
+.task-title { font-weight: 600; }
+.task-desc { color: #555; margin: .25rem 0; }
+.task-meta { font-size: .75rem; color: #999; }
+.task-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+.task-actions form { margin: 0; }
+.task-actions button { background: #4a6cf7; color: #fff; border: none; border-radius: 4px; padding: .25rem .5rem; cursor: pointer; font-size: .8rem; }
+.task-actions button:hover { background: #3b5de7; }
+.delete-btn { background: #f44336; color: #fff; border: none; border-radius: 4px; padding: .25rem .5rem; cursor: pointer; font-size: .8rem; }
+.delete-btn:hover { background: #d32f2f; }
+.completed { text-decoration: line-through; color: #999; }
+.empty { text-align: center; color: #999; padding: 2rem; }
+.notice { background: #e8f5e9; color: #2e7d32; padding: .5rem .75rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert { background: #fdecea; color: #c62828; padding: .5rem .75rem; border-radius: 8px; margin-bottom: 1rem; }

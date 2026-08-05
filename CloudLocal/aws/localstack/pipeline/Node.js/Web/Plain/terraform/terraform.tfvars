@@ -1,0 +1,11 @@
+aws_region               = "us-east-1"
+aws_endpoint_url         = "http://localhost:4566"
+aws_access_key_id        = "mock_key"
+aws_secret_access_key    = "mock_secret"
+environment              = "development"
+bucket_name              = "pipeline-uploads-bucket"
+dynamodb_table_name      = "pipeline-files-metadata"
+sqs_queue_name           = "pipeline-file-processing"
+sns_topic_name           = "pipeline-file-events"
+file_retention_days      = 30
+cloudwatch_retention_days = 14

@@ -1,0 +1,84 @@
+<div class="calculator-form">
+    <div class="mb-3">
+        <label for="numberA" class="form-label">Number A</label>
+        <input id="numberA" type="number" class="form-control" step="any" @bind="NumberA" />
+    </div>
+
+    <div class="mb-3">
+        <label for="numberB" class="form-label">Number B</label>
+        <input id="numberB" type="number" class="form-control" step="any" @bind="NumberB" />
+    </div>
+
+    <div class="mb-3">
+        <label for="operator" class="form-label">Operator</label>
+        <select id="operator" class="form-select" @bind="SelectedOperator">
+            <option value="Add">Add</option>
+            <option value="Subtract">Subtract</option>
+            <option value="Multiply">Multiply</option>
+            <option value="Divide">Divide</option>
+        </select>
+    </div>
+
+    <div class="d-grid">
+        <button class="btn btn-primary" @onclick="Calculate">Calculate</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            @ErrorMessage
+        </div>
+    }
+
+    @if (HasResult)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            Result: @NumberA @GetOperatorSymbol() @NumberB = @Result
+        </div>
+    }
+</div>
+
+@code {
+    private double NumberA { get; set; }
+    private double NumberB { get; set; }
+    private string SelectedOperator { get; set; } = "Add";
+    private double? Result { get; set; }
+    private string? ErrorMessage { get; set; }
+    private bool HasResult => Result.HasValue;
+
+    private void Calculate()
+    {
+        ErrorMessage = null;
+        Result = null;
+
+        try
+        {
+            Result = SelectedOperator switch
+            {
+                "Add" => Add(NumberA, NumberB),
+                "Subtract" => Subtract(NumberA, NumberB),
+                "Multiply" => Multiply(NumberA, NumberB),
+                "Divide" => Divide(NumberA, NumberB),
+                _ => throw new InvalidOperationException("Invalid operator")
+            };
+        }
+        catch (DivideByZeroException)
+        {
+            ErrorMessage = "Cannot divide by zero.";
+        }
+    }
+
+    private double Add(double a, double b) => a + b;
+    private double Subtract(double a, double b) => a - b;
+    private double Multiply(double a, double b) => a * b;
+    private double Divide(double a, double b) => b == 0 ? throw new DivideByZeroException() : a / b;
+
+    private string GetOperatorSymbol() => SelectedOperator switch
+    {
+        "Add" => "+",
+        "Subtract" => "-",
+        "Multiply" => "*",
+        "Divide" => "/",
+        _ => "?"
+    };
+}

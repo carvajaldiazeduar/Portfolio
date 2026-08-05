@@ -1,0 +1,20 @@
+* { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+  .container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 400px; text-align: center; }
+  h1 { margin: 0 0 1.5rem; color: #1a1a2e; }
+  .display { font-size: 3rem; font-weight: bold; font-family: monospace; margin-bottom: 1.5rem; color: #333; }
+  .controls { display: flex; gap: .5rem; justify-content: center; margin-bottom: 1.5rem; }
+  button { padding: .6rem 1.2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; color: #fff; }
+  #startBtn { background: #4caf50; }
+  #startBtn:hover { background: #43a047; }
+  #stopBtn { background: #f44336; }
+  #stopBtn:hover { background: #e53935; }
+  #resetBtn { background: #ff9800; }
+  #resetBtn:hover { background: #f57c00; }
+  #lapBtn { background: #2196f3; }
+  #lapBtn:hover { background: #1976d2; }
+  .laps { text-align: left; }
+  .laps h3 { margin: 0 0 .5rem; color: #555; }
+  .laps ul { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+  .laps li { padding: .4rem .75rem; border-bottom: 1px solid #eee; font-family: monospace; }
+  .laps li:last-child { border-bottom: none; }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Python Calculator</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <span class="display-text" id="display">0</span>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-function" onclick="clearDisplay()">C</button>
+            <button class="btn btn-function" onclick="toggleSign()">±</button>
+            <button class="btn btn-function" onclick="percent()">%</button>
+            <button class="btn btn-operator" onclick="setOperator('divide')">÷</button>
+
+            <button class="btn btn-number" onclick="inputDigit(7)">7</button>
+            <button class="btn btn-number" onclick="inputDigit(8)">8</button>
+            <button class="btn btn-number" onclick="inputDigit(9)">9</button>
+            <button class="btn btn-operator" onclick="setOperator('multiply')">×</button>
+
+            <button class="btn btn-number" onclick="inputDigit(4)">4</button>
+            <button class="btn btn-number" onclick="inputDigit(5)">5</button>
+            <button class="btn btn-number" onclick="inputDigit(6)">6</button>
+            <button class="btn btn-operator" onclick="setOperator('subtract')">-</button>
+
+            <button class="btn btn-number" onclick="inputDigit(1)">1</button>
+            <button class="btn btn-number" onclick="inputDigit(2)">2</button>
+            <button class="btn btn-number" onclick="inputDigit(3)">3</button>
+            <button class="btn btn-operator" onclick="setOperator('add')">+</button>
+
+            <button class="btn btn-number btn-zero" onclick="inputDigit(0)">0</button>
+            <button class="btn btn-number" onclick="inputDecimal()">.</button>
+            <button class="btn btn-operator" onclick="calculateResult()">=</button>
+        </div>
+
+        <p class="error" id="error"></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='calculator.js') }}"></script>
+</body>
+</html>

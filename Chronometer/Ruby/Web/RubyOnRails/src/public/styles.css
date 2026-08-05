@@ -1,0 +1,18 @@
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+.container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 600px; }
+h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+.time { font-size: 3rem; font-family: monospace; text-align: center; margin: 1rem 0; color: #1a1a2e; }
+.state { text-align: center; color: #555; font-weight: 600; margin-bottom: 1.5rem; }
+.controls { display: flex; gap: .75rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.controls button { padding: .5rem 1.25rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.controls button:hover { background: #3b5de7; }
+.controls .stop { background: #c62828; }
+.controls .stop:hover { background: #a51f1f; }
+.controls .reset { background: #e0e0e0; color: #333; }
+.controls .reset:hover { background: #d0d0d0; }
+.laps { list-style: none; padding: 0; margin: 0; }
+.lap { display: flex; justify-content: space-between; padding: .5rem .75rem; border-bottom: 1px solid #eee; font-family: monospace; color: #1a1a2e; }
+.empty { text-align: center; color: #999; padding: 2rem; }
+.notice { background: #e8f5e9; color: #2e7d32; padding: .5rem .75rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert { background: #fdecea; color: #c62828; padding: .5rem .75rem; border-radius: 8px; margin-bottom: 1rem; }

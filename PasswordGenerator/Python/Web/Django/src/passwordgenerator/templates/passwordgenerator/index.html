@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Generator</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+  .container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 420px; }
+  h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+  .form-group { margin-bottom: 1rem; }
+  label { display: block; margin-bottom: .25rem; font-weight: 600; color: #333; }
+  input[type="number"] { width: 100%; padding: .6rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+  input[type="number"]:focus { outline: none; border-color: #4a6cf7; }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .checkbox-group label { font-weight: 400; display: flex; align-items: center; gap: .4rem; cursor: pointer; }
+  button { width: 100%; padding: .75rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: .5rem; }
+  button:hover { background: #3b5de7; }
+  .result { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; text-align: center; font-size: 1.25rem; font-weight: 600; word-break: break-all; display: none; background: #e8f5e9; color: #2e7d32; }
+  .result.show { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Password Generator</h1>
+  <div class="form-group">
+    <label for="length">Length</label>
+    <input type="number" id="length" min="4" max="128" value="12">
+  </div>
+  <div class="form-group">
+    <label>Character Types</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="useUpper" checked> Uppercase</label>
+      <label><input type="checkbox" id="useLower" checked> Lowercase</label>
+      <label><input type="checkbox" id="useDigits" checked> Digits</label>
+      <label><input type="checkbox" id="useSymbols"> Symbols</label>
+    </div>
+  </div>
+  <button id="generateBtn">Generate</button>
+  <div id="resultDisplay" class="result"></div>
+</div>
+<script>
+document.getElementById('generateBtn').addEventListener('click', async () => {
+  const length = parseInt(document.getElementById('length').value) || 12;
+  const use_upper = document.getElementById('useUpper').checked;
+  const use_lower = document.getElementById('useLower').checked;
+  const use_digits = document.getElementById('useDigits').checked;
+  const use_symbols = document.getElementById('useSymbols').checked;
+  const display = document.getElementById('resultDisplay');
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ length, use_upper, use_lower, use_digits, use_symbols })
+    });
+    const data = await res.json();
+    if (data.error) {
+      display.className = 'result error';
+      display.textContent = data.error;
+    } else {
+      display.className = 'result show';
+      display.textContent = data.password;
+    }
+  } catch (err) {
+    display.className = 'result error';
+    display.textContent = 'Network error';
+  }
+});
+</script>
+</body>
+</html>

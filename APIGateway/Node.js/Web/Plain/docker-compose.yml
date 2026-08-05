@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  api-gateway:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_HOST=redis:6379
+      - JWT_SECRET=your-super-secret-key-change-in-production
+      - USERS_SERVICE_URL=http://users-service:3001
+      - ORDERS_SERVICE_URL=http://orders-service:3002
+      - PRODUCTS_SERVICE_URL=http://products-service:3003
+    depends_on:
+      - redis
+    networks:
+      - gateway-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - gateway-network
+
+networks:
+  gateway-network:
+    driver: bridge

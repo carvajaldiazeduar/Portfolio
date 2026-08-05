@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline - Event-Driven Data Pipeline</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Event-Driven Data Pipeline</h1>
+      <p>Upload files for async processing with AWS simulation</p>
+    </header>
+
+    <main>
+      <section class="upload-section">
+        <h2>Upload File</h2>
+        <form id="upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="file-input">Choose a file (PDF, CSV, Image)</label>
+            <input type="file" id="file-input" name="file" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" required>
+          </div>
+          <button type="submit" class="btn-primary">Upload & Process</button>
+        </form>
+        <div id="upload-response" class="response hidden"></div>
+      </section>
+
+      <section class="status-section">
+        <h2>Pipeline Status</h2>
+        <div id="pipeline-status" class="status-card">Loading...</div>
+      </section>
+
+      <section class="files-section">
+        <h2>Processed Files</h2>
+        <button id="refresh-files" class="btn-secondary">Refresh</button>
+        <div id="files-list"></div>
+      </section>
+
+      <section class="metrics-section">
+        <h2>Metrics</h2>
+        <button id="refresh-metrics" class="btn-secondary">Refresh</button>
+        <div id="metrics-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

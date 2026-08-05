@@ -1,0 +1,9 @@
+body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:0 20px}
+h1{color:#333}
+form div{margin:10px 0}
+label{display:inline-block;width:100px}
+select,input[type=number]{padding:5px;width:200px}
+button{padding:8px 20px;background:#007bff;color:#fff;border:none;cursor:pointer}
+button:hover{background:#0056b3}
+#result{margin-top:20px;font-size:1.2em;font-weight:bold}
+.error{color:red}

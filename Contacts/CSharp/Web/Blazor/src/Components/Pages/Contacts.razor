@@ -1,0 +1,74 @@
+@page "/contacts"
+@inject ContactService contactService
+
+<PageTitle>Contacts</PageTitle>
+
+<h3>Contacts</h3>
+
+@if (errorMsg != null)
+{
+    <div class="alert alert-danger">@errorMsg</div>
+}
+
+<div class="mb-3">
+    <input @bind="newName" placeholder="Name" class="form-control mb-2" />
+    <input @bind="newPhone" placeholder="Phone" class="form-control mb-2" />
+    <input @bind="newEmail" placeholder="Email" class="form-control mb-2" />
+    <button class="btn btn-primary" @onclick="AddContact">Add Contact</button>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in contactList)
+        {
+            <tr>
+                <td>@c.Id</td>
+                <td>@c.Name</td>
+                <td>@c.Phone</td>
+                <td>@c.Email</td>
+                <td><button class="btn btn-danger btn-sm" @onclick="() => DeleteContact(c.Id)">Delete</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Contact> contactList = new();
+    private string newName = "";
+    private string newPhone = "";
+    private string newEmail = "";
+    private string? errorMsg;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        try {         contactList = contactService.GetAll(); errorMsg = null; }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void AddContact()
+    {
+        if (string.IsNullOrWhiteSpace(newName)) { errorMsg = "Name is required"; return; }
+        try { contactService.Add(newName.Trim(), newPhone.Trim(), newEmail.Trim()); newName = ""; newPhone = ""; newEmail = ""; errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void DeleteContact(int id)
+    {
+        try { contactService.Delete(id); errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+}

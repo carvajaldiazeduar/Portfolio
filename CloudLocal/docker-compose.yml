@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  aws-localstack:
+    image: localstack/localstack:latest
+    profiles:
+      - aws
+      - all
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,dynamodb,sqs,sns,lambda,cloudwatch
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-mock_key}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-mock_secret}
+      - DEBUG=0
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+  gcp-pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    profiles:
+      - gcp
+      - all
+    command: gcloud beta emulators pubsub start --project=${GCP_PROJECT_ID:-local-project} --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+
+  gcp-firestore:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    profiles:
+      - gcp
+      - all
+    command: gcloud emulators firestore start --project=${GCP_PROJECT_ID:-local-project} --host-port=0.0.0.0:8080
+    ports:
+      - "8080:8080"
+
+  gcp-bigtable:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    profiles:
+      - gcp
+      - all
+    command: gcloud beta emulators bigtable start --host-port=0.0.0.0:8086
+    ports:
+      - "8086:8086"
+
+  gcp-storage:
+    image: fsouza/fake-gcs-server:latest
+    profiles:
+      - gcp
+      - all
+    command: -scheme http -host 0.0.0.0 -port 4443 -data /data
+    ports:
+      - "4443:4443"
+    volumes:
+      - fake-gcs-data:/data
+
+  azure-azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    profiles:
+      - azure
+      - all
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --debug /data/debug.log
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+
+  azure-cosmosdb:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    profiles:
+      - azure-cosmos
+      - all
+    ports:
+      - "8081:8081"
+      - "10250-10255:10250-10255"
+    environment:
+      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=3
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+    volumes:
+      - cosmosdb-data:/data
+
+volumes:
+  localstack-data:
+  fake-gcs-data:
+  azurite-data:
+  cosmosdb-data:

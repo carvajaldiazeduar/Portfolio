@@ -1,0 +1,40 @@
+<h1>TasksList</h1>
+<div class="form-row">
+  <form action="<%= tasks_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <input type="text" name="task[title]" placeholder="Title" autofocus>
+    <textarea name="task[description]" placeholder="Description"></textarea>
+    <button type="submit">Add</button>
+  </form>
+</div>
+<div id="taskList">
+  <% if @tasks.empty? %>
+    <div class="empty">No tasks yet</div>
+  <% else %>
+    <ul class="tasks-list">
+      <% @tasks.each do |t| %>
+        <li class="<%= t.completed ? 'completed' : '' %>">
+          <div class="task-title"><%= t.title %></div>
+          <% unless t.description.empty? %>
+            <div class="task-desc"><%= t.description %></div>
+          <% end %>
+          <div class="task-meta"><%= t.created_at %></div>
+          <div class="task-actions">
+            <% unless t.completed %>
+              <form action="<%= complete_task_path(t) %>" method="post">
+                <input type="hidden" name="_method" value="put">
+                <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+                <button type="submit">Complete</button>
+              </form>
+            <% end %>
+            <form action="<%= task_path(t) %>" method="post" onsubmit="return confirm('Delete?')">
+              <input type="hidden" name="_method" value="delete">
+              <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+              <button type="submit" class="delete-btn">Delete</button>
+            </form>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

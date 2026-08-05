@@ -1,0 +1,15 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        h1 { margin-bottom: 1rem; color: #1a1a2e; }
+        .time { font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 1rem 0; color: #333; }
+        .btns { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
+        button { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: white; }
+        #startBtn { background: #22c55e; } #startBtn:hover { background: #16a34a; }
+        #stopBtn { background: #ef4444; } #stopBtn:hover { background: #dc2626; }
+        #resetBtn { background: #6b7280; } #resetBtn:hover { background: #4b5563; }
+        #lapBtn { background: #3b82f6; } #lapBtn:hover { background: #2563eb; }
+        .laps { max-height: 200px; overflow-y: auto; text-align: left; }
+        .laps h3 { margin-bottom: 0.5rem; color: #555; }
+        .laps ul { list-style: none; }
+        .laps li { padding: 0.3rem 0.5rem; border-bottom: 1px solid #e5e7eb; font-variant-numeric: tabular-nums; }

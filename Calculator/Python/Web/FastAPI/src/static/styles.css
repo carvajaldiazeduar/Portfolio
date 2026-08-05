@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+  .calculator { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 360px; }
+  h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+  .form-group { margin-bottom: 1rem; }
+  label { display: block; margin-bottom: .25rem; font-weight: 600; color: #333; }
+  input, select { width: 100%; padding: .6rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+  input:focus, select:focus { outline: none; border-color: #4a6cf7; }
+  button { width: 100%; padding: .75rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  button:hover { background: #3b5de7; }
+  .result { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; text-align: center; font-size: 1.25rem; font-weight: 600; display: none; }
+  .result.success { display: block; background: #e8f5e9; color: #2e7d32; }
+  .result.error { display: block; background: #fdecea; color: #c62828; }

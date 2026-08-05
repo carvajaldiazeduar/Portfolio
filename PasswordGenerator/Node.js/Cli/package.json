@@ -1,0 +1,12 @@
+{
+  "name": "password-generator-cli",
+  "version": "1.0.0",
+  "description": "Secure password generator CLI",
+  "main": "password_generator.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

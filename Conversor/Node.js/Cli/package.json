@@ -1,0 +1,13 @@
+{
+  "name": "conversor-cli",
+  "version": "1.0.0",
+  "description": "Unit Converter CLI",
+  "main": "conversor.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node conversor.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

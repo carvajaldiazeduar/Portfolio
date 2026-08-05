@@ -1,0 +1,102 @@
+version: "3.8"
+services:
+  # ─── PostgreSQL (default) ──────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tasks
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── MySQL (alternative) ──────────────────────────────────────
+  # db:
+  #   image: mysql:8
+  #   environment:
+  #     MYSQL_DATABASE: tasks
+  #     MYSQL_USER: user
+  #     MYSQL_PASSWORD: password
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysqldata:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     timeout: 5s
+  #     retries: 5
+
+  # ─── SQL Server (alternative) ──────────────────────────────────
+  # db:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_SA_PASSWORD: "Password123"
+  #     MSSQL_DB: tasks
+  #   ports:
+  #     - "1433:1433"
+  #   volumes:
+  #     - mssqldata:/var/opt/mssql
+  #   healthcheck:
+  #     test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password123", "-C", "-Q", "SELECT 1"]
+  #     timeout: 10s
+  #     retries: 10
+
+  # ─── MongoDB (alternative) ─────────────────────────────────────
+  # db:
+  #   image: mongo:7
+  #   environment:
+  #     MONGO_INITDB_DATABASE: tasks
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodata:/data/db
+  #   healthcheck:
+  #     test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+  #     timeout: 10s
+  #     retries: 5
+
+  # ─── SQLite (no service needed, uses local file) ───────────────
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_DRIVER: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: tasks
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      CACHE_TYPE: redis
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  # mysqldata:
+  # mssqldata:
+  # mongodata:

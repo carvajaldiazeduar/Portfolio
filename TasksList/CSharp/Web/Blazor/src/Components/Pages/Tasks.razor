@@ -1,0 +1,81 @@
+@page "/tasks"
+@inject TaskService taskService
+
+<PageTitle>Tasks</PageTitle>
+
+<h3>Tasks</h3>
+
+@if (errorMsg != null)
+{
+    <div class="alert alert-danger">@errorMsg</div>
+}
+
+<div class="mb-3">
+    <input @bind="newTitle" placeholder="Title" class="form-control mb-2" />
+    <textarea @bind="newDescription" placeholder="Description" class="form-control mb-2"></textarea>
+    <button class="btn btn-primary" @onclick="AddTask">Add Task</button>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Completed</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in taskList)
+        {
+            <tr>
+                <td>@t.Id</td>
+                <td>@t.Title</td>
+                <td>@t.Description</td>
+                <td>@(t.Completed ? "Yes" : "No")</td>
+                <td>
+                    @if (!t.Completed)
+                    {
+                        <button class="btn btn-success btn-sm me-1" @onclick="() => CompleteTask(t.Id)">Complete</button>
+                    }
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(t.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<TaskItem> taskList = new();
+    private string newTitle = "";
+    private string newDescription = "";
+    private string? errorMsg;
+
+    protected override void OnInitialized() { Refresh(); }
+
+    private void Refresh()
+    {
+        try { taskList = taskService.GetAll(); errorMsg = null; }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void AddTask()
+    {
+        if (string.IsNullOrWhiteSpace(newTitle)) { errorMsg = "Title is required"; return; }
+        try { taskService.Add(newTitle.Trim(), newDescription.Trim()); newTitle = ""; newDescription = ""; errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void CompleteTask(int id)
+    {
+        try { taskService.Complete(id); errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void DeleteTask(int id)
+    {
+        try { taskService.Delete(id); errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+}

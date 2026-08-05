@@ -1,0 +1,33 @@
+<h1>Chronometer</h1>
+<div class="time" data-timer-running="<%= @running %>"><%= format("%02d:%05.2f", @elapsed.to_i / 60, @elapsed % 60) %></div>
+<div class="state"><%= @running ? "Running" : "Stopped" %></div>
+<div class="controls">
+  <form action="<%= start_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <button type="submit">Start</button>
+  </form>
+  <form action="<%= stop_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <button type="submit" class="stop">Stop</button>
+  </form>
+  <form action="<%= reset_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <button type="submit" class="reset">Reset</button>
+  </form>
+  <form action="<%= lap_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <button type="submit">Lap</button>
+  </form>
+</div>
+<div class="laps">
+  <% if @laps.empty? %>
+    <div class="empty">No laps</div>
+  <% else %>
+    <% @laps.each_with_index do |lap, i| %>
+      <div class="lap">
+        <span>Lap <%= i + 1 %></span>
+        <span><%= format("%02d:%05.2f", lap.to_i / 60, lap % 60) %></span>
+      </div>
+    <% end %>
+  <% end %>
+</div>

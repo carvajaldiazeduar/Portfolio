@@ -1,0 +1,73 @@
+@page "/messages"
+@inject MessageService messageService
+
+<PageTitle>Messages</PageTitle>
+
+<h3>Messages</h3>
+
+@if (errorMsg != null)
+{
+    <div class="alert alert-danger">@errorMsg</div>
+}
+
+<div class="mb-3">
+    <input @bind="newSender" placeholder="Sender" class="form-control mb-2" />
+    <input @bind="newSubject" placeholder="Subject" class="form-control mb-2" />
+    <textarea @bind="newBody" placeholder="Body" class="form-control mb-2"></textarea>
+    <button class="btn btn-primary" @onclick="AddMessage">Add Message</button>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Sender</th>
+            <th>Subject</th>
+            <th>Body</th>
+            <th>Read</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in messageList)
+        {
+            <tr>
+                <td>@m.Id</td>
+                <td>@m.Sender</td>
+                <td>@m.Subject</td>
+                <td>@m.Body</td>
+                <td>@(m.Read ? "Yes" : "No")</td>
+                <td><button class="btn btn-danger btn-sm" @onclick="() => DeleteMessage(m.Id)">Delete</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Message> messageList = new();
+    private string newSender = "";
+    private string newSubject = "";
+    private string newBody = "";
+    private string? errorMsg;
+
+    protected override void OnInitialized() { Refresh(); }
+
+    private void Refresh()
+    {
+        try { messageList = messageService.GetAll(); errorMsg = null; }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void AddMessage()
+    {
+        if (string.IsNullOrWhiteSpace(newSubject)) { errorMsg = "Subject is required"; return; }
+        try { messageService.Add(newSender.Trim(), newSubject.Trim(), newBody.Trim()); newSender = ""; newSubject = ""; newBody = ""; errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private void DeleteMessage(int id)
+    {
+        try { messageService.Delete(id); errorMsg = null; Refresh(); }
+        catch (Exception e) { errorMsg = e.Message; }
+    }
+}

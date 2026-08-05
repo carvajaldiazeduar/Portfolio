@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tasks List</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+  .container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 500px; }
+  h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+  .add-row { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+  .add-row input { flex: 1; padding: .6rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+  .add-row input:focus { outline: none; border-color: #4a6cf7; }
+  .add-row button { padding: .6rem 1.2rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .add-row button:hover { background: #3b5de7; }
+  .task { display: flex; align-items: center; gap: .5rem; padding: .6rem .75rem; border-bottom: 1px solid #eee; }
+  .task:last-child { border-bottom: none; }
+  .task .title { flex: 1; }
+  .task .title.done { text-decoration: line-through; color: #999; }
+  .task button { border: none; border-radius: 4px; padding: .3rem .6rem; cursor: pointer; font-size: .8rem; }
+  .toggle-btn { background: #4caf50; color: #fff; }
+  .toggle-btn:hover { background: #43a047; }
+  .delete-btn { background: #f44336; color: #fff; }
+  .delete-btn:hover { background: #d32f2f; }
+  .empty { text-align: center; color: #999; padding: 2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Tasks List</h1>
+  <div class="add-row">
+    <input type="text" id="taskInput" placeholder="New task..." autofocus>
+    <button id="addBtn">Add</button>
+  </div>
+  <div id="taskList"></div>
+</div>
+<script>
+async function loadTasks() {
+  const res = await fetch('/api/tasks');
+  const data = await res.json();
+  const container = document.getElementById('taskList');
+  if (data.tasks.length === 0) {
+    container.innerHTML = '<div class="empty">No tasks yet</div>';
+    return;
+  }
+  container.innerHTML = data.tasks.map(t => `
+    <div class="task">
+      <span class="title ${t.completed ? 'done' : ''}">${t.title}</span>
+      <button class="toggle-btn" data-id="${t.id}">${t.completed ? 'Undo' : 'Done'}</button>
+      <button class="delete-btn" data-id="${t.id}">Delete</button>
+    </div>
+  `).join('');
+  container.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(`/api/tasks/${btn.dataset.id}/complete`, { method: 'PUT' });
+      loadTasks();
+    });
+  });
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(`/api/tasks/${btn.dataset.id}`, { method: 'DELETE' });
+      loadTasks();
+    });
+  });
+}
+
+document.getElementById('addBtn').addEventListener('click', async () => {
+  const title = document.getElementById('taskInput').value.trim();
+  if (!title) return;
+  await fetch('/api/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title })
+  });
+  document.getElementById('taskInput').value = '';
+  loadTasks();
+});
+
+document.getElementById('taskInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('addBtn').click();
+});
+
+loadTasks();
+</script>
+</body>
+</html>

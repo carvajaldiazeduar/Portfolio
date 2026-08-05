@@ -1,0 +1,36 @@
+<h1>PasswordGenerator</h1>
+<% if @generated %>
+  <div class="password-box"><%= @generated %></div>
+<% end %>
+<div class="form-row">
+  <form action="<%= generate_path %>" method="post">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <label>Length</label>
+    <input type="number" name="length" min="1" value="16">
+    <button type="submit">Generate</button>
+  </form>
+</div>
+<div class="options-row">
+  <label><input type="checkbox" name="use_upper" value="1" checked> Uppercase</label>
+  <label><input type="checkbox" name="use_lower" value="1" checked> Lowercase</label>
+  <label><input type="checkbox" name="use_digits" value="1" checked> Digits</label>
+  <label><input type="checkbox" name="use_symbols" value="1" checked> Symbols</label>
+</div>
+<div id="passwordList">
+  <% if @passwords.empty? %>
+    <div class="empty">No passwords yet</div>
+  <% else %>
+    <table>
+      <thead><tr><th>Password</th><th>Length</th><th>Created At</th></tr></thead>
+      <tbody>
+        <% @passwords.each do |p| %>
+          <tr>
+            <td class="password-cell"><%= p.password %></td>
+            <td><%= p.length %></td>
+            <td><%= p.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

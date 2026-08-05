@@ -1,0 +1,5 @@
+body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    .task { padding: .5rem; border-bottom: 1px solid #ccc; }
+    .task.completed { text-decoration: line-through; color: #888; }
+    form { margin-bottom: 1rem; }
+    input, textarea { display: block; margin-bottom: .5rem; width: 100%; }

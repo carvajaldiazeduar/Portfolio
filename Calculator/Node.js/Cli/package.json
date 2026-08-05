@@ -1,0 +1,13 @@
+{
+  "name": "calculator-cli",
+  "version": "1.0.0",
+  "description": "Simple calculator CLI",
+  "main": "calculator.js",
+  "scripts": {
+    "start": "node calculator.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

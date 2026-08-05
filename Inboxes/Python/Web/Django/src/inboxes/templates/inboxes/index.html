@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inboxes</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f0f2f5; }
+  .container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); width: 600px; }
+  h1 { text-align: center; margin: 0 0 1.5rem; color: #1a1a2e; }
+  .new-message { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+  .new-message input, .new-message textarea { padding: .5rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: .9rem; }
+  .new-message input:focus, .new-message textarea:focus { outline: none; border-color: #4a6cf7; }
+  .new-message button { align-self: flex-end; padding: .5rem 1.5rem; background: #4a6cf7; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .new-message button:hover { background: #3b5de7; }
+  .message { padding: .75rem; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: .5rem; cursor: pointer; }
+  .message:hover { border-color: #4a6cf7; }
+  .message h3 { margin: 0 0 .25rem; }
+  .message .meta { font-size: .8rem; color: #888; }
+  .message .body { margin-top: .5rem; display: none; }
+  .message.expanded .body { display: block; }
+  .delete-btn { float: right; background: #f44336; color: #fff; border: none; border-radius: 4px; padding: .25rem .5rem; cursor: pointer; font-size: .8rem; }
+  .delete-btn:hover { background: #d32f2f; }
+  .empty { text-align: center; color: #999; padding: 2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Inboxes</h1>
+  <div class="new-message">
+    <input type="text" id="senderInput" placeholder="Sender">
+    <input type="text" id="subjectInput" placeholder="Subject">
+    <textarea id="bodyInput" placeholder="Message body" rows="3"></textarea>
+    <button id="sendBtn">Send</button>
+  </div>
+  <div id="messageList"></div>
+</div>
+<script>
+async function loadMessages() {
+  const res = await fetch('/api/messages');
+  const data = await res.json();
+  const container = document.getElementById('messageList');
+  if (data.messages.length === 0) {
+    container.innerHTML = '<div class="empty">No messages</div>';
+    return;
+  }
+  container.innerHTML = data.messages.map(m => `
+    <div class="message" data-id="${m.id}">
+      <button class="delete-btn" data-id="${m.id}">Delete</button>
+      <h3>${m.subject || '(No subject)'}</h3>
+      <div class="meta">From: ${m.sender} &middot; ${new Date(m.timestamp).toLocaleString()}</div>
+      <div class="body">${m.body || '(No body)'}</div>
+    </div>
+  `).join('');
+  container.querySelectorAll('.message').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) return;
+      el.classList.toggle('expanded');
+    });
+  });
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(`/api/messages/${btn.dataset.id}`, { method: 'DELETE' });
+      loadMessages();
+    });
+  });
+}
+
+document.getElementById('sendBtn').addEventListener('click', async () => {
+  const sender = document.getElementById('senderInput').value.trim();
+  const subject = document.getElementById('subjectInput').value.trim();
+  const body = document.getElementById('bodyInput').value.trim();
+  if (!sender) return;
+  await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender, subject, body })
+  });
+  document.getElementById('senderInput').value = '';
+  document.getElementById('subjectInput').value = '';
+  document.getElementById('bodyInput').value = '';
+  loadMessages();
+});
+
+loadMessages();
+</script>
+</body>
+</html>

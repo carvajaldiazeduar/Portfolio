@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
+        .calculator { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .calculator h1 { margin-top: 0; }
+        .calculator input, .calculator select, .calculator button { margin: 0.5rem; padding: 0.5rem; font-size: 1rem; }
+        .calculator button { cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; padding: 0.5rem 1.5rem; }
+        .calculator button:hover { background: #0056b3; }
+        #result { margin-top: 1rem; font-size: 1.2rem; font-weight: bold; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>Calculator</h1>
+        <input type="number" id="a" placeholder="First number" step="any">
+        <select id="operator">
+            <option value="+">+</option>
+            <option value="-">-</option>
+            <option value="*">*</option>
+            <option value="/">/</option>
+        </select>
+        <input type="number" id="b" placeholder="Second number" step="any">
+        <button id="calculateBtn">Calculate</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('calculateBtn').addEventListener('click', async function() {
+            const a = document.getElementById('a').value;
+            const b = document.getElementById('b').value;
+            const operator = document.getElementById('operator').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!a || !b) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = 'Please enter both numbers.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ a: parseFloat(a), b: parseFloat(b), operator }),
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = '';
+                    resultDiv.textContent = `Result: ${data.result}`;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `Error: ${data.error}`;
+                }
+            } catch (err) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = 'Network error.';
+            }
+        });
+    </script>
+</body>
+</html>

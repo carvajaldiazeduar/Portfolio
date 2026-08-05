@@ -1,0 +1,4 @@
+body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
+        input, select, button { display: block; width: 100%; margin: 10px 0; padding: 8px; }
+        #result { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+        .error { color: red; }

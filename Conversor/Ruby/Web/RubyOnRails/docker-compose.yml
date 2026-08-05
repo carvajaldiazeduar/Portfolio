@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  # No database or cache is used for this app; only the web service runs.
+  web:
+    build: .
+    ports:
+      - "3000:3000"
