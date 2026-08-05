@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatAI</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 1rem; }
+        #chat { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; height: 420px; overflow-y: auto; }
+        .message { margin-bottom: 0.75rem; }
+        .message .role { font-weight: bold; }
+        #form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        #input { flex: 1; padding: 0.5rem; }
+        button { padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+    <h1>ChatAI</h1>
+    <div id="chat"></div>
+    <form id="form">
+        <input id="input" type="text" placeholder="Type your message..." autocomplete="off">
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chat = document.getElementById('chat');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message';
+            userMsg.innerHTML = '<span class="role">You:</span> ' + escapeHtml(text);
+            chat.appendChild(userMsg);
+            input.value = '';
+
+            const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'user', content: text }] })
+            });
+
+            const data = await resp.json();
+            const assistantMsg = document.createElement('div');
+            assistantMsg.className = 'message';
+            const content = data.choices && data.choices[0] ? data.choices[0].content : (data.error || 'Error');
+            assistantMsg.innerHTML = '<span class="role">Assistant:</span> ' + escapeHtml(content);
+            chat.appendChild(assistantMsg);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        document.getElementById('form').addEventListener('submit', (e) => { e.preventDefault(); sendMessage(); });
+    </script>
+</body>
+</html>

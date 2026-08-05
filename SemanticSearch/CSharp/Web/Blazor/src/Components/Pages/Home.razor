@@ -1,0 +1,63 @@
+@page "/"
+@inject VectorStoreAdapter vectorStore
+@inject CacheAdapter cache
+@using System.Text.Json
+
+<PageTitle>Semantic Search</PageTitle>
+
+<h3>Semantic Search</h3>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Search documents..." @bind="query" />
+    <button class="btn btn-primary mt-2" @onclick="SearchAsync">Search</button>
+</div>
+
+@if (errorMsg != null)
+{
+    <div class="alert alert-danger">@errorMsg</div>
+}
+
+@if (results != null)
+{
+    <ul class="list-group">
+        @foreach (var r in results)
+        {
+            <li class="list-group-item">@r.Document</li>
+        }
+    </ul>
+}
+
+@code {
+    private string? query;
+    private string? errorMsg;
+    private List<SearchResult>? results;
+
+    private async Task SearchAsync()
+    {
+        errorMsg = null;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            errorMsg = "Query cannot be empty.";
+            return;
+        }
+        try
+        {
+            var dimension = int.Parse(Environment.GetEnvironmentVariable("VECTOR_DIMENSION") ?? "1536");
+            var embedding = new float[dimension];
+            var cached = cache.Get($"search:{query}");
+            if (cached != null)
+            {
+                results = JsonSerializer.Deserialize<List<SearchResult>>(cached);
+            }
+            else
+            {
+                results = await vectorStore.Search(embedding, 5);
+                cache.Set($"search:{query}", JsonSerializer.Serialize(results), 300);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMsg = ex.Message;
+        }
+    }
+}

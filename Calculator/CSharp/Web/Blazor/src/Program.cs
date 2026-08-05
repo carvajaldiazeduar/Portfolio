@@ -1,3 +1,5 @@
+using BlazorCalculator;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()

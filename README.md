@@ -415,7 +415,7 @@ See `.env.example` for a reusable template. Ruby on Rails projects build `DATABA
 
 ## 🐳 Podman
 
-Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignore`. The repository keeps those standard OCI-compatible filenames, but the intended runtime is Podman. The compose files start the app, PostgreSQL (active), and Redis, with MySQL, SQL Server and MongoDB commented out for optional use. `CloudLocal` additionally includes local AWS, GCP and Azure service emulators.
+Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignore`. The repository keeps those standard OCI-compatible filenames, but the intended runtime is Podman. The compose files start the app, PostgreSQL (active), and Redis, with MySQL, SQL Server and MongoDB commented out for optional use. `CloudLocal` additionally includes local AWS, GCP and Azure service emulators. C# images are `.NET 9 Alpine` (`mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine`).
 
 | Framework | Port | Command |
 |-----------|--------|---------|

@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      CHAT_PROVIDER: openai
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
+      CHAT_TEMPERATURE: ${CHAT_TEMPERATURE:-0.7}
+      CHAT_MAX_TOKENS: ${CHAT_MAX_TOKENS:-1024}
+    volumes:
+      - .:/app

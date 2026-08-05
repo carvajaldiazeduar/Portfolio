@@ -1,3 +1,4 @@
+using PasswordGeneratorBlazor;
 using Microsoft.EntityFrameworkCore;
 
 var driver = (Environment.GetEnvironmentVariable("DB_DRIVER") ?? "postgresql").ToLower();
