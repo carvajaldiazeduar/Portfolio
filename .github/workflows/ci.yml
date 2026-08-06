@@ -32,7 +32,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install --quiet pytest flask redis psycopg2-binary chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
+          pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
       - name: Test all projects
         shell: bash
         run: |
