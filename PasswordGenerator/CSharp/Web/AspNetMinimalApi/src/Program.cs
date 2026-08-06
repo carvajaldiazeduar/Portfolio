@@ -63,6 +63,9 @@ app.MapGet("/api/passwords", (PwGenService service, ICacheAdapter cache) =>
 });
 
 app.MapFallbackToFile("index.html");
+
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public partial class Program { }

@@ -22,6 +22,8 @@ None required (no DB/cache). Web port set via compose.
 ## Endpoints
 - `GET /` → serves `wwwroot/index.html` (UI)
 - `POST /calculate` → body `{ "a": number, "b": number, "operator": string }` → `{ "result": number }`
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

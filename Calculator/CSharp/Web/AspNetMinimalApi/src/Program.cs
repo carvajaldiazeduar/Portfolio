@@ -40,6 +40,8 @@ app.MapPost("/calculate", (CalculateRequest request) =>
     }
 });
 
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public record CalculateRequest(string A, string B, string Operator);

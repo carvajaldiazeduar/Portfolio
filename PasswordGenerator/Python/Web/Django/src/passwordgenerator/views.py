@@ -1,9 +1,10 @@
 import json
+import os
 import random
 import string
 from django.conf import settings
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -13,6 +14,14 @@ CACHE_TTL = getattr(settings, 'CACHE_TTL', 300)
 
 def index(request):
     return render(request, 'passwordgenerator/index.html')
+
+def openapi_spec(request):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'openapi.json')
+    return FileResponse(open(path, 'rb'), content_type='application/json')
+
+def swagger(request):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'swagger.html')
+    return FileResponse(open(path, 'rb'), content_type='text/html')
 
 @csrf_exempt
 @require_http_methods(['POST'])

@@ -29,6 +29,8 @@ Only a **Node.js** implementation exists. No DB — only cache for rate limiting
 - `GET /products` → proxies to `PRODUCTS_SERVICE_URL` (requires JWT)
 - Any route without a token → `401 Unauthorized`
 - Request limit exceeded → `429 Too Many Requests`
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
 
 ## Tests
 | Language | Framework | Where |

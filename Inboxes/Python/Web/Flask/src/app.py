@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from config import DATABASE_URL
 from models import db, Message
 from cache import create_cache
@@ -64,6 +64,14 @@ def delete_message(id):
     cache.delete("messages:all")
     cache.delete(f"message:{id}")
     return "", 204
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,45 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Calculator API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/calculate": {
+            "post": {
+                "summary": "Calculate a result",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "a": {
+                                        "type": "number"
+                                    },
+                                    "b": {
+                                        "type": "number"
+                                    },
+                                    "operator": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "a",
+                                    "b",
+                                    "operator"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Calculation result"
+                    }
+                }
+            }
+        }
+    }
+}

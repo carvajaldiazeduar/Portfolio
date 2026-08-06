@@ -7,6 +7,18 @@ header("X-Frame-Options: DENY");
 $method = $_SERVER["REQUEST_METHOD"];
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
+if ($path === "/openapi.json") {
+    header("Content-Type: application/json");
+    readfile(__DIR__ . "/openapi.json");
+    exit;
+}
+
+if ($path === "/swagger") {
+    header("Content-Type: text/html");
+    readfile(__DIR__ . "/swagger.html");
+    exit;
+}
+
 $defaultModel = getenv("CHAT_MODEL") ?: "gpt-4o-mini";
 $defaultTemperature = (float)(getenv("CHAT_TEMPERATURE") ?: 0.7);
 $defaultMaxTokens = (int)(getenv("CHAT_MAX_TOKENS") ?: 1024);

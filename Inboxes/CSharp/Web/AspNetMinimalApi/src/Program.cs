@@ -55,6 +55,8 @@ app.MapDelete("/api/messages/{id:int}", (int id, MessageService service) =>
     return Results.NoContent();
 });
 
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public partial class Program { }

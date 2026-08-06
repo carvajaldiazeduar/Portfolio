@@ -26,6 +26,8 @@ None required. Web port set via compose.
 - `POST /resume` → resumes → `{ "state": "running" }`
 - `POST /reset` → resets to zero → `{ "elapsed": 0 }`
 - `GET /status` → current state + elapsed time
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

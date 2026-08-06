@@ -1,9 +1,14 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 import os
 import time
 
 app = FastAPI()
+
+
+@app.get("/swagger", include_in_schema=False)
+async def swagger():
+    return RedirectResponse("/docs")
 
 timer = {
     'running': False,

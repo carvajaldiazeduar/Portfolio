@@ -1,0 +1,91 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Contacts API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/contacts": {
+            "get": {
+                "summary": "List contacts",
+                "responses": {
+                    "200": {
+                        "description": "List of contacts"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a contact",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact created"
+                    }
+                }
+            }
+        },
+        "/api/contacts/search": {
+            "get": {
+                "summary": "Search contacts",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Matching contacts"
+                    }
+                }
+            }
+        },
+        "/api/contacts/{id}": {
+            "delete": {
+                "summary": "Delete a contact",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact deleted"
+                    }
+                }
+            }
+        }
+    }
+}

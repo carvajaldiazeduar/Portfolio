@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from storage.vector_factory import create_vector_store
 from cache.cache_factory import create_cache
 
@@ -56,6 +56,16 @@ def delete_collection(name):
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({"error": "Not found"}), 404
+
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 
 if __name__ == "__main__":

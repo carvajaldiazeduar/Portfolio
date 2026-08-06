@@ -31,6 +31,8 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 - `GET /api/search?q=...&k=...` → semantic search → `{ "results": [{ "document", "metadata", "distance" }] }`
 - `GET /api/collections` → lists collections
 - `DELETE /api/collections/:name` → deletes a collection
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

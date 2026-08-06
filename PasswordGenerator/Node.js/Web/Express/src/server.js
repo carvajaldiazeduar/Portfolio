@@ -76,6 +76,8 @@ app.get('/api/passwords', async (req, res) => {
   res.json(entries);
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 module.exports = app;
 module.exports.app = app;
 module.exports.generatePassword = generatePassword;

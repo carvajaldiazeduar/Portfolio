@@ -56,6 +56,9 @@ app.MapDelete("/api/contacts/{id:int}", (int id, ContactService service) =>
 });
 
 app.MapFallbackToFile("index.html");
+
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public partial class Program { }

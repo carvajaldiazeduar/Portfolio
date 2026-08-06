@@ -30,6 +30,8 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - `GET /tasks/{id}` → one by id
 - `PUT /tasks/{id}` → updates (title and/or completed)
 - `DELETE /tasks/{id}` → deletes and invalidates cache
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

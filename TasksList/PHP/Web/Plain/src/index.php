@@ -12,6 +12,18 @@ $cache = CacheFactory::create();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+if ($path === '/openapi.json') {
+    header('Content-Type: application/json');
+    readfile(__DIR__ . '/openapi.json');
+    exit;
+}
+
+if ($path === '/swagger') {
+    header('Content-Type: text/html');
+    readfile(__DIR__ . '/swagger.html');
+    exit;
+}
+
 header('Content-Type: application/json');
 
 if ($path === '/' || $path === '/index.php') {

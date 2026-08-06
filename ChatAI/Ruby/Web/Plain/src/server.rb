@@ -62,6 +62,16 @@ class ChatServer
       res.body = File.read(File.join(__dir__, 'template.html'))
     end
 
+    server.mount_proc('/openapi.json') do |_req, res|
+      res['Content-Type'] = 'application/json'
+      res.body = File.read(File.join(__dir__, 'openapi.json'))
+    end
+
+    server.mount_proc('/swagger') do |_req, res|
+      res['Content-Type'] = 'text/html'
+      res.body = File.read(File.join(__dir__, 'swagger.html'))
+    end
+
     server.mount_proc('/health') do |_req, res|
       res['Content-Type'] = 'application/json'
       res.body = JSON.generate(status: 'ok')

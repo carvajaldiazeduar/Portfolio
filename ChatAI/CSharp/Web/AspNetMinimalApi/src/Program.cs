@@ -34,6 +34,8 @@ app.MapPost("/api/chat", async (ChatRequest request, IChatProvider provider) =>
     }
 });
 
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public partial class Program { }

@@ -54,6 +54,9 @@ app.MapDelete("/api/collections/{name}", (string name, VectorStoreAdapter vector
 });
 
 app.MapFallbackToFile("index.html");
+
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 VectorStoreAdapter CreateVectorStore() {

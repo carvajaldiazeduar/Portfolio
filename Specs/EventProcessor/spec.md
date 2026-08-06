@@ -25,6 +25,8 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 ## Endpoints
 - `POST /events` → body `{ "type": string, "payload": object }` → `202 Accepted` + `{ "status": "queued" }`
 - `GET /health` → service status
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
 
 ## Worker
 - Continuously processes events from the queue

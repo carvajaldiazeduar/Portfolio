@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'Cli'))
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from conversor import convert, list_categories, CATEGORY_UNITS
 
 app = Flask(__name__)
@@ -29,6 +29,14 @@ def api_convert():
         return jsonify({"result": result, "from": from_unit, "to": to_unit, "value": float(value)})
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

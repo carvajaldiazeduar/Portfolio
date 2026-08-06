@@ -73,6 +73,8 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 module.exports = app;
 module.exports.resetTasks = async () => {
   await prisma.task.deleteMany();

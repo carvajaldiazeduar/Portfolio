@@ -1,0 +1,40 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Conversor API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/convert": {
+      "post": {
+        "summary": "Convert a value between units",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["value", "from", "to"],
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversion result"
+          }
+        }
+      }
+    }
+  }
+}

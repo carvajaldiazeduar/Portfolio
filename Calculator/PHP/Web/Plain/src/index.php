@@ -4,6 +4,20 @@ header("Content-Type: application/json");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 
+$path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+
+if ($path === "/openapi.json") {
+    header("Content-Type: application/json");
+    readfile(__DIR__ . "/openapi.json");
+    exit;
+}
+
+if ($path === "/swagger") {
+    header("Content-Type: text/html");
+    readfile(__DIR__ . "/swagger.html");
+    exit;
+}
+
 function calculate(float $a, float $b, string $operator): float|string|null
 {
     return match ($operator) {

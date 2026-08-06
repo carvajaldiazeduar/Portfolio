@@ -56,6 +56,8 @@ app.post("/calculate", (req, res) => {
   res.json({ result });
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Calculator server running on http://localhost:${PORT}`);

@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SemanticSearch API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/search": {
+      "get": {
+        "summary": "Search indexed documents",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "summary": "Upload and index a document",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed"
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "summary": "List vector collections",
+        "responses": {
+          "200": {
+            "description": "List of collections"
+          }
+        }
+      }
+    }
+  }
+}

@@ -9,4 +9,6 @@ urlpatterns = [
     path('api/stop', views.stop, name='stop'),
     path('api/reset', views.reset, name='reset'),
     path('api/lap', views.lap, name='lap'),
+    path('openapi.json', views.openapi_spec, name='openapi_spec'),
+    path('swagger', views.swagger, name='swagger'),
 ]

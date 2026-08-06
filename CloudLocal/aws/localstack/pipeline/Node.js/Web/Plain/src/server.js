@@ -90,6 +90,8 @@ app.get('/api/handlers', (req, res) => {
   res.json({ handlers: Object.keys(HANDLERS) });
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) {
   const port = process.env.PORT || 8080;
   app.listen(port, () => console.log(`Pipeline API running on :${port}`));

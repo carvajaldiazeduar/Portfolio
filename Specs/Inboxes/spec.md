@@ -29,6 +29,8 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - `POST /inboxes` → creates (validates subject/from/body)
 - `GET /inboxes/{id}` → one by id (marks as read)
 - `DELETE /inboxes/{id}` → deletes and invalidates cache
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

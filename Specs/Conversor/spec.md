@@ -23,6 +23,8 @@ None required. Web port set via compose.
 - `GET /` → serves `wwwroot/index.html` (UI)
 - `POST /convert` → body `{ "value": number, "from": string, "to": string, "type": string }` → `{ "result": number, "unit": string }`
 - Supported types: `length`, `mass`, `temperature`, `currency`
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

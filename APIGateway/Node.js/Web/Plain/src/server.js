@@ -37,6 +37,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 app.use(rateLimitMiddleware);
 app.use(authMiddleware);
 app.use(proxyMiddleware);

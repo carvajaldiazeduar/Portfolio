@@ -1,6 +1,6 @@
 import os
 import random
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from config import DATABASE_URL
 from models import db, PasswordEntry
 from cache import create_cache
@@ -81,6 +81,14 @@ def list_passwords():
     data = [e.to_dict() for e in entries]
     cache.set("passwords:recent", data, ttl=CACHE_TTL)
     return jsonify(data)
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "/swagger", to: redirect("/swagger.html")
   root "timer#index"
 
   post "start", to: "timer#start"

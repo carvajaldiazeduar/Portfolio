@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from storage.vector_factory import create_vector_store
 from cache.cache_factory import create_cache
 
@@ -8,6 +8,11 @@ app = FastAPI()
 vector_store = create_vector_store()
 cache = create_cache()
 CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))
+
+
+@app.get("/swagger", include_in_schema=False)
+async def swagger():
+    return RedirectResponse("/docs")
 
 
 @app.get("/")

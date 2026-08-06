@@ -29,6 +29,8 @@ Classic CRUD over a database with cache. Generation is pure logic (entropy/rando
 - `POST /passwords` → stores a generated password
 - `GET /passwords` → lists stored ones (300s cache)
 - `DELETE /passwords/{id}` → deletes and invalidates cache
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
 ## Tests
 | Language | Framework | Where |

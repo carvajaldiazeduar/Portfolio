@@ -1,7 +1,8 @@
 import json
+import os
 from django.conf import settings
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import Message
@@ -10,6 +11,14 @@ CACHE_TTL = getattr(settings, 'CACHE_TTL', 300)
 
 def index(request):
     return render(request, 'inboxes/index.html')
+
+def openapi_spec(request):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'openapi.json')
+    return FileResponse(open(path, 'rb'), content_type='application/json')
+
+def swagger(request):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'swagger.html')
+    return FileResponse(open(path, 'rb'), content_type='text/html')
 
 @csrf_exempt
 def messages_handler(request):

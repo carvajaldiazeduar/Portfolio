@@ -51,6 +51,8 @@ app.delete('/api/collections/:name', async (req, res) => {
   res.json({ message: `Collection '${req.params.name}' deleted` });
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) {
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`SemanticSearch server on :${port}`));

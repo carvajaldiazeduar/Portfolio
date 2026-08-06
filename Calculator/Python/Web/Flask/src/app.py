@@ -1,5 +1,5 @@
 import math
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -75,6 +75,16 @@ def calculate_route():
         return jsonify({"error": "Calculation overflow"}), 400
 
     return jsonify({"result": result})
+
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 
 if __name__ == "__main__":

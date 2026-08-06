@@ -54,6 +54,8 @@ Each Plain implementation exposes the same endpoints, request/response contract 
   }
   ```
   → `400` if `messages` is empty or invalid; `502` if the external provider fails.
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
 
 ## Behavior
 - Model/params sent by the client override the server defaults.

@@ -1,0 +1,49 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Chronometer API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/start": {
+      "post": {
+        "summary": "Start the chronometer",
+        "responses": {
+          "200": {
+            "description": "Chronometer started"
+          }
+        }
+      }
+    },
+    "/stop": {
+      "post": {
+        "summary": "Stop the chronometer",
+        "responses": {
+          "200": {
+            "description": "Chronometer stopped"
+          }
+        }
+      }
+    },
+    "/reset": {
+      "post": {
+        "summary": "Reset the chronometer",
+        "responses": {
+          "200": {
+            "description": "Chronometer reset"
+          }
+        }
+      }
+    },
+    "/lap": {
+      "post": {
+        "summary": "Record a lap",
+        "responses": {
+          "200": {
+            "description": "Lap recorded"
+          }
+        }
+      }
+    }
+  }
+}

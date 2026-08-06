@@ -27,6 +27,8 @@ Only a **Python** implementation exists.
 - `GET /api/pipelines` → lists defined pipelines
 - `POST /api/pipelines/<name>/run` → runs a pipeline → `{ "status": "success", "rows_processed": n }`
 - `GET /api/sources` → lists available data sources
+- `GET /openapi.json` → OpenAPI 3.0 spec of this API
+- `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
 
 ## Tests
 | Language | Framework | Where |

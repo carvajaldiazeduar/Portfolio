@@ -67,6 +67,8 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) {
   app.listen(PORT, () => console.log(`ChatAI server on :${PORT}`));
 }

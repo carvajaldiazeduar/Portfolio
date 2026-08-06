@@ -73,6 +73,8 @@ app.delete('/api/contacts/:id', async (req, res) => {
   }
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 module.exports = app;
 module.exports.resetContacts = async () => {
   await prisma.contact.deleteMany();

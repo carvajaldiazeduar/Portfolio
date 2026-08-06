@@ -27,6 +27,8 @@ app.post('/api/convert', (req, res) => {
   }
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

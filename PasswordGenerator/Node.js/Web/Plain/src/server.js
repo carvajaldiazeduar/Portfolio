@@ -60,6 +60,8 @@ app.get('/api/passwords', async (req, res) => {
   res.json(entries);
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) { const port = process.env.PORT || 3000; app.listen(port, () => console.log(`Plain on :${port}`)); }
 module.exports = app;
 module.exports.resetEntries = async () => { await db.clear('password_entries'); };

@@ -1,0 +1,84 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SemanticSearch API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/upload": {
+      "post": {
+        "summary": "Upload a document for indexing",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "summary": "Search documents by query",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/api/collections": {
+      "get": {
+        "summary": "List collections",
+        "responses": {
+          "200": {
+            "description": "List of collections"
+          }
+        }
+      }
+    },
+    "/api/collections/{name}": {
+      "delete": {
+        "summary": "Delete a collection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection deleted"
+          }
+        }
+      }
+    }
+  }
+}

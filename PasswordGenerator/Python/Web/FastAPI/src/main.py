@@ -1,7 +1,7 @@
 import random
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from models import SessionLocal, PasswordEntry
 from cache import create_cache
@@ -11,6 +11,11 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 cache = create_cache()
 CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))
+
+
+@app.get("/swagger", include_in_schema=False)
+async def swagger():
+    return RedirectResponse("/docs")
 
 UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LOWERCASE = "abcdefghijklmnopqrstuvwxyz"

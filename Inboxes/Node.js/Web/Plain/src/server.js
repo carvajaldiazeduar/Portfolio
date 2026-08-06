@@ -64,6 +64,8 @@ app.delete('/api/messages/:id', async (req, res) => {
   res.status(204).send();
 });
 
+app.get('/swagger', (req, res) => res.redirect('/swagger.html'));
+
 if (require.main === module) { const port = process.env.PORT || 3000; app.listen(port, () => console.log(`Plain on :${port}`)); }
 module.exports = app;
 module.exports.resetMessages = async () => { await db.clear('messages'); };

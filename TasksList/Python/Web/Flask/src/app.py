@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from config import DATABASE_URL
 from models import db, Task
 from cache import create_cache
@@ -61,6 +61,14 @@ def delete_task(task_id):
     db.session.commit()
     cache.delete("tasks:all")
     return jsonify({"result": "deleted"})
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

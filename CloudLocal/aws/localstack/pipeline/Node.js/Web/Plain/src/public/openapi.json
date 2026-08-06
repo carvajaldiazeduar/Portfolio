@@ -1,0 +1,106 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Pipeline API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service status"
+          }
+        }
+      }
+    },
+    "/api/pipeline/status": {
+      "get": {
+        "summary": "Get pipeline service status",
+        "responses": {
+          "200": {
+            "description": "Pipeline status"
+          }
+        }
+      }
+    },
+    "/api/pipeline/upload": {
+      "post": {
+        "summary": "Upload a file to the pipeline",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File ingested"
+          }
+        }
+      }
+    },
+    "/api/pipeline/files": {
+      "get": {
+        "summary": "List pipeline files",
+        "responses": {
+          "200": {
+            "description": "List of files"
+          }
+        }
+      }
+    },
+    "/api/pipeline/files/{key}": {
+      "get": {
+        "summary": "Get file metadata by key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata"
+          }
+        }
+      }
+    },
+    "/api/pipeline/metrics": {
+      "get": {
+        "summary": "Get pipeline metrics",
+        "responses": {
+          "200": {
+            "description": "Pipeline metrics"
+          }
+        }
+      }
+    },
+    "/api/handlers": {
+      "get": {
+        "summary": "List registered handlers",
+        "responses": {
+          "200": {
+            "description": "List of handlers"
+          }
+        }
+      }
+    }
+  }
+}

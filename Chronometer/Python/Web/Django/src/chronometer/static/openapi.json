@@ -1,0 +1,59 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Chronometer API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/state": {
+            "get": {
+                "summary": "Get current state",
+                "responses": {
+                    "200": {
+                        "description": "Current timer state"
+                    }
+                }
+            }
+        },
+        "/api/start": {
+            "post": {
+                "summary": "Start the timer",
+                "responses": {
+                    "200": {
+                        "description": "Timer started"
+                    }
+                }
+            }
+        },
+        "/api/stop": {
+            "post": {
+                "summary": "Stop the timer",
+                "responses": {
+                    "200": {
+                        "description": "Timer stopped"
+                    }
+                }
+            }
+        },
+        "/api/reset": {
+            "post": {
+                "summary": "Reset the timer",
+                "responses": {
+                    "200": {
+                        "description": "Timer reset"
+                    }
+                }
+            }
+        },
+        "/api/lap": {
+            "post": {
+                "summary": "Record a lap",
+                "responses": {
+                    "200": {
+                        "description": "Lap recorded"
+                    }
+                }
+            }
+        }
+    }
+}

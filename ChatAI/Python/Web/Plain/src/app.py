@@ -1,7 +1,7 @@
 import json
 import os
 import urllib.request
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 app = Flask(__name__)
 
@@ -72,6 +72,16 @@ def chat():
             },
         }
     )
+
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 
 if __name__ == "__main__":

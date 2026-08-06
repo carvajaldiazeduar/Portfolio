@@ -32,6 +32,8 @@ app.MapPost("/api/convert", (ConvertRequest req) =>
 
 app.MapFallbackToFile("index.html");
 
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public record ConvertRequest(double? Value, string? From, string? To);

@@ -1,5 +1,5 @@
 import time
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -82,6 +82,16 @@ def lap():
         prev = state["laps"][-1][0] if state["laps"] else 0.0
         state["laps"].append((current, current - prev))
     return jsonify(make_response())
+
+
+@app.route("/openapi.json")
+def openapi_spec():
+    return send_from_directory("static", "openapi.json")
+
+
+@app.route("/swagger")
+def swagger():
+    return send_from_directory("static", "swagger.html")
 
 
 if __name__ == "__main__":

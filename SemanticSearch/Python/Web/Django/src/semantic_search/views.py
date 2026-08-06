@@ -1,5 +1,5 @@
 import os
-from django.http import JsonResponse, HttpResponse
+from django.http import FileResponse, JsonResponse, HttpResponse
 from django.shortcuts import render
 from storage.vector_factory import create_vector_store
 from cache.cache_factory import create_cache
@@ -11,6 +11,16 @@ CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))
 
 def index(request):
     return render(request, "index.html")
+
+
+def openapi_spec(request):
+    path = os.path.join(os.path.dirname(__file__), "static", "openapi.json")
+    return FileResponse(open(path, "rb"), content_type="application/json")
+
+
+def swagger(request):
+    path = os.path.join(os.path.dirname(__file__), "static", "swagger.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
 
 
 def search(request):

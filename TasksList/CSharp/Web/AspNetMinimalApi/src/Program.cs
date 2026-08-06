@@ -50,6 +50,8 @@ app.MapDelete("/api/tasks/{id:int}", (int id, TaskService service) =>
     return Results.Ok(new { success = true });
 });
 
+app.MapGet("/swagger", () => Results.Redirect("/swagger.html"));
+
 app.Run();
 
 public partial class Program { }
