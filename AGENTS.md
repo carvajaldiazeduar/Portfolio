@@ -25,7 +25,7 @@ There are **12 top-level items**: 7 core apps (Calculator, Chronometer, Contacts
 | DataPipeline (Python only) | `DataWarehouseAdapter` (WAREHOUSE_DRIVER: duckdb/bigquery/postgresql, default duckdb) + cache |
 | SemanticSearch | `VectorStoreAdapter` (VECTOR_DRIVER: chromadb/pinecone/pgvector) + cache |
 
-New specialized projects (DataPipeline, SemanticSearch) are NOT covered in README.md yet — README covers APIGateway, EventProcessor, CloudLocal only.
+New specialized projects (DataPipeline, SemanticSearch) are covered in README.md alongside APIGateway, EventProcessor and CloudLocal.
 
 ## Adapter conventions by Language
 

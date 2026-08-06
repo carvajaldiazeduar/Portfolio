@@ -37,6 +37,10 @@ Want to explore something quickly? Pick your entry point:
   ```
 - **See the Adapter pattern in action (no ORM, direct connection):**
   → `PHP/Web/Plain/src/Storage/` or `Python/Web/Plain/src/storage/`
+- **See an ETL data pipeline with a configurable warehouse:**
+  → `DataPipeline/Python/Web/Plain`
+- **See semantic search over a vector store:**
+  → `SemanticSearch/Python/Web/Flask` or `SemanticSearch/Node.js/Web/Plain`
 - **See local cloud services:**
   → `CloudLocal` (AWS LocalStack, GCP emulators, Azure Azurite/Cosmos DB)
 - **See an API Gateway with JWT and rate limiting:**
@@ -247,6 +251,46 @@ Project/
 │               │   └── public/
 │               ├── Dockerfile
 │               └── docker-compose.yml
+├── DataPipeline/
+│   └── Python/
+│       └── Web/
+│           └── Plain/
+│               ├── src/
+│               │   ├── storage/
+│               │   │   ├── warehouse_adapter.py     ← ABC
+│               │   │   ├── warehouse_factory.py
+│               │   │   └── adapters/
+│               │   │       ├── duckdb.py            ← default
+│               │   │       ├── bigquery.py
+│               │   │       └── postgresql.py
+│               │   ├── cache/
+│               │   │   ├── cache_adapter.py         ← ABC
+│               │   │   ├── cache_factory.py
+│               │   │   └── adapters/
+│               │   │       ├── redis.py
+│               │   │       └── local.py
+│               │   ├── app.py
+│               │   ├── templates/
+│               │   └── requirements.txt
+│               ├── Dockerfile
+│               └── docker-compose.yml
+├── SemanticSearch/
+│   ├── Cli/  (per language)
+│   └── Web/
+│       ├── Plain/       ← VectorStoreAdapter + CacheAdapter
+│       │   └── src/
+│       │       ├── storage/
+│       │       │   ├── VectorAdapter.js/.py/.php    ← interface/ABC
+│       │       │   ├── VectorFactory.js/.py/.php
+│       │       │   └── adapters/
+│       │       │       ├── ChromaDB.js/.py/.php     ← default
+│       │       │       ├── PgVector.js/.py/.php
+│       │       │       └── Pinecone.js/.py/.php
+│       │       ├── cache/   ← CacheAdapter + Redis/Local
+│       │       ├── server.js/app.py/index.php
+│       │       └── public/ or templates/
+│       ├── Express/Flask/FastAPI/Django/Laravel/Symfony/RubyOnRails/NextJS/React/
+│       └── AspNetMinimalApi/Blazor/  (C# inline adapters in Program.cs)
 └── CloudLocal/
     ├── docker-compose.yml          ← AWS, GCP and Azure local emulator profiles
     ├── aws/
@@ -282,6 +326,8 @@ Project/
 | **TasksList** | Task list (CRUD) with **database + cache**. |
 | **APIGateway** | Lightweight proxy/gateway with JWT validation, rate limiting (Redis/Token Bucket), and service routing. |
 | **EventProcessor** | Async job queue processor with RabbitMQ/Kafka/SQS/Redis support, retry mechanisms, and dead-letter queues. |
+| **DataPipeline** | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
+| **SemanticSearch** | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
 | **CloudLocal** | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
 
 ---
@@ -299,6 +345,8 @@ Project/
 | TasksList | Yes | Yes | Yes | Yes |
 | APIGateway | No | Yes | Cache | Yes |
 | EventProcessor | No | Yes | Queue + Cache | Yes |
+| DataPipeline | No | Yes | Warehouse + Cache | Yes |
+| SemanticSearch | Yes | Yes | Vector store + Cache | Yes |
 | CloudLocal | No | Local services | AWS/GCP/Azure emulators | Yes |
 
 ---
@@ -342,6 +390,8 @@ Each web project uses a different framework, with its own subfolder under `Web/(
 | **Node.js** | Plain | DatabaseAdapter (base class) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
 | **Node.js** | Plain (APIGateway) | CacheAdapter (base class) | Redis (rate limiting) | Redis / Local |
 | **Node.js** | Plain (APIGateway, EventProcessor, CloudLocal AWS pipeline) | DatabaseAdapter (base class) + QueueAdapter | Redis/BullMQ, RabbitMQ, Kafka, SQS | Redis / Local |
+| **Python** | Plain (DataPipeline) | DataWarehouseAdapter (ABC) | duckdb (default), BigQuery, PostgreSQL | Redis / Local |
+| **multi** | Plain (SemanticSearch) | VectorStoreAdapter (interface/ABC/base) | chromadb (default), pgvector, pinecone | Redis / Local |
 
 ---
 
@@ -358,6 +408,8 @@ The **plain** variants implement the **Adapter** pattern with a base interface/c
 | PasswordGenerator | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → 5 drivers | `PasswordEntry` (password, length) |
 | TasksList | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → 5 drivers | `Task` (title, description, completed) |
 | CloudLocal AWS pipeline | _(none)_ | DatabaseAdapter → PostgreSQL / MySQL / SQLite / SQL Server / MongoDB / DynamoDB | `FileMetadata` (fileName, fileType, status, key) |
+| DataPipeline | _(none)_ | DataWarehouseAdapter → duckdb (default) / bigquery / postgresql | `SourceRecord` (source, data, processed) |
+| SemanticSearch | _(none)_ | VectorStoreAdapter → chromadb (default) / pgvector / pinecone | `Document` (id, text, embedding, metadata) |
 
 ### Supported databases
 
@@ -436,6 +488,11 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 | Ruby RubyOnRails | `3000` | `podman compose up` |
 | **APIGateway (Plain)** | `3000` | `podman compose up` |
 | **EventProcessor (Plain)** | `3000` | `podman compose up` |
+| **DataPipeline (Plain)** | `5000` | `podman compose up` |
+| **SemanticSearch (Plain/Flask/Express)** | `5000` | `podman compose up` (adds a `chroma` service) |
+| **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
+| **SemanticSearch (NextJS/React)** | `3000`/`5173` | `podman compose up` |
+| **SemanticSearch (C#)** | `80`/`8000` | `podman compose up` |
 
 Example:
 ```bash
@@ -515,7 +572,7 @@ rails test
 - The Adapter pattern kept business logic fully decoupled from the chosen database engine, making it straightforward to switch from PostgreSQL to MongoDB without touching the rest of the code.
 
 **Next steps:**
-- [ ] CI/CD with GitHub Actions (build + test per project)
+- [x] CI/CD with GitHub Actions (build + test per project)
 - [ ] Observability and metrics (Prometheus/Grafana) in EventProcessor
 - [ ] API documentation (OpenAPI/Swagger) for the REST projects
 
