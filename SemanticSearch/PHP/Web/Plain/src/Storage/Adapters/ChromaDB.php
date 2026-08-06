@@ -43,7 +43,7 @@ class ChromaDB implements VectorStoreAdapter {
 
     public function deleteCollection(string $collectionName): void {
         unset($this->collections[$collectionName]);
-        try { $this->client->deleteCollection($collectionName); } catch {}
+        try { $this->client->deleteCollection($collectionName); } catch (Exception $e) {}
     }
 
     public function listCollections(): array {

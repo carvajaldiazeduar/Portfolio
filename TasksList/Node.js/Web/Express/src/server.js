@@ -74,3 +74,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
 });
 
 module.exports = app;
+module.exports.resetTasks = async () => {
+  await prisma.task.deleteMany();
+  await cache.delete('tasks:all');
+};

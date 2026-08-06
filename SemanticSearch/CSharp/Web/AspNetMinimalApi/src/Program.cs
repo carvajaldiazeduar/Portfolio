@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Npgsql;
+using StackExchange.Redis;
 
 var driver = (Environment.GetEnvironmentVariable("DB_DRIVER") ?? "postgresql").ToLower();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<VectorStoreAdapter>(CreateVectorStore);
-builder.Services.AddSingleton<CacheAdapter>(CreateCache);
+builder.Services.AddSingleton<VectorStoreAdapter>(_ => CreateVectorStore());
+builder.Services.AddSingleton<CacheAdapter>(_ => CreateCache());
 
 var app = builder.Build();
 
@@ -22,7 +24,7 @@ app.MapPost("/api/upload", async (HttpContext context, VectorStoreAdapter vector
     var content = await stream.ReadToEndAsync();
     var metadata = new Dictionary<string, object> { { "filename", file.FileName }, { "source", "upload" } };
     var dimension = int.Parse(Environment.GetEnvironmentVariable("VECTOR_DIMENSION") ?? "1536");
-    await vectorStore.AddDocuments(new[] { content }, new[] { new float[dimension] }, new[] { metadata });
+    await vectorStore.AddDocuments(new List<string> { content }, new List<float[]> { new float[dimension] }, new List<Dictionary<string, object>> { metadata });
     cache.Delete("search:results");
     return Results.Ok(new { message = "Document indexed", filename = file.FileName });
 });
@@ -117,9 +119,9 @@ public class ChromaDBAdapter : VectorStoreAdapter {
         var metas = results.GetType().GetProperty("Metadatas")!.GetValue(results) as System.Collections.IEnumerable;
         var dists = results.GetType().GetProperty("Distances")!.GetValue(results) as System.Collections.IEnumerable;
         var resultList = new List<SearchResult>();
-        using var docEnum = docs!.GetEnumerator();
-        using var metaEnum = metas!.GetEnumerator();
-        using var distEnum = dists!.GetEnumerator();
+        var docEnum = docs!.GetEnumerator();
+        var metaEnum = metas!.GetEnumerator();
+        var distEnum = dists!.GetEnumerator();
         while (docEnum.MoveNext() && metaEnum.MoveNext() && distEnum.MoveNext()) {
             resultList.Add(new SearchResult {
                 Document = docEnum.Current?.ToString() ?? "",
@@ -248,16 +250,16 @@ public class PgVectorAdapter : VectorStoreAdapter {
 }
 
 public class RedisCache : CacheAdapter {
-    private StackExchangeRedis.IConnectionMultiplexer? _redis;
+    private IConnectionMultiplexer? _redis;
 
     public RedisCache() {
         try {
             var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost:6379";
-            _redis = StackExchangeRedis.ConnectionMultiplexer.Connect(redisHost);
+            _redis = ConnectionMultiplexer.Connect(redisHost);
         } catch { }
     }
 
-    public string? Get(string key) {
+    public override string? Get(string key) {
         if (_redis == null) return null;
         try {
             var val = _redis.GetDatabase().StringGet(key);
@@ -265,12 +267,12 @@ public class RedisCache : CacheAdapter {
         } catch { return null; }
     }
 
-    public void Set(string key, string value, int ttl = 300) {
+    public override void Set(string key, string value, int ttl = 300) {
         if (_redis == null) return;
         try { _redis.GetDatabase().StringSet(key, value, TimeSpan.FromSeconds(ttl)); } catch { }
     }
 
-    public void Delete(string key) {
+    public override void Delete(string key) {
         if (_redis == null) return;
         try { _redis.GetDatabase().KeyDelete(key); } catch { }
     }
@@ -279,18 +281,18 @@ public class RedisCache : CacheAdapter {
 public class LocalCache : CacheAdapter {
     private readonly Dictionary<string, (string Value, DateTime Expiry)> _store = new();
 
-    public string? Get(string key) {
+    public override string? Get(string key) {
         if (_store.TryGetValue(key, out var entry) && entry.Expiry > DateTime.UtcNow)
             return entry.Value;
         _store.Remove(key);
         return null;
     }
 
-    public void Set(string key, string value, int ttl = 300) {
+    public override void Set(string key, string value, int ttl = 300) {
         _store[key] = (value, DateTime.UtcNow.AddSeconds(ttl));
     }
 
-    public void Delete(string key) {
+    public override void Delete(string key) {
         _store.Remove(key);
     }
 }

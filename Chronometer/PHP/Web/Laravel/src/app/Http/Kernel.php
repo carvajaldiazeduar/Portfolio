@@ -1,14 +1,18 @@
 <?php
+
 namespace App\Http;
+
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+
 class Kernel extends HttpKernel
 {
-    protected \ = [
+    protected $middleware = [
         \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     ];
-    protected \ = [
+
+    protected $middlewareGroups = [
         'web' => [
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -21,7 +25,8 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
-    protected \ = [
+
+    protected $middlewareAliases = [
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
     ];

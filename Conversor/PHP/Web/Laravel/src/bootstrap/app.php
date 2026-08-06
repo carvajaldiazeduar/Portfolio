@@ -1,17 +1,22 @@
 <?php
-\ = new Illuminate\Foundation\Application(
-    \['APP_BASE_PATH'] ?? dirname(__DIR__)
+
+$app = new Illuminate\Foundation\Application(
+    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
-\->singleton(
+
+$app->singleton(
     Illuminate\Contracts\Http\Kernel::class,
     App\Http\Kernel::class
 );
-\->singleton(
+
+$app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
     App\Console\Kernel::class
 );
-\->singleton(
+
+$app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     App\Exceptions\Handler::class
 );
-return \;
+
+return $app;

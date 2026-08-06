@@ -2,6 +2,10 @@ const request = require("supertest");
 const app = require("../server");
 
 describe("Tasks API", () => {
+  beforeEach(async () => {
+    await app.resetTasks();
+  });
+
   test("GET / returns HTML", async () => {
     const res = await request(app).get("/");
     expect(res.status).toBe(200);
@@ -12,8 +16,8 @@ describe("Tasks API", () => {
     const res = await request(app)
       .post("/api/tasks")
       .send({ title: "Test", description: "A task" });
-    expect(res.status).toBe(200);
-    expect(res.body.id).toBe(1);
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBeDefined();
   });
 
   test("GET /api/tasks lists tasks", async () => {

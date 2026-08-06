@@ -1,10 +1,20 @@
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+os.environ["DB_DRIVER"] = "sqlite"
+os.environ["DB_FILE"] = "test-passwords.db"
+os.environ["CACHE_TYPE"] = "local"
+
 import pytest
-from app import app, generate_password, UPPERCASE, LOWERCASE, DIGITS, SYMBOLS
+from app import app, db, generate_password, UPPERCASE, LOWERCASE, DIGITS, SYMBOLS
 
 
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
     with app.test_client() as client:
         yield client
 

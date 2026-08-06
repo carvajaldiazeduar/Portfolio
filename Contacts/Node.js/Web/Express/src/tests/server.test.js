@@ -36,9 +36,9 @@ describe('Contacts API', () => {
     expect(res.body[0].name).toBe('Alice');
   });
 
-  test('DELETE /api/contacts/:index removes contact', async () => {
-    await request(app).post('/api/contacts').send({ name: 'Alice', phone: '123', email: 'a@b.com' });
-    const res = await request(app).delete('/api/contacts/0');
+  test('DELETE /api/contacts/:id removes contact', async () => {
+    const post = await request(app).post('/api/contacts').send({ name: 'Alice', phone: '123', email: 'a@b.com' });
+    const res = await request(app).delete(`/api/contacts/${post.body.id}`);
     expect(res.status).toBe(200);
     const getRes = await request(app).get('/api/contacts');
     expect(getRes.body).toEqual([]);

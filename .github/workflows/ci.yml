@@ -6,79 +6,128 @@ on:
 
 jobs:
   csharp:
-    name: C# (AspNetMinimalApi)
+    name: C# (.NET 9)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ChatAI/CSharp/Web/AspNetMinimalApi
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Build
-        run: dotnet build src/ChatAI.csproj --nologo
-      - name: Test
-        run: dotnet test src/tests/ChatAI.Tests.csproj --nologo
+      - name: Test all projects
+        shell: bash
+        run: |
+          set -e
+          for csproj in $(find . -name '*.Tests.csproj' -not -path '*/node_modules/*' | sort); do
+            echo "=== $csproj ==="
+            dotnet test "$csproj" --nologo
+          done
 
   python:
-    name: Python (Flask)
+    name: Python (pytest)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ChatAI/Python/Web/Plain
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install -r src/requirements.txt
-      - name: Test
-        working-directory: ChatAI/Python/Web/Plain/src
-        run: python -m pytest -q
+        run: |
+          pip install --quiet pytest flask redis psycopg2-binary chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
+      - name: Test all projects
+        shell: bash
+        run: |
+          set -e
+          for t in $(find . -type d -name tests -path '*/Python/*' | sort); do
+            d=$(dirname "$t")
+            echo "=== $d ==="
+            (cd "$d" && python -m pytest -q)
+          done
 
   node:
-    name: Node.js (Express)
+    name: Node.js (Jest)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ChatAI/Node.js/Web/Plain
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
-        run: npm install
-        working-directory: ChatAI/Node.js/Web/Plain/src
-      - name: Test
-        working-directory: ChatAI/Node.js/Web/Plain/src
-        run: npm test
+      - name: Create test databases
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          for db in contacts inboxes passwords taskslist; do
+            PGPASSWORD=postgres psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE $db"
+          done
+      - name: Test all projects
+        shell: bash
+        run: |
+          set -e
+          for pkg in $(find . -name package.json -path '*/Node.js/*' -not -path '*/node_modules/*' | sort); do
+            d=$(dirname "$pkg")
+            [ -d "$d/tests" ] || continue
+            echo "=== $d ==="
+            (cd "$d" && npm install --no-fund --no-audit)
+            if [ -d "$d/prisma" ]; then
+              db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
+              (cd "$d" && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" npx prisma generate && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" npx prisma db push --accept-data-loss --skip-generate)
+              (cd "$d" && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" CACHE_TYPE=local npx jest --ci --runInBand --forceExit)
+            else
+              (cd "$d" && CACHE_TYPE=local npx jest --ci --runInBand --forceExit)
+            fi
+          done
 
   php:
-    name: PHP (Plain)
+    name: PHP (lint + assert)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-      - name: Lint
+      - name: Lint all PHP files
+        shell: bash
+        run: |
+          set -e
+          for f in $(find . -name '*.php' -not -path '*/vendor/*' | sort); do
+            php -l "$f" > /dev/null
+          done
+      - name: ChatAI PHP test
         working-directory: ChatAI/PHP/Web/Plain/src
-        run: php -l index.php
+        run: php -d zend.assertions=1 -d assert.exception=1 tests/test_app.php
 
   ruby:
-    name: Ruby (WEBrick)
+    name: Ruby (minitest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-      - name: Install dependencies
+      - name: Install ChatAI dependencies
         working-directory: ChatAI/Ruby/Web/Plain/src
         run: bundle install
-      - name: Test
+      - name: Test CLI projects
+        shell: bash
+        run: |
+          set -e
+          for test in $(find . -name '*_test.rb' -not -path '*/node_modules/*' -not -path '*/ChatAI/*' | sort); do
+            echo "=== $test ==="
+            ruby "$test"
+          done
+      - name: ChatAI Ruby test
         working-directory: ChatAI/Ruby/Web/Plain/src
         run: bundle exec ruby -I. tests/test_server.rb

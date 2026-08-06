@@ -36,7 +36,8 @@ const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz';
 const DIGITS = '0123456789';
 const SYMBOLS = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
-function generatePassword(length, useUpper, useLower, useDigits, useSymbols) {
+function generatePassword(length = 16, useUpper = true, useLower = true, useDigits = true, useSymbols = false) {
+  if (!Number.isInteger(length) || length <= 0) throw new Error('Length must be a positive integer');
   const categories = [];
   if (useUpper) categories.push(UPPERCASE);
   if (useLower) categories.push(LOWERCASE);
@@ -76,3 +77,9 @@ app.get('/api/passwords', async (req, res) => {
 });
 
 module.exports = app;
+module.exports.app = app;
+module.exports.generatePassword = generatePassword;
+module.exports.UPPERCASE = UPPERCASE;
+module.exports.LOWERCASE = LOWERCASE;
+module.exports.DIGITS = DIGITS;
+module.exports.SYMBOLS = SYMBOLS;

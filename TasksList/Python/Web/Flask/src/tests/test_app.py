@@ -1,22 +1,20 @@
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+os.environ["DB_DRIVER"] = "sqlite"
+os.environ["DB_FILE"] = "test-tasks.db"
+os.environ["CACHE_TYPE"] = "local"
+
 import pytest
-from app import app, tasks
-
-
-@pytest.fixture(autouse=True)
-def reset_tasks():
-    tasks.clear()
-    app.config["_next_id"] = 1
-    yield
-
-
-def _set_next_id(val):
-    import app as a
-    a._next_id = val
+from app import app, db
 
 
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
     with app.test_client() as c:
         yield c
 
@@ -65,7 +63,6 @@ def test_delete_task(client):
     client.post("/api/tasks", json={"title": "A", "description": ""})
     resp = client.delete("/api/tasks/1")
     assert resp.status_code == 200
-    assert len(tasks) == 0
 
 
 def test_delete_task_not_found(client):

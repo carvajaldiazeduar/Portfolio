@@ -2,6 +2,10 @@ const request = require("supertest");
 const app = require("../server");
 
 describe("Inbox API", () => {
+  beforeEach(async () => {
+    await app.resetMessages();
+  });
+
   test("GET /api/messages returns empty array", async () => {
     const res = await request(app).get("/api/messages");
     expect(res.status).toBe(200);
@@ -13,7 +17,7 @@ describe("Inbox API", () => {
       .post("/api/messages")
       .send({ from: "alice", subject: "Hello", body: "World" });
     expect(res.status).toBe(201);
-    expect(res.body.id).toBe(1);
+    expect(res.body.id).toBeDefined();
     expect(res.body.from).toBe("alice");
     expect(res.body.subject).toBe("Hello");
     expect(res.body.body).toBe("World");

@@ -1,0 +1,13 @@
+{
+  "name": "semantic-search-cli",
+  "version": "1.0.0",
+  "description": "Semantic Search CLI",
+  "main": "semantic_search.js",
+  "scripts": {
+    "start": "node semantic_search.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

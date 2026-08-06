@@ -1,5 +1,5 @@
-const RedisCache = require('./adapters/Redis');
-const LocalCache = require('./adapters/Local');
+const { RedisCache } = require('./Adapters/Redis');
+const { LocalCache } = require('./Adapters/Local');
 
 function createCache() {
   const local = new LocalCache();

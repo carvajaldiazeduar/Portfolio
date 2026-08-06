@@ -1,14 +1,16 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ChronometerController extends Controller
 {
-    private static \ = false;
-    private static \ = 0.0;
-    private static \ = 0.0;
-    private static \ = [];
+    private static $running = false;
+    private static $startedAt = 0.0;
+    private static $elapsed = 0.0;
+    private static $laps = [];
 
     public function index()
     {
@@ -18,48 +20,48 @@ class ChronometerController extends Controller
     public function state(): JsonResponse
     {
         return response()->json([
-            'running' => self::\,
-            'elapsed' => self::\ ? (microtime(true) - self::\ + self::\) : self::\,
-            'laps' => self::\,
+            'running' => self::$running,
+            'elapsed' => self::$running ? (microtime(true) - self::$startedAt + self::$elapsed) : self::$elapsed,
+            'laps' => self::$laps,
         ]);
     }
 
     public function start(): JsonResponse
     {
-        if (self::\) {
+        if (self::$running) {
             return response()->json(['error' => 'Already running'], 400);
         }
-        self::\ = true;
-        self::\ = microtime(true);
+        self::$running = true;
+        self::$startedAt = microtime(true);
         return response()->json(['message' => 'Started']);
     }
 
     public function stop(): JsonResponse
     {
-        if (!self::\) {
+        if (!self::$running) {
             return response()->json(['error' => 'Not running'], 400);
         }
-        self::\ += microtime(true) - self::\;
-        self::\ = false;
-        return response()->json(['elapsed' => self::\]);
+        self::$elapsed += microtime(true) - self::$startedAt;
+        self::$running = false;
+        return response()->json(['elapsed' => self::$elapsed]);
     }
 
     public function reset(): JsonResponse
     {
-        self::\ = false;
-        self::\ = 0.0;
-        self::\ = [];
-        self::\ = 0.0;
+        self::$running = false;
+        self::$startedAt = 0.0;
+        self::$laps = [];
+        self::$elapsed = 0.0;
         return response()->json(['message' => 'Reset']);
     }
 
     public function lap(): JsonResponse
     {
-        if (!self::\) {
+        if (!self::$running) {
             return response()->json(['error' => 'Not running'], 400);
         }
-        \ = microtime(true) - self::\ + self::\;
-        self::\[] = \;
-        return response()->json(['lap' => \, 'laps' => self::\]);
+        $lap = microtime(true) - self::$startedAt + self::$elapsed;
+        self::$laps[] = $lap;
+        return response()->json(['lap' => $lap, 'laps' => self::$laps]);
     }
 }

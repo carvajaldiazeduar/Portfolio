@@ -8,6 +8,10 @@
     "ioredis": "^5.0.0",
     "jsonwebtoken": "^9.0.2"
   },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
   "scripts": {
     "start": "node server.js",
     "test": "jest"

@@ -4,3 +4,5 @@ redis
 psycopg2-binary
 chromadb
 pinecone-client
+python-multipart
+httpx

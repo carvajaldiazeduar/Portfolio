@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { convert, listCategories, CATEGORY_UNITS } = require('../Cli/conversor');
+const { convert, listCategories, CATEGORY_UNITS } = require('../../../Cli/conversor');
 
 const app = express();
 app.use(express.json());

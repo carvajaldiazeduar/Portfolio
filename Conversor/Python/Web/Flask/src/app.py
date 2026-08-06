@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Cli'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'Cli'))
 from flask import Flask, request, jsonify, render_template
 from conversor import convert, list_categories, CATEGORY_UNITS
 
