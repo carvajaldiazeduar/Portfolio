@@ -123,7 +123,7 @@ Recommended commands (run in the project folder):
 
 | Language | Framework | Command | Where to run |
 |----------|-----------|---------|--------------|
-| PHP      | PHPUnit   | `vendor/bin/phpunit` | framework projects (Laravel/Symfony) after `composer install`. **Plain PHP has no composer.json/vendor — its `tests/` are not runnable as-is.** |
+| PHP      | PHPUnit   | `vendor/bin/phpunit` | framework projects (Laravel/Symfony) after `composer install`. Plain PHP **CLI** tests run with `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; plain PHP **Web** tests run the same way against a built-in server (`php -S 127.0.0.1:8000 index.php`) with `DB_DRIVER=sqlite` + `DB_FILE` + `CACHE_TYPE=local`. |
 | Python   | pytest    | `pytest` | run from `src/` (tests import `from app import app`) |
 | C#       | xUnit     | `dotnet test` | from `src/tests/` (no .sln; the test csproj lives there) |
 | Node.js  | Jest      | `npm test` | run from `src/` for web plain; from project root for Cli |
@@ -132,6 +132,24 @@ Recommended commands (run in the project folder):
 Notes:
 - Python/Node plain tests import via `src/`, so `pytest` / `npm test` must be executed inside `src/`, not the framework folder.
 - DB-backed integration tests need `DB_*` env vars; use `DB_DRIVER=sqlite` + `DB_FILE=test.db` for test environments.
+
+## Local CI (multi-database)
+
+`scripts/ci-local.sh` runs the full CI matrix inside Podman containers, booting
+disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7
+on an isolated `ci-local-net` network. It is invoked per job (or `all`):
+- `./scripts/ci-local.sh php`, `node`, `python`, `ruby`, `csharp`, `all`.
+
+Per-language driver matrix (each project is exercised against every driver it
+actually supports; projects that reject a driver — e.g. a Prisma `provider =
+"postgresql"` schema — are reported as *skipped*, not failed):
+- PHP: `sqlite pgsql mysql mongodb` (PHP 8.2-cli lacks pdo_sqlsrv, so `sqlserver` is excluded; requires ≥8.3).
+- Node / Python / C#: `sqlite pgsql mysql sqlserver mongodb`.
+- Ruby: `sqlite` (Rails, on PostgreSQL/MariaDB hosts where tested).
+
+At startup the script runs `podman container prune -f` to remove every **stopped**
+container (not just the `ci-local-*` ones) left over from previous runs; a trap cleans
+the `ci-local-*` containers + network on exit.
 
 ## Editing Rules
 

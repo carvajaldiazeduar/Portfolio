@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/Storage/DatabaseFactory.php';
 require_once __DIR__ . '/Cache/CacheAdapter.php';
+require_once __DIR__ . '/Cache/CacheFactory.php';
 require_once __DIR__ . '/Cache/Adapters/Local.php';
 require_once __DIR__ . '/Cache/Adapters/Redis.php';
 

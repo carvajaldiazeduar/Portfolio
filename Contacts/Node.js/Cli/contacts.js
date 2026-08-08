@@ -1,8 +1,43 @@
 const readline = require('readline');
 
+function validateContact(name, phone, email) {
+  const errors = {};
+  const n = String(name == null ? '' : name).trim();
+  const p = String(phone == null ? '' : phone).trim();
+  const e = String(email == null ? '' : email).trim();
+  if (!n) {
+    errors.name = 'Name is required';
+  } else if (n.length < 2 || n.length > 100 || !/^[A-Za-zÀ-ÿ' .-]+$/.test(n)) {
+    errors.name = 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)';
+  }
+  if (!p) {
+    errors.phone = 'Phone is required';
+  } else if (!/^[0-9 +().-]{7,20}$/.test(p)) {
+    errors.phone = 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)';
+  }
+  if (!e) {
+    errors.email = 'Email is required';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) {
+    errors.email = 'Invalid email format';
+  }
+  return errors;
+}
+
 function addContact(contacts, name, phone, email) {
-  contacts.push({ name, phone, email });
+  const errors = validateContact(name, phone, email);
+  if (Object.keys(errors).length > 0) {
+    for (const field of Object.keys(errors)) {
+      console.error(errors[field]);
+    }
+    return false;
+  }
+  contacts.push({
+    name: String(name == null ? '' : name).trim(),
+    phone: String(phone == null ? '' : phone).trim(),
+    email: String(email == null ? '' : email).trim()
+  });
   console.log('Contact added!');
+  return true;
 }
 
 function listContacts(contacts) {
@@ -93,7 +128,7 @@ function main() {
   prompt();
 }
 
-module.exports = { addContact, listContacts, searchContacts, deleteContact };
+module.exports = { addContact, listContacts, searchContacts, deleteContact, validateContact };
 
 if (require.main === module) {
   main();

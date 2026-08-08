@@ -33,7 +33,7 @@ None required. Web port set via compose.
 | C# Web | xUnit + Mvc.Testing | `Web/AspNetMinimalApi/src/tests/` |
 | Python | pytest | `Cli/tests/` and `Web/*/src/tests/` |
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
-| PHP | PHPUnit | `Cli/tests/` (Plain PHP not runnable as-is) |
+| PHP | assert | `Cli/tests/` via `php -d zend.assertions=1 -d assert.exception=1`; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 
 ## Containers / Ports
 Per framework: Plain/Express/Flask on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`.

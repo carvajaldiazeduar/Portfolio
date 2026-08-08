@@ -21,16 +21,24 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 - `QUEUE_DRIVER` (default `redis`) — `redis` | `rabbitmq` | `kafka` | `sqs`
 - `REDIS_HOST`, `REDIS_PORT`, `RABBITMQ_URL`, `KAFKA_BROKERS`, `AWS_*` (per driver)
 - `CACHE_TYPE` (default `redis`), `REDIS_HOST` (default `localhost:6379`)
+- `WORKER_METRICS_PORT` (default `3001`) — port where the worker exposes `/metrics`
 
 ## Endpoints
 - `POST /events` → body `{ "type": string, "payload": object }` → `202 Accepted` + `{ "status": "queued" }`
 - `GET /health` → service status
 - `GET /openapi.json` → OpenAPI 3.0 spec of this API
 - `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
+- `GET /metrics` → Prometheus metrics (API on `:3000`, worker on `WORKER_METRICS_PORT`)
 
 ## Worker
 - Continuously processes events from the queue
 - Marks events as processed or retries them on failure
+
+## Observability
+- **Prometheus** (`:9090`) scrapes the API (`/metrics` on `:3000`) and the worker (`/metrics` on `WORKER_METRICS_PORT`)
+- **Grafana** (`:3001` UI, default user `admin` / password `admin`) with a provisioned datasource and the `EventProcessor` dashboard
+- Metrics: `http_requests_total`, `http_request_duration_seconds`, `jobs_published_total`, `jobs_processed_total`, `jobs_processing_duration_seconds` + default Node.js metrics
+- Config lives under `monitoring/prometheus/` and `monitoring/grafana/`
 
 ## Tests
 | Language | Framework | Where |
@@ -38,4 +46,4 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 | Node.js | Jest | `src/tests/` |
 
 ## Containers / Ports
-Compose: `event-processor-api` on `3000:3000` + `event-processor-worker` (separate service) + Redis on `6379:6379`.
+Compose: `event-processor-api` on `3000:3000` + `event-processor-worker` (separate service) + Redis on `6379:6379` + Prometheus on `9090:9090` + Grafana on `3001:3000`.

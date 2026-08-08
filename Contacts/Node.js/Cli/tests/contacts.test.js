@@ -45,4 +45,26 @@ describe('Contacts CLI', () => {
     deleteContact(contacts, 5);
     expect(contacts).toHaveLength(1);
   });
+
+  test('addContact with invalid email is not added', () => {
+    const contacts = [];
+    addContact(contacts, 'Alice', '1234567', 'not-an-email');
+    expect(contacts).toHaveLength(0);
+  });
+
+  test('addContact with invalid phone is not added', () => {
+    const contacts = [];
+    addContact(contacts, 'Alice', '123', 'alice@test.com');
+    expect(contacts).toHaveLength(0);
+  });
+
+  test('addContact with missing or too-short name is not added', () => {
+    const contacts = [];
+    addContact(contacts, '', '1234567', 'alice@test.com');
+    expect(contacts).toHaveLength(0);
+    addContact(contacts, '   ', '1234567', 'alice@test.com');
+    expect(contacts).toHaveLength(0);
+    addContact(contacts, 'A', '1234567', 'alice@test.com');
+    expect(contacts).toHaveLength(0);
+  });
 });

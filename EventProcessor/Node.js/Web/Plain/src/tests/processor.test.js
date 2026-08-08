@@ -48,6 +48,13 @@ describe('Event Processor API', () => {
     expect(res.status).toBe(400);
   });
 
+  test('GET /metrics returns prometheus metrics', async () => {
+    const res = await request(app).get('/metrics');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.text).toContain('jobs_published_total');
+  });
+
   test('POST /api/jobs/batch queues multiple jobs', async () => {
     const res = await request(app)
       .post('/api/jobs/batch')

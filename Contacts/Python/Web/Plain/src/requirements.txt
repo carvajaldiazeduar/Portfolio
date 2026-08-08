@@ -1,5 +1,6 @@
 flask
 redis
 psycopg2-binary
+pymysql
 pymongo
 pymssql

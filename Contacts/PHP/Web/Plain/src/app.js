@@ -13,9 +13,31 @@ async function loadContacts() {
     renderTable(contacts);
 }
 
+function clearFieldErrors() {
+    ['name', 'phone', 'email'].forEach((f) => {
+        const input = document.getElementById(f);
+        const errEl = document.getElementById(f + '-error');
+        input.classList.remove('invalid', 'valid');
+        errEl.textContent = '';
+    });
+}
+
+function markFieldErrors(errors) {
+    clearFieldErrors();
+    ['name', 'phone', 'email'].forEach((f) => {
+        const input = document.getElementById(f);
+        const errEl = document.getElementById(f + '-error');
+        if (errors[f]) {
+            input.classList.add('invalid');
+            errEl.textContent = errors[f];
+        } else {
+            input.classList.add('valid');
+        }
+    });
+}
+
 async function addContact() {
     const name = document.getElementById('name').value.trim();
-    if (!name) { showMsg('Name is required', 'error'); return; }
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
     const res = await fetch('/api/contacts', {
@@ -24,6 +46,7 @@ async function addContact() {
         body: JSON.stringify({name, phone, email})
     });
     if (res.ok) {
+        clearFieldErrors();
         showMsg('Contact added!', 'success');
         document.getElementById('name').value = '';
         document.getElementById('phone').value = '';
@@ -31,7 +54,11 @@ async function addContact() {
         loadContacts();
     } else {
         const err = await res.json();
-        showMsg(err.error, 'error');
+        if (err.errors) {
+            markFieldErrors(err.errors);
+        } else {
+            showMsg(err.error, 'error');
+        }
     }
 }
 

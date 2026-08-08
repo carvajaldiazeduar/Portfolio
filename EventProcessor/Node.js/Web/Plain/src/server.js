@@ -5,8 +5,12 @@ app.use(express.static('public'));
 
 const { createQueue } = require('./queue/QueueFactory');
 const { getHandler, HANDLERS } = require('./handlers');
+const { instrumentRequest, observeJobPublish, metricsRouter } = require('./metrics');
 
 const queue = createQueue();
+
+app.use(instrumentRequest);
+app.use(metricsRouter());
 
 (async () => {
   try {
@@ -36,6 +40,7 @@ app.post('/api/jobs', async (req, res) => {
   }
   
   try {
+    observeJobPublish(type);
     await queue.publish(type, data);
     res.status(202).json({ message: 'Job queued', type, status: 'pending' });
   } catch (err) {
@@ -51,7 +56,10 @@ app.post('/api/jobs/batch', async (req, res) => {
   }
   
   try {
-    await Promise.all(jobs.map(({ type, data }) => queue.publish(type, data)));
+    await Promise.all(jobs.map(({ type, data }) => {
+      observeJobPublish(type);
+      return queue.publish(type, data);
+    }));
     res.status(202).json({ message: `${jobs.length} jobs queued`, status: 'pending' });
   } catch (err) {
     console.error('Batch publish error:', err.message);

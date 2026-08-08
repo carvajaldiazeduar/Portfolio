@@ -2,9 +2,27 @@
 <div class="form-row">
   <form action="<%= contacts_path %>" method="post" id="addForm">
     <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-    <input type="text" name="contact[name]" placeholder="Name" autofocus required>
-    <input type="text" name="contact[phone]" placeholder="Phone">
-    <input type="email" name="contact[email]" placeholder="Email">
+    <div class="field">
+      <input type="text" name="contact[name]" placeholder="Name" autofocus required
+             value="<%= @contact&.name %>" class="<%= field_class(@contact, :name) %>">
+      <% if field_error(@contact, :name) %>
+        <span class="error-msg"><%= field_error(@contact, :name) %></span>
+      <% end %>
+    </div>
+    <div class="field">
+      <input type="text" name="contact[phone]" placeholder="Phone"
+             value="<%= @contact&.phone %>" class="<%= field_class(@contact, :phone) %>">
+      <% if field_error(@contact, :phone) %>
+        <span class="error-msg"><%= field_error(@contact, :phone) %></span>
+      <% end %>
+    </div>
+    <div class="field">
+      <input type="email" name="contact[email]" placeholder="Email"
+             value="<%= @contact&.email %>" class="<%= field_class(@contact, :email) %>">
+      <% if field_error(@contact, :email) %>
+        <span class="error-msg"><%= field_error(@contact, :email) %></span>
+      <% end %>
+    </div>
     <button type="submit">Add</button>
   </form>
 </div>

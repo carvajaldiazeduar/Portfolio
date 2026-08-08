@@ -24,7 +24,12 @@ public class ContactService
 
     public Contact Add(string name, string phone, string email)
     {
-        var contact = new Contact { Name = name, Phone = phone, Email = email };
+        var contact = new Contact
+        {
+            Name = name.Trim(),
+            Phone = phone.Trim(),
+            Email = email.Trim()
+        };
         _db.Contacts.Add(contact);
         _db.SaveChanges();
         _cache.Delete("contacts:all");

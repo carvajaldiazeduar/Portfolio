@@ -6,6 +6,7 @@ node_modules
 Dockerfile
 docker-compose.yml
 .dockerignore
+monitoring
 .vscode
 .idea
 coverage

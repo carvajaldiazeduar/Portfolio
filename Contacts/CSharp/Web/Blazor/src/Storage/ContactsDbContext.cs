@@ -1,10 +1,21 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 public class Contact
 {
     public int Id { get; set; }
+
+    [Required(ErrorMessage = "Name is required")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)")]
+    [RegularExpression(@"^[A-Za-zÀ-ÿ' .-]+$", ErrorMessage = "Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)")]
     public string Name { get; set; } = "";
+
+    [Required(ErrorMessage = "Phone is required")]
+    [RegularExpression(@"^[0-9 +().-]{7,20}$", ErrorMessage = "Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)")]
     public string Phone { get; set; } = "";
+
+    [Required(ErrorMessage = "Email is required")]
+    [RegularExpression(@"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$", ErrorMessage = "Invalid email format")]
     public string Email { get; set; } = "";
 }
 

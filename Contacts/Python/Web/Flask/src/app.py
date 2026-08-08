@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from config import DATABASE_URL
 from models import db, Contact
@@ -11,6 +12,36 @@ db.init_app(app)
 
 cache = create_cache()
 CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))
+
+NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ' .-]+$")
+PHONE_RE = re.compile(r"^[0-9 +().-]{7,20}$")
+EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+
+NAME_REQUIRED = "Name is required"
+PHONE_REQUIRED = "Phone is required"
+EMAIL_REQUIRED = "Email is required"
+NAME_FORMAT = "Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)"
+PHONE_FORMAT = "Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)"
+EMAIL_FORMAT = "Invalid email format"
+
+def validate_contact(data):
+    errors = {}
+    name = (data.get("name") or "").strip() if data else ""
+    phone = (data.get("phone") or "").strip() if data else ""
+    email = (data.get("email") or "").strip() if data else ""
+    if not name:
+        errors["name"] = NAME_REQUIRED
+    elif not (2 <= len(name) <= 100) or not NAME_RE.match(name):
+        errors["name"] = NAME_FORMAT
+    if not phone:
+        errors["phone"] = PHONE_REQUIRED
+    elif not PHONE_RE.match(phone):
+        errors["phone"] = PHONE_FORMAT
+    if not email:
+        errors["email"] = EMAIL_REQUIRED
+    elif not EMAIL_RE.match(email):
+        errors["email"] = EMAIL_FORMAT
+    return errors, {"name": name, "phone": phone, "email": email}
 
 with app.app_context():
     db.create_all()
@@ -31,10 +62,11 @@ def list_contacts():
 
 @app.route("/api/contacts", methods=["POST"])
 def add_contact():
-    data = request.get_json()
-    if not data or not data.get("name"):
-        return jsonify({"error": "Name is required"}), 400
-    contact = Contact(name=data["name"], phone=data.get("phone", ""), email=data.get("email", ""))
+    data = request.get_json(silent=True) or {}
+    errors, values = validate_contact(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
+    contact = Contact(name=values["name"], phone=values["phone"], email=values["email"])
     db.session.add(contact)
     db.session.commit()
     cache.delete("contacts:all")

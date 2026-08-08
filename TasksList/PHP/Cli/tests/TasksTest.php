@@ -1,90 +1,103 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
-
 require_once __DIR__ . '/../tasks.php';
 
-class TasksTest extends TestCase
-{
-    public function testAddTask(): void
-    {
-        $tasks = [];
-        $id = add_task($tasks, 'Test', 'A task');
-        $this->assertSame(1, $id);
-        $this->assertCount(1, $tasks);
-        $this->assertSame('Test', $tasks[0]['title']);
-        $this->assertSame('A task', $tasks[0]['description']);
-        $this->assertFalse($tasks[0]['completed']);
-        $this->assertArrayHasKey('created_at', $tasks[0]);
-    }
+$pass = 0;
+$fail = 0;
 
-    public function testAddTaskAutoIncrement(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
-        ];
-        $id = add_task($tasks, 'b', '');
-        $this->assertSame(2, $id);
-    }
-
-    public function testListTasksNoTasks(): void
-    {
-        $this->expectOutputString("No tasks found.\n");
-        list_tasks([]);
-    }
-
-    public function testListTasks(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'Buy milk', 'description' => '', 'completed' => false, 'created_at' => 'now']
-        ];
-        $this->expectOutputRegex('/\[ \].*Buy milk/');
-        list_tasks($tasks);
-    }
-
-    public function testListTasksCompleted(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'Done', 'description' => '', 'completed' => true, 'created_at' => 'now']
-        ];
-        $this->expectOutputRegex('/\[x\].*Done/');
-        list_tasks($tasks);
-    }
-
-    public function testCompleteTask(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
-        ];
-        $result = complete_task($tasks, 1);
-        $this->assertTrue($result);
-        $this->assertTrue($tasks[0]['completed']);
-    }
-
-    public function testCompleteTaskNotFound(): void
-    {
-        $tasks = [];
-        $result = complete_task($tasks, 99);
-        $this->assertFalse($result);
-    }
-
-    public function testDeleteTask(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
-        ];
-        $result = delete_task($tasks, 1);
-        $this->assertTrue($result);
-        $this->assertCount(0, $tasks);
-    }
-
-    public function testDeleteTaskNotFound(): void
-    {
-        $tasks = [
-            ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
-        ];
-        $result = delete_task($tasks, 99);
-        $this->assertFalse($result);
-        $this->assertCount(1, $tasks);
+function test(string $name, callable $fn): void {
+    global $pass, $fail;
+    try {
+        $fn();
+        $pass++;
+        echo "PASS: $name\n";
+    } catch (Throwable $e) {
+        $fail++;
+        fwrite(STDERR, "FAIL: $name - " . $e->getMessage() . "\n");
     }
 }
+
+test('addTask', function () {
+    $tasks = [];
+    $id = add_task($tasks, 'Test', 'A task');
+    assert($id === 1);
+    assert(count($tasks) === 1);
+    assert($tasks[0]['title'] === 'Test');
+    assert($tasks[0]['description'] === 'A task');
+    assert($tasks[0]['completed'] === false);
+    assert(array_key_exists('created_at', $tasks[0]));
+});
+
+test('addTaskAutoIncrement', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
+    ];
+    $id = add_task($tasks, 'b', '');
+    assert($id === 2);
+});
+
+test('listTasksNoTasks', function () {
+    ob_start();
+    list_tasks([]);
+    $output = ob_get_clean();
+    assert($output === "No tasks found.\n");
+});
+
+test('listTasks', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'Buy milk', 'description' => '', 'completed' => false, 'created_at' => 'now']
+    ];
+    ob_start();
+    list_tasks($tasks);
+    $output = ob_get_clean();
+    assert(preg_match('/\[ \].*Buy milk/', $output) === 1);
+});
+
+test('listTasksCompleted', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'Done', 'description' => '', 'completed' => true, 'created_at' => 'now']
+    ];
+    ob_start();
+    list_tasks($tasks);
+    $output = ob_get_clean();
+    assert(preg_match('/\[x\].*Done/', $output) === 1);
+});
+
+test('completeTask', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
+    ];
+    $result = complete_task($tasks, 1);
+    assert($result === true);
+    assert($tasks[0]['completed'] === true);
+});
+
+test('completeTaskNotFound', function () {
+    $tasks = [];
+    $result = complete_task($tasks, 99);
+    assert($result === false);
+});
+
+test('deleteTask', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
+    ];
+    $result = delete_task($tasks, 1);
+    assert($result === true);
+    assert(count($tasks) === 0);
+});
+
+test('deleteTaskNotFound', function () {
+    $tasks = [
+        ['id' => 1, 'title' => 'a', 'description' => '', 'completed' => false, 'created_at' => '']
+    ];
+    $result = delete_task($tasks, 99);
+    assert($result === false);
+    assert(count($tasks) === 1);
+});
+
+if ($fail > 0) {
+    fwrite(STDERR, "{$fail} test(s) failed\n");
+    exit(1);
+}
+echo "OK: {$pass} tests passed\n";

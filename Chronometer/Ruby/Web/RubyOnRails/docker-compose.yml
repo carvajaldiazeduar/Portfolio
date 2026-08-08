@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   # No database or cache services — timer state is kept in the server-side session.
   web:

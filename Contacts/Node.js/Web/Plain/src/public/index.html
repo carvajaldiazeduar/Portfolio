@@ -12,9 +12,18 @@
 <h1>Contact Manager</h1>
 <div id="msg" class="msg"></div>
 <div class="form-row">
+<div class="field">
 <input type="text" id="name" placeholder="Name" required>
+<div class="field-error" id="name-error"></div>
+</div>
+<div class="field">
 <input type="text" id="phone" placeholder="Phone">
+<div class="field-error" id="phone-error"></div>
+</div>
+<div class="field">
 <input type="email" id="email" placeholder="Email">
+<div class="field-error" id="email-error"></div>
+</div>
 <button onclick="addContact()">Add</button>
 </div>
 <div class="search-row">

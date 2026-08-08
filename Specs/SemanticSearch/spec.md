@@ -39,7 +39,7 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 |---|---|---|
 | Python | pytest | `Web/*/src/tests/` and `Cli/tests/` |
 | Node | Jest | `Web/*/src/tests/` and `Cli/tests/` |
-| PHP | PHPUnit | `Cli/tests/` (Plain not runnable as-is) |
+| PHP | assert | `Cli/tests/` via `php -d zend.assertions=1 -d assert.exception=1`; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 | C# | xUnit | `Web/AspNetMinimalApi/src/tests/` (placeholder) |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
 

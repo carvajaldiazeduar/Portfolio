@@ -487,7 +487,7 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 | Node.js NextJS | `3000` | `podman compose up` |
 | Ruby RubyOnRails | `3000` | `podman compose up` |
 | **APIGateway (Plain)** | `3000` | `podman compose up` |
-| **EventProcessor (Plain)** | `3000` | `podman compose up` |
+| **EventProcessor (Plain)** | `3000` | `podman compose up` (adds Prometheus on `9090` and Grafana on `3001` for metrics) |
 | **DataPipeline (Plain)** | `5000` | `podman compose up` |
 | **SemanticSearch (Plain/Flask/Express)** | `5000` | `podman compose up` (adds a `chroma` service) |
 | **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
@@ -521,7 +521,7 @@ Each implementation includes unit tests using the standard framework for each la
 
 | Language | Framework | Command |
 |----------|-----------|---------|
-| PHP | PHPUnit | `vendor/bin/phpunit` |
+| PHP | PHPUnit (frameworks) / assert (Plain CLI + Web) | `vendor/bin/phpunit` · Plain: `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php` (Web contra `php -S 127.0.0.1:8000 index.php`) |
 | Python | pytest | `pytest` |
 | C# | xUnit | `dotnet test` |
 | Node.js | Jest | `npm test` |
@@ -551,6 +551,23 @@ cd Contacts/Ruby/Web/RubyOnRails/src
 rails test
 ```
 
+### Running CI locally with only Podman
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced locally without installing any language toolchains. `scripts/ci-local.sh` runs the same 5 jobs (node, python, php, ruby, csharp) inside Podman containers, booting disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7 on an isolated `ci-local-net` network (these won't conflict with a local PostgreSQL on `:5432`). At startup it removes every stopped Podman container (`podman container prune -f`) so leftover containers from previous runs don't interfere:
+
+```bash
+./scripts/ci-local.sh          # run all CI jobs
+./scripts/ci-local.sh node     # run a single job
+```
+
+Per-language driver matrix (projects that don't support a given driver are skipped, not failed):
+
+| Language | Drivers exercised |
+|:---:|---|
+| PHP | `sqlite pgsql mysql mongodb` (pdo_sqlsrv needs PHP ≥ 8.3, so `sqlserver` is excluded on `php:8.2`) |
+| Node / Python / C# | `sqlite pgsql mysql sqlserver mongodb` |
+| Ruby | `sqlite` (Rails; plain Ruby uses SQLite) |
+
 ---
 
 ## 🛠️ Troubleshooting
@@ -573,8 +590,8 @@ rails test
 
 **Next steps:**
 - [x] CI/CD with GitHub Actions (build + test per project)
-- [ ] Observability and metrics (Prometheus/Grafana) in EventProcessor
-- [ ] API documentation (OpenAPI/Swagger) for the REST projects
+- [x] Observability and metrics (Prometheus/Grafana) in EventProcessor
+- [x] API documentation (OpenAPI/Swagger) for the REST projects
 
 ---
 

@@ -52,4 +52,45 @@ class TestContacts < Minitest::Test
     assert_output(/Invalid/) { delete_contact(contacts, 5) }
     assert_equal 1, contacts.length
   end
+
+  def test_add_contact_invalid_email
+    contacts = []
+    assert_output(nil, /Invalid email format/) do
+      add_contact(contacts, 'Alice', '123-456-7890', 'not-an-email')
+    end
+    assert_equal 0, contacts.length
+  end
+
+  def test_add_contact_invalid_phone
+    contacts = []
+    assert_output(nil, /Phone must be 7-20 characters/) do
+      add_contact(contacts, 'Alice', '12', 'alice@test.com')
+    end
+    assert_equal 0, contacts.length
+  end
+
+  def test_add_contact_missing_name
+    contacts = []
+    assert_output(nil, /Name is required/) do
+      add_contact(contacts, '', '123-456-7890', 'alice@test.com')
+    end
+    assert_equal 0, contacts.length
+  end
+
+  def test_add_contact_name_too_short
+    contacts = []
+    assert_output(nil, /Name must be 2-100 characters/) do
+      add_contact(contacts, 'A', '123-456-7890', 'alice@test.com')
+    end
+    assert_equal 0, contacts.length
+  end
+
+  def test_add_contact_strips_input
+    contacts = []
+    add_contact(contacts, '  Alice  ', ' 123-456-7890 ', ' alice@test.com ')
+    assert_equal 1, contacts.length
+    assert_equal 'Alice', contacts[0][:name]
+    assert_equal '123-456-7890', contacts[0][:phone]
+    assert_equal 'alice@test.com', contacts[0][:email]
+  end
 end

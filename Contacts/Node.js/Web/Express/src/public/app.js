@@ -15,9 +15,9 @@ async function loadContacts() {
 
 async function addContact() {
     const name = document.getElementById('name').value.trim();
-    if (!name) { showMsg('Name is required', 'error'); return; }
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
+    clearFieldFeedback();
     const res = await fetch('/api/contacts', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -31,8 +31,37 @@ async function addContact() {
         loadContacts();
     } else {
         const err = await res.json();
-        showMsg(err.error, 'error');
+        if (err.errors) {
+            applyFieldFeedback(err.errors);
+        } else {
+            showMsg(err.error, 'error');
+        }
     }
+}
+
+function clearFieldFeedback() {
+    ['name', 'phone', 'email'].forEach((field) => {
+        const input = document.getElementById(field);
+        const msg = document.getElementById(field + '-error');
+        input.classList.remove('invalid', 'valid');
+        msg.textContent = '';
+    });
+}
+
+function applyFieldFeedback(errors) {
+    ['name', 'phone', 'email'].forEach((field) => {
+        const input = document.getElementById(field);
+        const msg = document.getElementById(field + '-error');
+        if (errors[field]) {
+            input.classList.remove('valid');
+            input.classList.add('invalid');
+            msg.textContent = errors[field];
+        } else {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+            msg.textContent = '';
+        }
+    });
 }
 
 async function searchContacts() {

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from django.conf import settings
 from django.core.cache import cache
 from django.http import FileResponse, JsonResponse
@@ -8,6 +9,36 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Contact
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', 300)
+
+NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ' .-]+$")
+PHONE_RE = re.compile(r"^[0-9 +().-]{7,20}$")
+EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+
+NAME_REQUIRED = "Name is required"
+PHONE_REQUIRED = "Phone is required"
+EMAIL_REQUIRED = "Email is required"
+NAME_FORMAT = "Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)"
+PHONE_FORMAT = "Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)"
+EMAIL_FORMAT = "Invalid email format"
+
+def validate_contact(data):
+    errors = {}
+    name = (data.get('name') or '').strip() if data else ''
+    phone = (data.get('phone') or '').strip() if data else ''
+    email = (data.get('email') or '').strip() if data else ''
+    if not name:
+        errors['name'] = NAME_REQUIRED
+    elif not (2 <= len(name) <= 100) or not NAME_RE.match(name):
+        errors['name'] = NAME_FORMAT
+    if not phone:
+        errors['phone'] = PHONE_REQUIRED
+    elif not PHONE_RE.match(phone):
+        errors['phone'] = PHONE_FORMAT
+    if not email:
+        errors['email'] = EMAIL_REQUIRED
+    elif not EMAIL_RE.match(email):
+        errors['email'] = EMAIL_FORMAT
+    return errors, {'name': name, 'phone': phone, 'email': email}
 
 def index(request):
     return render(request, 'contacts/index.html')
@@ -34,13 +65,11 @@ def contacts_handler(request):
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        name = data.get('name', '').strip()
-        phone = data.get('phone', '').strip()
-        email = data.get('email', '').strip()
-        if not name:
-            return JsonResponse({'error': 'Name is required'}, status=400)
-        contact = Contact.objects.create(name=name, phone=phone, email=email)
+            return JsonResponse({'errors': {'name': NAME_REQUIRED, 'phone': PHONE_REQUIRED, 'email': EMAIL_REQUIRED}}, status=400)
+        errors, values = validate_contact(data)
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+        contact = Contact.objects.create(name=values['name'], phone=values['phone'], email=values['email'])
         cache.delete('contacts:all')
         return JsonResponse({'contact': {'id': contact.id, 'name': contact.name, 'phone': contact.phone, 'email': contact.email}}, status=201)
 

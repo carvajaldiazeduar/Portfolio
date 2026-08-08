@@ -52,3 +52,45 @@ def test_delete_contact_invalid(capsys):
     assert len(contacts) == 1
     captured = capsys.readouterr()
     assert "Invalid" in captured.out
+
+def test_add_contact_invalid_email_not_added():
+    contacts = []
+    result = add_contact(contacts, "Alice", "123-4567", "not-an-email")
+    assert result is False
+    assert len(contacts) == 0
+
+def test_add_contact_invalid_email_stderr(capsys):
+    contacts = []
+    add_contact(contacts, "Alice", "123-4567", "not-an-email")
+    captured = capsys.readouterr()
+    assert "Invalid email format" in captured.err
+
+def test_add_contact_invalid_phone_not_added():
+    contacts = []
+    result = add_contact(contacts, "Alice", "abc", "alice@test.com")
+    assert result is False
+    assert len(contacts) == 0
+
+def test_add_contact_invalid_phone_stderr(capsys):
+    contacts = []
+    add_contact(contacts, "Alice", "123", "alice@test.com")
+    captured = capsys.readouterr()
+    assert "Phone must be 7-20" in captured.err
+
+def test_add_contact_missing_name_not_added():
+    contacts = []
+    result = add_contact(contacts, "   ", "123-4567", "alice@test.com")
+    assert result is False
+    assert len(contacts) == 0
+
+def test_add_contact_short_name_not_added():
+    contacts = []
+    result = add_contact(contacts, "A", "123-4567", "alice@test.com")
+    assert result is False
+    assert len(contacts) == 0
+
+def test_add_contact_missing_name_stderr(capsys):
+    contacts = []
+    add_contact(contacts, "", "123-4567", "alice@test.com")
+    captured = capsys.readouterr()
+    assert "Name is required" in captured.err

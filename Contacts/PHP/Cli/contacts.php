@@ -1,7 +1,37 @@
 <?php
 
+function validateContact(string $name, string $phone, string $email): array {
+    $errors = [];
+    $name = trim($name);
+    $phone = trim($phone);
+    $email = trim($email);
+    if ($name === '') {
+        $errors['name'] = 'Name is required';
+    } elseif (strlen($name) < 2 || strlen($name) > 100 || !preg_match('/^[A-Za-zÀ-ÿ\' .-]+$/', $name)) {
+        $errors['name'] = 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)';
+    }
+    if ($phone === '') {
+        $errors['phone'] = 'Phone is required';
+    } elseif (!preg_match('/^[0-9 +().-]{7,20}$/', $phone)) {
+        $errors['phone'] = 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)';
+    }
+    if ($email === '') {
+        $errors['email'] = 'Email is required';
+    } elseif (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
+        $errors['email'] = 'Invalid email format';
+    }
+    return $errors;
+}
+
 function addContact(array &$contacts, string $name, string $phone, string $email): void {
-    $contacts[] = ["name" => $name, "phone" => $phone, "email" => $email];
+    $errors = validateContact($name, $phone, $email);
+    if ($errors) {
+        foreach ($errors as $error) {
+            fwrite(STDERR, $error . "\n");
+        }
+        return;
+    }
+    $contacts[] = ["name" => trim($name), "phone" => trim($phone), "email" => trim($email)];
     echo "Contact added!\n";
 }
 

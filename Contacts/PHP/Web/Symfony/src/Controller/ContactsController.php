@@ -41,16 +41,44 @@ class ContactsController
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        if (!is_array($data) || empty($data['name'])) {
-            return new JsonResponse(['error' => 'Name is required'], 400);
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $errors = $this->validateContact($data);
+        if ($errors) {
+            return new JsonResponse(['errors' => $errors], 400);
         }
         $contact = ORM::table('contacts')->create([
-            'name' => $data['name'],
-            'phone' => $data['phone'] ?? '',
-            'email' => $data['email'] ?? '',
+            'name' => trim($data['name']),
+            'phone' => trim($data['phone']),
+            'email' => trim($data['email']),
         ]);
         $this->cache->delete('contacts:all');
         return new JsonResponse($contact, 201);
+    }
+
+    private function validateContact(array $data): array
+    {
+        $errors = [];
+        $name = trim($data['name'] ?? '');
+        $phone = trim($data['phone'] ?? '');
+        $email = trim($data['email'] ?? '');
+        if ($name === '') {
+            $errors['name'] = 'Name is required';
+        } elseif (strlen($name) < 2 || strlen($name) > 100 || !preg_match('/^[A-Za-zÀ-ÿ\' .-]+$/', $name)) {
+            $errors['name'] = 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)';
+        }
+        if ($phone === '') {
+            $errors['phone'] = 'Phone is required';
+        } elseif (!preg_match('/^[0-9 +().-]{7,20}$/', $phone)) {
+            $errors['phone'] = 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)';
+        }
+        if ($email === '') {
+            $errors['email'] = 'Email is required';
+        } elseif (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
+            $errors['email'] = 'Invalid email format';
+        }
+        return $errors;
     }
 
     #[Route('/api/contacts/search', methods: ['GET'])]

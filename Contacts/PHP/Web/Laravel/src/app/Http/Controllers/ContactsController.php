@@ -4,6 +4,7 @@ use App\Models\Contact;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ContactsController extends Controller
 {
@@ -33,15 +34,34 @@ class ContactsController extends Controller
 
     public function create(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
+        $data = array_map(function ($value) {
+            return is_string($value) ? trim($value) : $value;
+        }, $request->all());
+        $validator = Validator::make($data, [
+            'name' => 'required|min:2|max:100|regex:/^[A-Za-zÀ-ÿ\' .-]+$/',
+            'phone' => 'required|regex:/^[0-9 +().-]{7,20}$/',
+            'email' => 'required|email:rfc',
+        ], [
+            'name.required' => 'Name is required',
+            'name.min' => 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)',
+            'name.max' => 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)',
+            'name.regex' => 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)',
+            'phone.required' => 'Phone is required',
+            'phone.regex' => 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)',
+            'email.required' => 'Email is required',
+            'email.email' => 'Invalid email format',
         ]);
+        if ($validator->fails()) {
+            $errors = [];
+            foreach ($validator->errors()->toArray() as $field => $messages) {
+                $errors[$field] = $messages[0];
+            }
+            return response()->json(['errors' => $errors], 400);
+        }
         $contact = Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? '',
-            'phone' => $validated['phone'] ?? '',
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
         ]);
         $this->cache->delete('contacts:all');
         return response()->json($contact, 201);

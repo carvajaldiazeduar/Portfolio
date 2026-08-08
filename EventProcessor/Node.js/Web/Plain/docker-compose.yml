@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   event-processor-api:
     build: .
@@ -18,8 +17,35 @@ services:
     environment:
       - QUEUE_DRIVER=redis
       - REDIS_HOST=redis:6379
+      - WORKER_METRICS_PORT=3001
     depends_on:
       - redis
+    networks:
+      - event-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - event-processor-api
+      - event-processor-worker
+    networks:
+      - event-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
     networks:
       - event-network
 

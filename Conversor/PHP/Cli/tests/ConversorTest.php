@@ -1,93 +1,95 @@
 <?php
+
 require_once __DIR__ . '/../conversor.php';
 
-use PHPUnit\Framework\TestCase;
+$pass = 0;
+$fail = 0;
 
-class ConversorTest extends TestCase
-{
-    public function testLengthConversion()
-    {
-        $result = convert(1, "m", "cm");
-        $this->assertEqualsWithDelta(100, $result, 0.001);
-    }
-
-    public function testWeightConversion()
-    {
-        $result = convert(1, "kg", "g");
-        $this->assertEqualsWithDelta(1000, $result, 0.001);
-    }
-
-    public function testTemperatureCtoF()
-    {
-        $result = convert(0, "C", "F");
-        $this->assertEqualsWithDelta(32, $result, 0.001);
-    }
-
-    public function testTemperatureCtoK()
-    {
-        $result = convert(0, "C", "K");
-        $this->assertEqualsWithDelta(273.15, $result, 0.001);
-    }
-
-    public function testTemperatureFtoC()
-    {
-        $result = convert(32, "F", "C");
-        $this->assertEqualsWithDelta(0, $result, 0.001);
-    }
-
-    public function testTemperatureFtoK()
-    {
-        $result = convert(32, "F", "K");
-        $this->assertEqualsWithDelta(273.15, $result, 0.001);
-    }
-
-    public function testTemperatureKtoC()
-    {
-        $result = convert(273.15, "K", "C");
-        $this->assertEqualsWithDelta(0, $result, 0.001);
-    }
-
-    public function testTemperatureKtoF()
-    {
-        $result = convert(273.15, "K", "F");
-        $this->assertEqualsWithDelta(32, $result, 0.001);
-    }
-
-    public function testInvalidUnit()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        convert(1, "m", "kg");
-    }
-
-    public function testIncompatibleCategories()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        convert(1, "m", "kg");
-    }
-
-    public function testListCategories()
-    {
-        $cats = list_categories();
-        $this->assertContains("length", $cats);
-        $this->assertContains("weight", $cats);
-        $this->assertContains("temperature", $cats);
-    }
-
-    public function testKmToMi()
-    {
-        $result = convert(1, "km", "mi");
-        $this->assertEqualsWithDelta(0.621371, $result, 0.001);
-    }
-
-    public function testLbToOz()
-    {
-        $result = convert(1, "lb", "oz");
-        $this->assertEqualsWithDelta(16, $result, 0.001);
-    }
-
-    public function testIdentity()
-    {
-        $result = convert(100, "cm", "cm");
-        $this->assertEqualsWithDelta(100, $result, 0.001);
+function test(string $name, callable $fn): void {
+    global $pass, $fail;
+    try {
+        $fn();
+        $pass++;
+        echo "PASS: $name\n";
+    } catch (Throwable $e) {
+        $fail++;
+        fwrite(STDERR, "FAIL: $name - " . $e->getMessage() . "\n");
     }
 }
+
+test('lengthConversion', function () {
+    assert(abs(convert(1, "m", "cm") - 100) < 0.001);
+});
+
+test('weightConversion', function () {
+    assert(abs(convert(1, "kg", "g") - 1000) < 0.001);
+});
+
+test('temperatureCtoF', function () {
+    assert(abs(convert(0, "C", "F") - 32) < 0.001);
+});
+
+test('temperatureCtoK', function () {
+    assert(abs(convert(0, "C", "K") - 273.15) < 0.001);
+});
+
+test('temperatureFtoC', function () {
+    assert(abs(convert(32, "F", "C") - 0) < 0.001);
+});
+
+test('temperatureFtoK', function () {
+    assert(abs(convert(32, "F", "K") - 273.15) < 0.001);
+});
+
+test('temperatureKtoC', function () {
+    assert(abs(convert(273.15, "K", "C") - 0) < 0.001);
+});
+
+test('temperatureKtoF', function () {
+    assert(abs(convert(273.15, "K", "F") - 32) < 0.001);
+});
+
+test('invalidUnit', function () {
+    $thrown = false;
+    try {
+        convert(1, "m", "kg");
+    } catch (InvalidArgumentException $e) {
+        $thrown = true;
+    }
+    assert($thrown);
+});
+
+test('incompatibleCategories', function () {
+    $thrown = false;
+    try {
+        convert(1, "m", "kg");
+    } catch (InvalidArgumentException $e) {
+        $thrown = true;
+    }
+    assert($thrown);
+});
+
+test('listCategories', function () {
+    $cats = list_categories();
+    assert(in_array("length", $cats, true));
+    assert(in_array("weight", $cats, true));
+    assert(in_array("temperature", $cats, true));
+});
+
+test('kmToMi', function () {
+    assert(abs(convert(1, "km", "mi") - 0.621371) < 0.001);
+});
+
+test('lbToOz', function () {
+    assert(abs(convert(1, "lb", "oz") - 16) < 0.001);
+});
+
+test('identity', function () {
+    assert(abs(convert(100, "cm", "cm") - 100) < 0.001);
+});
+
+if ($fail > 0) {
+    fwrite(STDERR, "{$fail} test(s) failed\n");
+    exit(1);
+}
+echo "OK: {$pass} tests passed\n";

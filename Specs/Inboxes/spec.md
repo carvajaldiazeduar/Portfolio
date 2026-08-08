@@ -40,7 +40,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 | Python | pytest | `Cli/tests/` and `Web/*/src/tests/` |
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
-| PHP | PHPUnit | frameworks; Plain PHP tests not runnable |
+| PHP | assert | Cli via `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; frameworks via PHPUnit; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 

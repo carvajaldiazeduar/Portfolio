@@ -33,6 +33,22 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - `GET /openapi.json` → OpenAPI 3.0 spec of this API
 - `GET /swagger` → Swagger UI (HTML, loads spec from CDN; FastAPI redirects to `/docs`)
 
+## Validation
+
+Fields are validated on create/update. Invalid input returns **HTTP 400** with
+`{ "errors": { "<field>": "<message>" } }` (only invalid fields present). The CLI
+prints the error and does nothing. The web UI marks each invalid field with a red
+border + inline message and valid fields with a green border.
+
+| Field | Rule |
+|---|---|
+| `name` | Required. 2–100 characters. Allowed: letters, spaces, apostrophes, hyphens, dots. |
+| `phone` | Required. 7–20 characters. Allowed: digits, spaces, `+`, `(`, `)`, `-`. |
+| `email` | Required. Must match a valid email format (`name@domain.tld`). |
+
+Required-field errors use `<Field> is required`; format errors use a descriptive
+per-field message. Empty/whitespace-only values are treated as missing.
+
 ## Tests
 | Language | Framework | Where |
 |---|---|---|
@@ -41,7 +57,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 | Python | pytest | `Cli/tests/` and `Web/*/src/tests/` |
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
-| PHP | PHPUnit | frameworks; Plain PHP tests not runnable |
+| PHP | assert | Cli via `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; frameworks via PHPUnit; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 

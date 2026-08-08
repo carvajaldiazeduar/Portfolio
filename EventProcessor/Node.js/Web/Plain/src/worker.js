@@ -1,8 +1,24 @@
+const http = require('http');
 const { createQueue } = require('./queue/QueueFactory');
 const { getHandler } = require('./handlers');
+const { withJobMetrics, metricsBody } = require('./metrics');
 
 const queue = createQueue();
 const QUEUES = ['image.process', 'email.bulk', 'report.generate', 'default'];
+
+function startMetricsServer() {
+  const port = process.env.WORKER_METRICS_PORT || 3001;
+  const server = http.createServer(async (req, res) => {
+    if (req.url === '/metrics') {
+      res.setHeader('Content-Type', 'text/plain');
+      res.end(await metricsBody());
+    } else {
+      res.statusCode = 404;
+      res.end('Not found');
+    }
+  });
+  server.listen(port, () => console.log(`Worker metrics available on :${port}/metrics`));
+}
 
 async function startWorker() {
   try {
@@ -10,7 +26,7 @@ async function startWorker() {
     console.log('Connected to queue');
     
     for (const queueName of QUEUES) {
-      const handler = getHandler(queueName) || defaultHandler;
+      const handler = withJobMetrics(queueName, getHandler(queueName) || defaultHandler);
       await queue.subscribe(queueName, handler, { concurrency: 5 });
       console.log(`Subscribed to queue: ${queueName}`);
     }
@@ -35,3 +51,4 @@ process.on('SIGINT', async () => {
 });
 
 startWorker();
+startMetricsServer();

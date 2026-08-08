@@ -1,5 +1,3 @@
-using ContactsCli;
-
 var manager = new ContactsManager();
 
 while (true)
@@ -22,8 +20,16 @@ while (true)
             var phone = Console.ReadLine()?.Trim() ?? "";
             Console.Write("Email: ");
             var email = Console.ReadLine()?.Trim() ?? "";
-            manager.AddContact(name, phone, email);
-            Console.WriteLine("Contact added!");
+            var errors = manager.AddContact(name, phone, email);
+            if (errors.Count > 0)
+            {
+                foreach (var e in errors)
+                    Console.Error.WriteLine($"{e.Key}: {e.Value}");
+            }
+            else
+            {
+                Console.WriteLine("Contact added!");
+            }
             break;
 
         case "2":

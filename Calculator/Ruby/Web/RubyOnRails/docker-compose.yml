@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   # ─── Calculator: no database, no cache ──────────────────────────
   web:

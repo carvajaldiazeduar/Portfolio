@@ -1,6 +1,36 @@
 def add_contact(contacts, name, phone, email)
-  contacts << { name: name, phone: phone, email: email }
-  puts 'Contact added!'
+  name = name.to_s.strip
+  phone = phone.to_s.strip
+  email = email.to_s.strip
+  errors = validate_contact(name, phone, email)
+  if errors.empty?
+    contacts << { name: name, phone: phone, email: email }
+    puts 'Contact added!'
+    true
+  else
+    errors.each_value { |msg| warn msg }
+    false
+  end
+end
+
+def validate_contact(name, phone, email)
+  errors = {}
+  if name.empty?
+    errors[:name] = 'Name is required'
+  elsif name.length < 2 || name.length > 100 || !name.match?(/\A[A-Za-zÀ-ÿ' .-]+\z/)
+    errors[:name] = 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)'
+  end
+  if phone.empty?
+    errors[:phone] = 'Phone is required'
+  elsif !phone.match?(/\A[0-9 +().-]{7,20}\z/)
+    errors[:phone] = 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)'
+  end
+  if email.empty?
+    errors[:email] = 'Email is required'
+  elsif !email.match?(/\A[^\s@]+@[^\s@]+\.[^\s@]{2,}\z/)
+    errors[:email] = 'Invalid email format'
+  end
+  errors
 end
 
 def list_contacts(contacts)

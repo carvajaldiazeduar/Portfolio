@@ -32,7 +32,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
+          pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary pymysql pymongo pymssql chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
       - name: Test all projects
         shell: bash
         run: |
@@ -108,6 +108,44 @@ jobs:
       - name: ChatAI PHP test
         working-directory: ChatAI/PHP/Web/Plain/src
         run: php -d zend.assertions=1 -d assert.exception=1 tests/test_app.php
+      - name: PHP CLI tests
+        shell: bash
+        run: |
+          set -e
+          for test in $(find . -path '*/PHP/Cli/tests/*Test.php' | sort); do
+            echo "=== $test ==="
+            php -d zend.assertions=1 -d assert.exception=1 "$test"
+          done
+      - name: PHP Web Plain tests
+        shell: bash
+        run: |
+          set -e
+          for tdir in $(find . -type d -path '*/PHP/Web/Plain/src/tests' | sort); do
+            src=$(dirname "$tdir")
+            proj=${src%%/*}
+            db="/tmp/${proj}-web-test.db"
+            rm -f "$db"
+            echo "=== $src ==="
+            : > /tmp/php-web-server.log
+            (
+              cd "$src"
+              DB_DRIVER=sqlite DB_FILE="$db" CACHE_TYPE=local php -S 127.0.0.1:8000 index.php >/tmp/php-web-server.log 2>&1 &
+              SRVPID=$!
+              ready=0
+              for i in $(seq 1 60); do
+                if php -r '$h=@file_get_contents("http://127.0.0.1:8000/"); exit($h!==false?0:1);' 2>/dev/null; then ready=1; break; fi
+                sleep 1
+              done
+              if [ "$ready" != 1 ]; then echo "ERROR: server not ready for $src"; cat /tmp/php-web-server.log; kill $SRVPID 2>/dev/null || true; exit 1; fi
+              for test in "$tdir"/*Test.php; do
+                [ -f "$test" ] || continue
+                echo "--- $(basename "$test") ---"
+                DB_DRIVER=sqlite DB_FILE="$db" CACHE_TYPE=local php -d zend.assertions=1 -d assert.exception=1 "$test"
+              done
+              kill $SRVPID 2>/dev/null || true
+              wait $SRVPID 2>/dev/null || true
+            )
+          done
 
   ruby:
     name: Ruby (minitest)
@@ -124,10 +162,23 @@ jobs:
         shell: bash
         run: |
           set -e
-          for test in $(find . -name '*_test.rb' -not -path '*/node_modules/*' -not -path '*/ChatAI/*' | sort); do
+          for test in $(find . -name '*_test.rb' -not -path '*/node_modules/*' -not -path '*/ChatAI/*' -not -path '*/RubyOnRails/src/test/*' | sort); do
             echo "=== $test ==="
             ruby "$test"
           done
       - name: ChatAI Ruby test
         working-directory: ChatAI/Ruby/Web/Plain/src
         run: bundle exec ruby -I. tests/test_server.rb
+      - name: Test Rails projects
+        shell: bash
+        run: |
+          set -e
+          for tdir in $(find . -type d -path '*/RubyOnRails/src/test' | sort); do
+            if [ -z "$(find "$tdir" -name '*_test.rb' | head -1)" ]; then
+              echo "=== $(dirname "$tdir") (no tests, skipped) ==="
+              continue
+            fi
+            src=$(dirname "$tdir")
+            echo "=== $src ==="
+            (cd "$src" && bundle install --quiet && RAILS_ENV=test DB_DRIVER=sqlite DB_FILE=/tmp/contacts_test.db bundle exec ruby -Itest -I. -e 'require "config/environment"; ActiveRecord::Base.connection.migration_context.migrate; Dir["test/**/*_test.rb"].sort.each { |f| require File.expand_path(f) }')
+          done

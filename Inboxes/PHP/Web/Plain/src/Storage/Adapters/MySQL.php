@@ -13,7 +13,7 @@ class MySQL implements DatabaseAdapter {
         $this->pdo = new PDO("mysql:host=$host;port=$port;dbname=$name", $user, $pass);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $this->pdo->exec("CREATE TABLE IF NOT EXISTS messages (id INT AUTO_INCREMENT PRIMARY KEY, sender TEXT NOT NULL DEFAULT '', subject TEXT NOT NULL, body TEXT DEFAULT '', read INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS messages (id INT AUTO_INCREMENT PRIMARY KEY, sender TEXT NOT NULL DEFAULT '', subject TEXT NOT NULL, body TEXT DEFAULT '', `read` INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
     }
 
     public function getAll(string $table): array {

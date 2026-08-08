@@ -1,8 +1,45 @@
+import re
 import sys
 
+NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ' .-]+$")
+PHONE_RE = re.compile(r"^[0-9 +().-]{7,20}$")
+EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+
+NAME_REQUIRED = "Name is required"
+PHONE_REQUIRED = "Phone is required"
+EMAIL_REQUIRED = "Email is required"
+NAME_FORMAT = "Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)"
+PHONE_FORMAT = "Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)"
+EMAIL_FORMAT = "Invalid email format"
+
+def validate_contact(data):
+    errors = {}
+    name = (data.get("name") or "").strip() if data else ""
+    phone = (data.get("phone") or "").strip() if data else ""
+    email = (data.get("email") or "").strip() if data else ""
+    if not name:
+        errors["name"] = NAME_REQUIRED
+    elif not (2 <= len(name) <= 100) or not NAME_RE.match(name):
+        errors["name"] = NAME_FORMAT
+    if not phone:
+        errors["phone"] = PHONE_REQUIRED
+    elif not PHONE_RE.match(phone):
+        errors["phone"] = PHONE_FORMAT
+    if not email:
+        errors["email"] = EMAIL_REQUIRED
+    elif not EMAIL_RE.match(email):
+        errors["email"] = EMAIL_FORMAT
+    return errors, {"name": name, "phone": phone, "email": email}
+
 def add_contact(contacts, name, phone, email):
-    contacts.append({"name": name, "phone": phone, "email": email})
+    errors, values = validate_contact({"name": name, "phone": phone, "email": email})
+    if errors:
+        for msg in errors.values():
+            print(msg, file=sys.stderr)
+        return False
+    contacts.append({"name": values["name"], "phone": values["phone"], "email": values["email"]})
     print("Contact added!")
+    return True
 
 def list_contacts(contacts):
     if not contacts:

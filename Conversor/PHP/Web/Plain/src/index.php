@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../Cli/conversor.php';
+require_once __DIR__ . '/../../../Cli/conversor.php';
 
 header('Content-Type: application/json');
 

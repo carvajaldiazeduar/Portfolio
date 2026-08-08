@@ -1,8 +1,32 @@
 <?php
 require_once __DIR__ . '/Storage/DatabaseFactory.php';
 require_once __DIR__ . '/Cache/CacheAdapter.php';
+require_once __DIR__ . '/Cache/CacheFactory.php';
 require_once __DIR__ . '/Cache/Adapters/Local.php';
 require_once __DIR__ . '/Cache/Adapters/Redis.php';
+
+function validateContact(array $input): array {
+    $errors = [];
+    $name = trim($input['name'] ?? '');
+    $phone = trim($input['phone'] ?? '');
+    $email = trim($input['email'] ?? '');
+    if ($name === '') {
+        $errors['name'] = 'Name is required';
+    } elseif (strlen($name) < 2 || strlen($name) > 100 || !preg_match('/^[A-Za-zÀ-ÿ\' .-]+$/', $name)) {
+        $errors['name'] = 'Name must be 2-100 characters (letters, spaces, apostrophes, hyphens, dots)';
+    }
+    if ($phone === '') {
+        $errors['phone'] = 'Phone is required';
+    } elseif (!preg_match('/^[0-9 +().-]{7,20}$/', $phone)) {
+        $errors['phone'] = 'Phone must be 7-20 characters (digits, spaces, +, parentheses, dashes)';
+    }
+    if ($email === '') {
+        $errors['email'] = 'Email is required';
+    } elseif (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
+        $errors['email'] = 'Invalid email format';
+    }
+    return $errors;
+}
 
 $db = DatabaseFactory::create();
 $db->connect();
@@ -43,17 +67,24 @@ if ($path === '/api/contacts' && $method === 'GET') {
 
 if ($path === '/api/contacts' && $method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-    if (!$input || empty($input['name'])) {
+    if (!is_array($input)) {
+        $input = [];
+    }
+    $errors = validateContact($input);
+    if ($errors) {
         http_response_code(400);
-        echo json_encode(["error" => "Name is required"]);
+        echo json_encode(["errors" => $errors]);
         exit;
     }
+    $name = trim($input['name']);
+    $phone = trim($input['phone']);
+    $email = trim($input['email']);
     $id = $db->create('contacts', [
-        'name' => $input['name'],
-        'phone' => $input['phone'] ?? '',
-        'email' => $input['email'] ?? ''
+        'name' => $name,
+        'phone' => $phone,
+        'email' => $email
     ]);
-    $contact = ['id' => $id, 'name' => $input['name'], 'phone' => $input['phone'] ?? '', 'email' => $input['email'] ?? ''];
+    $contact = ['id' => $id, 'name' => $name, 'phone' => $phone, 'email' => $email];
     $cache->delete('contacts:all');
     http_response_code(201);
     echo json_encode($contact);

@@ -10,12 +10,24 @@
     <div class="alert alert-danger">@errorMsg</div>
 }
 
-<div class="mb-3">
-    <input @bind="newName" placeholder="Name" class="form-control mb-2" />
-    <input @bind="newPhone" placeholder="Phone" class="form-control mb-2" />
-    <input @bind="newEmail" placeholder="Email" class="form-control mb-2" />
-    <button class="btn btn-primary" @onclick="AddContact">Add Contact</button>
-</div>
+<EditForm EditContext="@editContext" OnSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <div class="mb-2">
+            <InputText @bind-Value="contactForm.Name" class="form-control" placeholder="Name" />
+            <ValidationMessage For="() => contactForm.Name" class="text-danger" />
+        </div>
+        <div class="mb-2">
+            <InputText @bind-Value="contactForm.Phone" class="form-control" placeholder="Phone" />
+            <ValidationMessage For="() => contactForm.Phone" class="text-danger" />
+        </div>
+        <div class="mb-2">
+            <InputText @bind-Value="contactForm.Email" class="form-control" placeholder="Email" />
+            <ValidationMessage For="() => contactForm.Email" class="text-danger" />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Contact</button>
+    </div>
+</EditForm>
 
 <table class="table">
     <thead>
@@ -43,32 +55,74 @@
 
 @code {
     private List<Contact> contactList = new();
-    private string newName = "";
-    private string newPhone = "";
-    private string newEmail = "";
+    private Contact contactForm = new();
+    private EditContext editContext = default!;
     private string? errorMsg;
 
     protected override void OnInitialized()
     {
+        ResetForm();
         Refresh();
+    }
+
+    private void ResetForm()
+    {
+        contactForm = new Contact();
+        editContext = new EditContext(contactForm);
+        editContext.SetFieldCssClassProvider(new BootstrapFieldCssClassProvider());
     }
 
     private void Refresh()
     {
-        try {         contactList = contactService.GetAll(); errorMsg = null; }
+        try { contactList = contactService.GetAll(); errorMsg = null; }
         catch (Exception e) { errorMsg = e.Message; }
     }
 
-    private void AddContact()
+    private void HandleSubmit()
     {
-        if (string.IsNullOrWhiteSpace(newName)) { errorMsg = "Name is required"; return; }
-        try { contactService.Add(newName.Trim(), newPhone.Trim(), newEmail.Trim()); newName = ""; newPhone = ""; newEmail = ""; errorMsg = null; Refresh(); }
-        catch (Exception e) { errorMsg = e.Message; }
+        contactForm.Name = contactForm.Name?.Trim() ?? "";
+        contactForm.Phone = contactForm.Phone?.Trim() ?? "";
+        contactForm.Email = contactForm.Email?.Trim() ?? "";
+
+        editContext.NotifyFieldChanged(editContext.Field(nameof(Contact.Name)));
+        editContext.NotifyFieldChanged(editContext.Field(nameof(Contact.Phone)));
+        editContext.NotifyFieldChanged(editContext.Field(nameof(Contact.Email)));
+
+        if (!editContext.Validate())
+        {
+            return;
+        }
+
+        try
+        {
+            contactService.Add(contactForm.Name, contactForm.Phone, contactForm.Email);
+            ResetForm();
+            errorMsg = null;
+            Refresh();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            errorMsg = e.Message;
+        }
     }
 
     private void DeleteContact(int id)
     {
         try { contactService.Delete(id); errorMsg = null; Refresh(); }
         catch (Exception e) { errorMsg = e.Message; }
+    }
+
+    private class BootstrapFieldCssClassProvider : FieldCssClassProvider
+    {
+        public override string GetFieldCssClass(EditContext editContext, in FieldIdentifier fieldIdentifier)
+        {
+            var messages = editContext.GetValidationMessages(fieldIdentifier);
+            if (!editContext.IsModified(fieldIdentifier))
+            {
+                return messages.Any() ? "is-invalid" : "";
+            }
+            return messages.Any() ? "is-invalid" : "is-valid";
+        }
     }
 }

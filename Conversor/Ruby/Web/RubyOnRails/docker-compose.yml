@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   # No database or cache is used for this app; only the web service runs.
   web:

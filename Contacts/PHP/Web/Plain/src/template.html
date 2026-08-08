@@ -12,10 +12,19 @@
 <h1>Contact Manager</h1>
 <div id="msg" class="msg"></div>
 <div class="form-row">
-<input type="text" id="name" placeholder="Name" required>
-<input type="text" id="phone" placeholder="Phone">
-<input type="email" id="email" placeholder="Email">
-<button onclick="addContact()">Add</button>
+  <div class="field">
+    <input type="text" id="name" placeholder="Name" required>
+    <span class="field-error" id="name-error"></span>
+  </div>
+  <div class="field">
+    <input type="text" id="phone" placeholder="Phone">
+    <span class="field-error" id="phone-error"></span>
+  </div>
+  <div class="field">
+    <input type="email" id="email" placeholder="Email">
+    <span class="field-error" id="email-error"></span>
+  </div>
+  <button onclick="addContact()">Add</button>
 </div>
 <div class="search-row">
 <input type="text" id="search" placeholder="Search by name...">

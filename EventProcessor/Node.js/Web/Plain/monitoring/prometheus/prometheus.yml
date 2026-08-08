@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: event-processor-api
+    static_configs:
+      - targets: ['event-processor-api:3000']
+
+  - job_name: event-processor-worker
+    static_configs:
+      - targets: ['event-processor-worker:3001']
