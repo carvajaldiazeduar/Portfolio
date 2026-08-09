@@ -25,9 +25,12 @@ function proxyMiddleware(req, res, next) {
     target: service.target,
     changeOrigin: true,
     pathRewrite: { [`^${service.prefix}`]: '' },
+    logLevel: 'silent',
     ...service.options,
     onError: (err, req, res) => {
-      console.error('Proxy error:', err.message);
+      if (process.env.GATEWAY_PROXY_LOG === '1') {
+        console.error('Proxy error:', err.message);
+      }
       if (!res.headersSent) {
         res.status(502).json({ error: 'Bad Gateway', message: 'Upstream service unavailable' });
       }
