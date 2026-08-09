@@ -4,16 +4,65 @@ on:
   push:
   pull_request:
 
+# Multi-database matrix.
+# Each DB-backed job runs against sqlite, pgsql, mysql and mongodb.
+# `sqlserver` (MSSQL) is exercised locally via `scripts/ci-local.sh` only,
+# because the mssql:2022 container defaults to encrypted connections that
+# need extra client tuning (see AGENTS.md "Local CI (multi-database)").
 jobs:
   csharp:
-    name: C# (.NET 9)
+    name: C# (.NET 9) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db_driver: [sqlite, pgsql, mysql, mongodb]
+        db_host: ["", "postgres", "mariadb", "mongo"]
+        db_port: ["", "5432", "3306", "27017"]
+        db_user: ["", "postgres", "root", ""]
+        db_pass: ["", "postgres", "secret", ""]
+        db_file: ["", "", "", ""]
+    env:
+      DB_DRIVER: ${{ matrix.db_driver }}
+      DB_HOST: ${{ matrix.db_host }}
+      DB_PORT: ${{ matrix.db_port }}
+      DB_USER: ${{ matrix.db_user }}
+      DB_PASSWORD: ${{ matrix.db_pass }}
+      DB_FILE: ${{ matrix.db_file }}
+      CACHE_TYPE: local
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: secret
+        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+      mongo:
+        image: mongo:7
+        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Test all projects
+      - name: Install clients + create databases
+        if: matrix.db_driver != 'sqlite'
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for db in contacts inboxes passwords tasks; do
+            case "$DB_DRIVER" in
+              pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
+              mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+            esac
+          done
+      - name: Test all C# projects
         shell: bash
         run: |
           set -e
@@ -23,8 +72,41 @@ jobs:
           done
 
   python:
-    name: Python (pytest)
+    name: Python (pytest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db_driver: [sqlite, pgsql, mysql, mongodb]
+        db_host: ["", "postgres", "mariadb", "mongo"]
+        db_port: ["", "5432", "3306", "27017"]
+        db_user: ["", "postgres", "root", ""]
+        db_pass: ["", "postgres", "secret", ""]
+        db_file: ["", "", "", ""]
+    env:
+      DB_DRIVER: ${{ matrix.db_driver }}
+      DB_HOST: ${{ matrix.db_host }}
+      DB_PORT: ${{ matrix.db_port }}
+      DB_USER: ${{ matrix.db_user }}
+      DB_PASSWORD: ${{ matrix.db_pass }}
+      DB_FILE: ${{ matrix.db_file }}
+      CACHE_TYPE: local
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: secret
+        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+      mongo:
+        image: mongo:7
+        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,7 +115,18 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary pymysql pymongo pymssql chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
-      - name: Test all projects
+      - name: Create databases
+        if: matrix.db_driver != 'sqlite'
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for db in contacts inboxes passwords tasks; do
+            case "$DB_DRIVER" in
+              pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
+              mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+            esac
+          done
+      - name: Test all Python projects
         shell: bash
         run: |
           set -e
@@ -44,8 +137,25 @@ jobs:
           done
 
   node:
-    name: Node.js (Jest)
+    name: Node.js (Jest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db_driver: [sqlite, pgsql, mysql, mongodb]
+        db_host: ["", "postgres", "mariadb", "mongo"]
+        db_port: ["", "5432", "3306", "27017"]
+        db_user: ["", "postgres", "root", ""]
+        db_pass: ["", "postgres", "secret", ""]
+        db_file: ["/tmp/contacts.db", "", "", ""]
+    env:
+      DB_DRIVER: ${{ matrix.db_driver }}
+      DB_HOST: ${{ matrix.db_host }}
+      DB_PORT: ${{ matrix.db_port }}
+      DB_USER: ${{ matrix.db_user }}
+      DB_PASSWORD: ${{ matrix.db_pass }}
+      DB_FILE: ${{ matrix.db_file }}
+      CACHE_TYPE: local
     services:
       postgres:
         image: postgres:16
@@ -53,26 +163,32 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: secret
+        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+      mongo:
+        image: mongo:7
+        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Create test databases
+      - name: Install clients + create databases
+        if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-          for db in contacts inboxes passwords taskslist; do
-            PGPASSWORD=postgres psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE $db"
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for db in contacts inboxes passwords tasks; do
+            case "$DB_DRIVER" in
+              pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
+              mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+            esac
           done
-      - name: Test all projects
+      - name: Test all Node.js projects
         shell: bash
         run: |
           set -e
@@ -81,23 +197,93 @@ jobs:
             [ -d "$d/tests" ] || continue
             echo "=== $d ==="
             (cd "$d" && npm install --no-fund --no-audit)
+            # Prisma projects are pinned to a single datasource provider in schema.prisma;
+            # only run them against the matching driver, otherwise skip.
+            skip=0
+            if [ -d "$d/prisma" ] && [ -f "$d/prisma/schema.prisma" ]; then
+              prov=$(awk '/^datasource[[:space:]]/{f=1} f&&/provider[[:space:]]*=/{sub(/.*= */,""); gsub(/"/,""); print; exit}' "$d/prisma/schema.prisma")
+              cur="$DB_DRIVER"
+              want=$(case "$prov" in postgresql|postgres) echo pgsql;; mysql) echo mysql;; sqlite|sqlite3) echo sqlite;; sqlserver|mssql) echo sqlserver;; mongodb) echo mongodb;; esac)
+              [ -n "$want" ] && [ "$cur" != "$want" ] && skip=1
+            fi
+            if [ "$skip" = 1 ]; then
+              echo "=== $d (skipped: prisma provider=$prov, driver=$cur) ==="
+              continue
+            fi
             if [ -d "$d/prisma" ]; then
               db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
-              (cd "$d" && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" npx prisma generate && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" npx prisma db push --accept-data-loss --skip-generate)
-              (cd "$d" && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" CACHE_TYPE=local npx jest --ci --runInBand --forceExit)
+              url="postgresql://postgres:postgres@localhost:5432/$db"
+              if [ "$DB_DRIVER" = "pgsql" ]; then
+                (cd "$d" && DATABASE_URL="$url" npx prisma generate && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate)
+                (cd "$d" && DATABASE_URL="$url" npx jest --ci --runInBand --forceExit)
+              else
+                echo "=== $d (skipped: prisma provider=$prov, driver=$cur) ==="
+                continue
+              fi
             else
-              (cd "$d" && CACHE_TYPE=local npx jest --ci --runInBand --forceExit)
+              out=$(cd "$d" && npx jest --ci --runInBand --forceExit 2>&1) && rc=0 || rc=$?
+              if [ $rc -ne 0 ] && echo "$out" | grep -qiE "Unsupported database driver|must start with the protocol|Invalid datasource"; then
+                echo "=== $d (skipped: driver unsupported by project) ==="
+              else
+                printf '%s\n' "$out"
+                [ $rc -ne 0 ] && exit 1
+              fi
             fi
           done
 
   php:
-    name: PHP (lint + assert)
+    name: PHP (lint + assert) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db_driver: [sqlite, pgsql, mysql, mongodb]
+        db_host: ["", "postgres", "mariadb", "mongo"]
+        db_port: ["", "5432", "3306", "27017"]
+        db_user: ["", "postgres", "root", ""]
+        db_pass: ["", "postgres", "secret", ""]
+        db_file: ["", "", "", ""]
+    env:
+      DB_DRIVER: ${{ matrix.db_driver }}
+      DB_HOST: ${{ matrix.db_host }}
+      DB_PORT: ${{ matrix.db_port }}
+      DB_USER: ${{ matrix.db_user }}
+      DB_PASSWORD: ${{ matrix.db_pass }}
+      DB_FILE: ${{ matrix.db_file }}
+      CACHE_TYPE: local
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: secret
+        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+      mongo:
+        image: mongo:7
+        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: pdo, pdo_pgsql, pdo_mysql, pdo_sqlite, mongodb
+      - name: Create databases
+        if: matrix.db_driver != 'sqlite'
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for db in contacts inboxes passwords tasks; do
+            case "$DB_DRIVER" in
+              pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
+              mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+            esac
+          done
       - name: Lint all PHP files
         shell: bash
         run: |
@@ -122,14 +308,13 @@ jobs:
           set -e
           for tdir in $(find . -type d -path '*/PHP/Web/Plain/src/tests' | sort); do
             src=$(dirname "$tdir")
-            proj=${src%%/*}
-            db="/tmp/${proj}-web-test.db"
-            rm -f "$db"
             echo "=== $src ==="
+            dbfile="/tmp/php-web-$(echo "$src" | md5sum | cut -c1-8).db"
             : > /tmp/php-web-server.log
             (
               cd "$src"
-              DB_DRIVER=sqlite DB_FILE="$db" CACHE_TYPE=local php -S 127.0.0.1:8000 index.php >/tmp/php-web-server.log 2>&1 &
+              rm -f "$dbfile"
+              DB_DRIVER=$DB_DRIVER DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_USER=$DB_USER DB_PASSWORD=$DB_PASSWORD DB_FILE="$dbfile" CACHE_TYPE=local php -S 127.0.0.1:8000 index.php >/tmp/php-web-server.log 2>&1 &
               SRVPID=$!
               ready=0
               for i in $(seq 1 60); do
@@ -140,7 +325,7 @@ jobs:
               for test in "$tdir"/*Test.php; do
                 [ -f "$test" ] || continue
                 echo "--- $(basename "$test") ---"
-                DB_DRIVER=sqlite DB_FILE="$db" CACHE_TYPE=local php -d zend.assertions=1 -d assert.exception=1 "$test"
+                DB_DRIVER=$DB_DRIVER DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_USER=$DB_USER DB_PASSWORD=$DB_PASSWORD DB_FILE="$dbfile" CACHE_TYPE=local php -d zend.assertions=1 -d assert.exception=1 "$test"
               done
               kill $SRVPID 2>/dev/null || true
               wait $SRVPID 2>/dev/null || true

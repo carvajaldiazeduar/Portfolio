@@ -165,6 +165,7 @@ the `ci-local-*` containers + network on exit.
 10. **Run Tests**: run the relevant tests for touched projects; broader tests only for shared conventions, cross-project changes, or high-risk edits
 11. **Environment examples**: keep `.env.example` aligned with documented DB/cache variables
 12. **Review tests after every change**: whenever a task finishes, review (and run) all tests for that change to validate nothing is broken — see Verification Strategy
+13. **Branches**: Always create a new branch from main for new changes so they can be reviewed before merging.
 
 ## Verification Strategy
 
