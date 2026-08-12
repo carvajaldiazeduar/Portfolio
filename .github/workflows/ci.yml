@@ -26,7 +26,7 @@ jobs:
             db_file: ""
             services: {}
           - db_driver: pgsql
-            db_host: postgres
+            db_host: 127.0.0.1
             db_port: "5432"
             db_user: postgres
             db_pass: postgres
@@ -34,13 +34,14 @@ jobs:
             services:
               postgres:
                 image: postgres:16
+                ports: ['5432:5432']
                 env:
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: postgres
                   POSTGRES_DB: postgres
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
           - db_driver: mysql
-            db_host: mariadb
+            db_host: 127.0.0.1
             db_port: "3306"
             db_user: root
             db_pass: secret
@@ -48,11 +49,12 @@ jobs:
             services:
               mariadb:
                 image: mariadb:11
+                ports: ['3306:3306']
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
           - db_driver: mongodb
-            db_host: mongo
+            db_host: 127.0.0.1
             db_port: "27017"
             db_user: ""
             db_pass: ""
@@ -60,6 +62,7 @@ jobs:
             services:
               mongo:
                 image: mongo:7
+                ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
@@ -110,7 +113,7 @@ jobs:
             db_file: ""
             services: {}
           - db_driver: pgsql
-            db_host: postgres
+            db_host: 127.0.0.1
             db_port: "5432"
             db_user: postgres
             db_pass: postgres
@@ -118,13 +121,14 @@ jobs:
             services:
               postgres:
                 image: postgres:16
+                ports: ['5432:5432']
                 env:
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: postgres
                   POSTGRES_DB: postgres
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
           - db_driver: mysql
-            db_host: mariadb
+            db_host: 127.0.0.1
             db_port: "3306"
             db_user: root
             db_pass: secret
@@ -132,11 +136,12 @@ jobs:
             services:
               mariadb:
                 image: mariadb:11
+                ports: ['3306:3306']
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
           - db_driver: mongodb
-            db_host: mongo
+            db_host: 127.0.0.1
             db_port: "27017"
             db_user: ""
             db_pass: ""
@@ -144,6 +149,7 @@ jobs:
             services:
               mongo:
                 image: mongo:7
+                ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
@@ -198,7 +204,7 @@ jobs:
             db_file: /tmp/contacts.db
             services: {}
           - db_driver: pgsql
-            db_host: postgres
+            db_host: 127.0.0.1
             db_port: "5432"
             db_user: postgres
             db_pass: postgres
@@ -206,13 +212,14 @@ jobs:
             services:
               postgres:
                 image: postgres:16
+                ports: ['5432:5432']
                 env:
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: postgres
                   POSTGRES_DB: postgres
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
           - db_driver: mysql
-            db_host: mariadb
+            db_host: 127.0.0.1
             db_port: "3306"
             db_user: root
             db_pass: secret
@@ -220,11 +227,12 @@ jobs:
             services:
               mariadb:
                 image: mariadb:11
+                ports: ['3306:3306']
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
           - db_driver: mongodb
-            db_host: mongo
+            db_host: 127.0.0.1
             db_port: "27017"
             db_user: ""
             db_pass: ""
@@ -232,6 +240,7 @@ jobs:
             services:
               mongo:
                 image: mongo:7
+                ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
@@ -342,7 +351,7 @@ jobs:
             db_file: ""
             services: {}
           - db_driver: pgsql
-            db_host: postgres
+            db_host: 127.0.0.1
             db_port: "5432"
             db_user: postgres
             db_pass: postgres
@@ -350,13 +359,14 @@ jobs:
             services:
               postgres:
                 image: postgres:16
+                ports: ['5432:5432']
                 env:
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: postgres
                   POSTGRES_DB: postgres
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
           - db_driver: mysql
-            db_host: mariadb
+            db_host: 127.0.0.1
             db_port: "3306"
             db_user: root
             db_pass: secret
@@ -364,11 +374,12 @@ jobs:
             services:
               mariadb:
                 image: mariadb:11
+                ports: ['3306:3306']
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
           - db_driver: mongodb
-            db_host: mongo
+            db_host: 127.0.0.1
             db_port: "27017"
             db_user: ""
             db_pass: ""
@@ -376,6 +387,7 @@ jobs:
             services:
               mongo:
                 image: mongo:7
+                ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
@@ -502,7 +514,7 @@ jobs:
             db_file: ""
             services: {}
           - db_driver: pgsql
-            db_host: postgres
+            db_host: 127.0.0.1
             db_port: "5432"
             db_user: postgres
             db_pass: postgres
@@ -510,13 +522,14 @@ jobs:
             services:
               postgres:
                 image: postgres:16
+                ports: ['5432:5432']
                 env:
                   POSTGRES_USER: postgres
                   POSTGRES_PASSWORD: postgres
                   POSTGRES_DB: postgres
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
           - db_driver: mysql
-            db_host: mariadb
+            db_host: 127.0.0.1
             db_port: "3306"
             db_user: root
             db_pass: secret
@@ -524,6 +537,7 @@ jobs:
             services:
               mariadb:
                 image: mariadb:11
+                ports: ['3306:3306']
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
