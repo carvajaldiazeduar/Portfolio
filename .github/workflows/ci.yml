@@ -286,6 +286,7 @@ jobs:
               db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
               url="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$db"
               if [ "$DB_DRIVER" = "pgsql" ]; then
+                PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE \"$db\""
                 (cd "$d" && DATABASE_URL="$url" npx prisma generate)
                 pushed=0
                 for i in $(seq 1 40); do
