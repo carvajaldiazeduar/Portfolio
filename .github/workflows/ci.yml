@@ -240,6 +240,20 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          # Wait for the database service to accept connections (avoids races with
+          # Prisma `db push` / first test connections right after service start).
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "pgsql" ]; then
+            for i in $(seq 1 30); do
+              if PGPASSWORD=$DB_PASSWORD psql -h "$DB_HOST" -U "$DB_USER" -c '\q' >/dev/null 2>&1; then break; fi
+              echo "waiting for postgres at $DB_HOST..."; sleep 2
+            done
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "mysql" ]; then
+            for i in $(seq 1 30); do
+              if mysql -h "$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e 'SELECT 1' >/dev/null 2>&1; then break; fi
+              echo "waiting for mysql at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
