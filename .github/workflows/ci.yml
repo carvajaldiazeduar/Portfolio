@@ -286,7 +286,15 @@ jobs:
               db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
               url="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$db"
               if [ "$DB_DRIVER" = "pgsql" ]; then
-                (cd "$d" && DATABASE_URL="$url" npx prisma generate && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate)
+                (cd "$d" && DATABASE_URL="$url" npx prisma generate)
+                pushed=0
+                for i in $(seq 1 40); do
+                  if (cd "$d" && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate) >/dev/null 2>&1; then
+                    pushed=1; break
+                  fi
+                  echo "prisma db push attempt $i failed, retrying in 5s..."; sleep 5
+                done
+                [ "$pushed" = 1 ] || { echo "prisma db push failed after retries"; exit 1; }
                 (cd "$d" && DATABASE_URL="$url" npx jest --ci --runInBand --forceExit)
               else
                 echo "=== $d (skipped: prisma provider=$prov, driver=$cur) ==="
@@ -301,6 +309,9 @@ jobs:
                 [ $rc -ne 0 ] && exit 1
               fi
             fi
+            # Free disk space so the database service container stays healthy
+            # across the many sequential `npm install` runs in this job.
+            rm -rf "$d/node_modules" 2>/dev/null || true
           done
 
   php:
