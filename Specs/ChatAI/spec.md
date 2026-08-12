@@ -89,6 +89,15 @@ Generation defaults (apply when the client omits the field):
 - `CHAT_TEMPERATURE` (default `0.7`)
 - `CHAT_MAX_TOKENS` (default `1024`)
 
+Resilience and failover:
+- `CHAT_TIMEOUT_MS` (default `30000`) — per-provider HTTP timeout. A provider
+  that does not respond in time is cut short and the request fails with `502`
+  instead of hanging the worker and other users.
+- `CHAT_FALLBACK_PROVIDER` (default empty = disabled) — when the selected
+  provider fails (`502`/timeout/non-2xx) and this is set with an API key
+  configured, the request is retried once against it; if it also fails, `502`
+  is returned as-is.
+
 ## Endpoints
 
 - `GET /` → serves the chat UI (HTML)
@@ -126,7 +135,10 @@ Generation defaults (apply when the client omits the field):
 - If the selected provider has no API key configured → `400 Bad Request`
   `{"error": "Provider '<name>' is not configured (missing API key)"}`.
 - If the external provider returns an error or does not respond → `502 Bad
-  Gateway` with an error message.
+  Gateway` with an error message; the request is bounded by `CHAT_TIMEOUT_MS`
+  (default 30 s) so a slow provider does not block other users.
+- `CHAT_FALLBACK_PROVIDER` (if set and its key is configured) is attempted once
+  after a provider failure before returning `502`.
 - Each provider adapter normalizes its native response into the shared
   `choices[].role` / `choices[].content` + `usage` shape.
 - The web UI calls `POST /api/chat` and displays the assistant response.
@@ -150,7 +162,10 @@ Tests do not require a real API key: the provider is tested against a mock/stub
 2. `POST /api/chat` with empty `messages` returns `400`.
 3. Request `provider` overrides `CHAT_PROVIDER`; `provider` with no key →
    `400`.
-4. External provider failure → `502`.
+4. Provider failure or `CHAT_TIMEOUT_MS` expiry → `502`.
+5. With `CHAT_FALLBACK_PROVIDER` set+keyed, a primary failure is retried once
+   against the fallback (→ `200`); without a fallback key, the `502` is
+   returned as-is.
 
 ## Containers / Ports
 
