@@ -5,11 +5,13 @@ on:
   pull_request:
 
 # Multi-database matrix.
-# Each DB-backed job runs against sqlite, pgsql, mysql and mongodb.
-# `sqlserver` (MSSQL) is exercised locally via `scripts/ci-local.sh` only,
-# because the mssql:2022 container defaults to encrypted connections that
-# need extra client tuning (see AGENTS.md "Local CI (multi-database)").
+# csharp/node/python/java run against sqlite, pgsql, mysql, mongodb and
+# sqlserver; PHP excludes sqlserver (pdo_sqlsrv needs PHP >= 8.3).
 # Java runs a subset: no mongodb (no JDBC driver in DataSourceConfig).
+# The mssql:2022 image defaults to encrypted connections, so sqlcmd is
+# invoked with `-C` (trust server certificate) and mssql-tools18 is installed
+# on the runner (pinned to its OS version, best-effort); see AGENTS.md
+# "Local CI (multi-database)".
 jobs:
   csharp:
     name: C# (.NET 9) ${{ matrix.db_driver }}
@@ -100,8 +102,8 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
-            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
             for i in $(seq 1 30); do
@@ -220,8 +222,8 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
-            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
             for i in $(seq 1 30); do
@@ -335,8 +337,8 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
-            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           # Wait for the database service to accept connections (avoids races with
           # Prisma `db push` / first test connections right after service start).
@@ -495,8 +497,8 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
-            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
             for i in $(seq 1 30); do
@@ -676,8 +678,8 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
-            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
             for i in $(seq 1 30); do

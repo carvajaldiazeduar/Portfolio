@@ -148,6 +148,14 @@ actually supports; projects that reject a driver — e.g. a Prisma `provider =
 - Java: `sqlite pgsql mysql sqlserver` (no MongoDB JDBC driver in `DataSourceConfig`); the runner keeps a persistent `ci-local-m2` Maven volume and forces `-XX:-TieredCompilation` because Temurin 21.0.11's C1 JIT crashes on `ConcurrentHashMap::putVal`.
 - Ruby: `sqlite` (Rails, on PostgreSQL/MariaDB hosts where tested).
 
+The `sqlserver` jobs use the `mcr.microsoft.com/mssql/server:2022-latest` image, which
+defaults to encrypted connections. Clients invoke `sqlcmd -C` (trust server certificate)
+to connect without configuring a custom CA. In GitHub Actions the runner also installs
+`mssql-tools18` via apt, pinned to the runner's Ubuntu version
+(`$(. /etc/os-release; echo $VERSION_ID)`) and made best-effort (`|| true`) so a missing
+Microsoft apt repo does not fail the job; local `ci-local.sh` runs instead use the
+`sqlcmd` shipped inside the mssql container, so no host-side install is needed there.
+
 At startup the script runs `podman container prune -f` to remove every **stopped**
 container (not just the `ci-local-*` ones) left over from previous runs; a trap cleans
 the `ci-local-*` containers + network on exit.
