@@ -64,6 +64,21 @@ jobs:
                 image: mongo:7
                 ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+          - db_driver: sqlserver
+            db_host: 127.0.0.1
+            db_port: "1433"
+            db_user: sa
+            db_pass: 'SqlServer123!'
+            db_file: ""
+            services:
+              sqlserver:
+                image: mcr.microsoft.com/mssql/server:2022-latest
+                ports: ['1433:1433']
+                env:
+                  ACCEPT_EULA: 'Y'
+                  MSSQL_SA_PASSWORD: 'SqlServer123!'
+                  MSSQL_PID: 'Developer'
+                options: --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q 'SELECT 1' -C -b" --health-interval 10s --health-timeout 5s --health-retries 15
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -83,10 +98,22 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
+            for i in $(seq 1 30); do
+              if /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q 'SELECT 1' -C -b >/dev/null 2>&1; then break; fi
+              echo "waiting for sqlserver at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
               mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+              sqlserver) /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "IF DB_ID('$db') IS NULL CREATE DATABASE [$db]" -C -b 2>/dev/null || true ;;
             esac
           done
       - name: Test all C# projects
@@ -151,6 +178,21 @@ jobs:
                 image: mongo:7
                 ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+          - db_driver: sqlserver
+            db_host: 127.0.0.1
+            db_port: "1433"
+            db_user: sa
+            db_pass: 'SqlServer123!'
+            db_file: ""
+            services:
+              sqlserver:
+                image: mcr.microsoft.com/mssql/server:2022-latest
+                ports: ['1433:1433']
+                env:
+                  ACCEPT_EULA: 'Y'
+                  MSSQL_SA_PASSWORD: 'SqlServer123!'
+                  MSSQL_PID: 'Developer'
+                options: --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q 'SELECT 1' -C -b" --health-interval 10s --health-timeout 5s --health-retries 15
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -168,15 +210,30 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary pymysql pymongo pymssql chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            printf '[global]\n  tds version = 7.4\n  trust = yes\n' > ~/.freetds.conf
+          fi
       - name: Create databases
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
+            for i in $(seq 1 30); do
+              if /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q 'SELECT 1' -C -b >/dev/null 2>&1; then break; fi
+              echo "waiting for sqlserver at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
               mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+              sqlserver) /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "IF DB_ID('$db') IS NULL CREATE DATABASE [$db]" -C -b 2>/dev/null || true ;;
             esac
           done
       - name: Test all Python projects
@@ -242,6 +299,21 @@ jobs:
                 image: mongo:7
                 ports: ['27017:27017']
                 options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+          - db_driver: sqlserver
+            db_host: 127.0.0.1
+            db_port: "1433"
+            db_user: sa
+            db_pass: 'SqlServer123!'
+            db_file: ""
+            services:
+              sqlserver:
+                image: mcr.microsoft.com/mssql/server:2022-latest
+                ports: ['1433:1433']
+                env:
+                  ACCEPT_EULA: 'Y'
+                  MSSQL_SA_PASSWORD: 'SqlServer123!'
+                  MSSQL_PID: 'Developer'
+                options: --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q 'SELECT 1' -C -b" --health-interval 10s --health-timeout 5s --health-retries 15
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -261,6 +333,11 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+          fi
           # Wait for the database service to accept connections (avoids races with
           # Prisma `db push` / first test connections right after service start).
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "pgsql" ]; then
@@ -275,10 +352,17 @@ jobs:
               echo "waiting for mysql at $DB_HOST..."; sleep 2
             done
           fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
+            for i in $(seq 1 30); do
+              if /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q 'SELECT 1' -C -b >/dev/null 2>&1; then break; fi
+              echo "waiting for sqlserver at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
               mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+              sqlserver) /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "IF DB_ID('$db') IS NULL CREATE DATABASE [$db]" -C -b 2>/dev/null || true ;;
             esac
           done
       - name: Test all Node.js projects
@@ -409,10 +493,22 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
+            for i in $(seq 1 30); do
+              if /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q 'SELECT 1' -C -b >/dev/null 2>&1; then break; fi
+              echo "waiting for sqlserver at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
               mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+              sqlserver) /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "IF DB_ID('$db') IS NULL CREATE DATABASE [$db]" -C -b 2>/dev/null || true ;;
             esac
           done
       - name: Lint all PHP files
@@ -541,6 +637,21 @@ jobs:
                 env:
                   MARIADB_ROOT_PASSWORD: secret
                 options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+          - db_driver: sqlserver
+            db_host: 127.0.0.1
+            db_port: "1433"
+            db_user: sa
+            db_pass: 'SqlServer123!'
+            db_file: ""
+            services:
+              sqlserver:
+                image: mcr.microsoft.com/mssql/server:2022-latest
+                ports: ['1433:1433']
+                env:
+                  ACCEPT_EULA: 'Y'
+                  MSSQL_SA_PASSWORD: 'SqlServer123!'
+                  MSSQL_PID: 'Developer'
+                options: --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q 'SELECT 1' -C -b" --health-interval 10s --health-timeout 5s --health-retries 15
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -563,10 +674,22 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          if [ "$DB_DRIVER" = "sqlserver" ]; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
+            for i in $(seq 1 30); do
+              if /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q 'SELECT 1' -C -b >/dev/null 2>&1; then break; fi
+              echo "waiting for sqlserver at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
               mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+              sqlserver) /opt/mssql-tools18/bin/sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USER" -P "$DB_PASSWORD" -Q "IF DB_ID('$db') IS NULL CREATE DATABASE [$db]" -C -b 2>/dev/null || true ;;
             esac
           done
       - name: Test all Java projects

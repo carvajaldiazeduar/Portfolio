@@ -22,6 +22,7 @@ class SQLServer(DatabaseAdapter):
             password=os.getenv("DB_PASSWORD", "your_password"),
             database=os.getenv("DB_NAME", "contacts"),
             port=int(os.getenv("DB_PORT", "1433")),
+            tds_version='7.4',
         )
 
     def _translate(self, col_def):
