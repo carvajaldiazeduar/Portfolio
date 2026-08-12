@@ -9,15 +9,16 @@ Middleware chain over the Express router:
 2. **Rate limit**: controls per-IP requests using cache (Redis, with local fallback), window + counter.
 3. **Proxy**: forwards to the configured backend services via `{X}_SERVICE_URL`.
 
-Only a **Node.js** implementation exists. No DB — only cache for rate limiting.
+Node.js and Java (Spring Boot) implementations exist. No DB — only cache for rate limiting.
 
 ## Implementations
 - **Node.js**: Web (Express) — only implementation
 - **Java**: Web (Spring Boot 3.3.4, Java 21; JWT auth + cache rate limiting + proxy)
 
 ## Adapters
-- **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (for rate limiting)
 - **Middleware**: `middleware/{auth,rateLimit,proxy}.js`
+- **Java**: `AuthFilter` (JWT) + `RateLimitFilter` (cache) + `ProxyController`/`ProxyService` (RestTemplate)
+- **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (for rate limiting)
 
 ## Env vars
 - `JWT_SECRET` — secret to sign/verify tokens
@@ -40,4 +41,4 @@ Only a **Node.js** implementation exists. No DB — only cache for rate limiting
 | Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
-Compose: API on `3000:3000`, Redis on `6379:6379`. No DB service.
+Compose: API on `3000:3000` (Node) / `5000:5000` (Java), Redis on `6379:6379`. No DB service.

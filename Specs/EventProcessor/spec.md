@@ -8,7 +8,7 @@ Async event processor: receives events via API, publishes them to a queue and co
 - **Worker** (`worker.js`): consumes events from the queue and processes them (persistence/log).
 - **Queue**: `QueueAdapter` (interface + factory + per-driver adapters).
 
-Only a **Node.js** implementation exists. No DB — only a queue.
+Node.js (Express) and Java (Spring Boot) implementations exist. No DB — only a queue.
 
 ## Implementations
 - **Node.js**: Web (Express) + separate worker
@@ -16,6 +16,7 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 
 ## Adapters
 - **Queue**: `QueueAdapter` + `QueueFactory` + `adapters/{RedisQueue,RabbitMQ,Kafka,SQS}.js`
+- **Java queue**: `queue/` with `QueueAdapter` + `QueueConfig` (factory) + adapters `{InMemory,Redis,RabbitMq,Kafka,Sqs}`; worker via `JobWorker` + `JobRegistry`
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` (optional)
 
 ## Env vars

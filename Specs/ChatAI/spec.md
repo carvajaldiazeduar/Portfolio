@@ -23,6 +23,7 @@ Each Plain implementation exposes the same endpoints, request/response contract 
   - Node.js: `completeChat()` in `server.js` (fetch)
   - PHP: `completeChat()` in `index.php` (stream context)
   - Ruby: `complete_chat()` in `server.rb` (Net::HTTP)
+  - Java: `IChatProvider` + `OpenAiCompatibleChatProvider` (RestTemplate), selected via `ChatProviderConfig`
 - Selected via env var: `CHAT_PROVIDER` (default `openai`).
 
 ## Env vars
@@ -87,6 +88,7 @@ Tests do not require a real API key: the HTTP provider is tested against a mock/
 | Python | `python:3.11-slim` | `5000:5000` |
 | Node.js | `node:20-alpine` | `3000:3000` |
 | Ruby | `ruby:3.2-alpine` | `3000:3000` |
+| Java | `maven:3.9-eclipse-temurin-21` build / `eclipse-temurin:21-jre-alpine` runtime | `5000:5000` |
 
 Run with Podman: `podman compose up` from each `Web/<Impl>/` folder.
 
@@ -127,7 +129,7 @@ ChatAI/
 │       ├── index.php
 │       ├── template.html
 │       └── tests/
-└── Ruby/Web/Plain/
+├── Ruby/Web/Plain/
     ├── Dockerfile
     ├── docker-compose.yml
     └── src/
@@ -135,4 +137,5 @@ ChatAI/
         ├── Gemfile
         ├── template.html
         └── tests/
+└── Java/Web/SpringBoot/ (Dockerfile, docker-compose.yml + Spring Boot app in src/: WebController, ChatController, Providers/IChatProvider + OpenAiCompatibleChatProvider)
 ```

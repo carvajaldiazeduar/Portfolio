@@ -19,6 +19,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (`CACHE_TYPE`, `REDIS_HOST`, `CACHE_TTL`)
 - C# Web uses EF Core (`ContactsDbContext`) instead of `DatabaseAdapter`.
 - Ruby uses Rails ORM + `Rails.cache` (`:redis_cache_store` / `:memory_store`).
+- Java Web uses Spring Boot JPA/Hibernate + Hikari (`DataSourceConfig`) + `CacheConfig` with `LocalCache`/`RedisCache` instead of `DatabaseAdapter`; Java Cli uses plain JDBC adapters.
 
 ## Env vars
 - `DB_DRIVER` (default `pgsql`), `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_FILE` (SQLite)
@@ -65,4 +66,4 @@ per-field message. Empty/whitespace-only values are treated as missing.
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 
 ## Containers / Ports
-Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`.
+Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`.

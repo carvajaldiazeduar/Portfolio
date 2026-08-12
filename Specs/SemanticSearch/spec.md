@@ -19,6 +19,7 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (`CACHE_TYPE`, `REDIS_HOST`, `CACHE_TTL`)
 - **C# EXCEPTION**: `SemanticSearch/CSharp` does NOT use EF Core or an external `Storage/`. It defines abstract `VectorStoreAdapter`/`CacheAdapter` **inline in `Program.cs`** with `Npgsql 7.0.0` + `StackExchange.Redis 2.7.0`. Do not add a DbContext there.
 - **PHP Plain EXCEPTION**: keeps its cache classes under `src/Storage/` (CacheAdapter, CacheFactory, Adapters/{Local,Redis}.php) and its vector drivers under `src/Storage/Adapters/{ChromaDB,PgVector,Pinecone}.php`. Do not "fix" it.
+- **Java EXCEPTION**: `SemanticSearch/Java/Web/SpringBoot` keeps vector stores under `vectorstore/` (`VectorStoreAdapter` + `VectorStoreConfig` + `{ChromaDbVectorStore,PgVectorStore,PineconeStore,InMemoryVectorStore}`, falling back to `InMemoryVectorStore` when Chroma is unreachable) and cache via `CacheAdapter`/`CacheConfig` (`LocalCache`/`RedisCache`). Don't add a DbContext there.
 
 ## Env vars
 - `VECTOR_DRIVER` (default `chromadb`) — `chromadb` | `pinecone` | `pgvector`
@@ -47,4 +48,4 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 | Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
-Compose adds a `chroma` service alongside Redis. API per framework: Plain/Express/Flask `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, C# `80`/`8000`.
+Compose adds a `chroma` service alongside Redis. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, C# `80`/`8000`.

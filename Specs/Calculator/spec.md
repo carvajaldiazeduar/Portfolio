@@ -38,4 +38,4 @@ None required (no DB/cache). Web port set via compose.
 | Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
-Per framework: Plain/Express/Flask on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`. C# web uses `mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine` images.
+Per framework: Plain/Express/Flask/Spring Boot on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`. C# web uses `mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine` images.
