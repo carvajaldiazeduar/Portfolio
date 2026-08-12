@@ -270,7 +270,7 @@ jobs:
             fi
             if [ -d "$d/prisma" ]; then
               db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
-              url="postgresql://postgres:postgres@localhost:5432/$db"
+              url="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$db"
               if [ "$DB_DRIVER" = "pgsql" ]; then
                 (cd "$d" && DATABASE_URL="$url" npx prisma generate && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate)
                 (cd "$d" && DATABASE_URL="$url" npx jest --ci --runInBand --forceExit)
