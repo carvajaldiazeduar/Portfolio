@@ -1,12 +1,40 @@
 # ChatAI — Spec
 
 ## Purpose
-AI chat API: receives a message history, sends it to an LLM provider (OpenAI-compatible) and returns the assistant response. Designed as an abstraction layer for different providers and models.
+
+AI chat API: receives a message history, routes it to a configured LLM provider
+(OpenAI-compatible or a native adapter), and returns the assistant response.
+Designed as an **abstraction layer over multiple providers, each with its own
+credentials sourced from environment variables**. No DB or cache.
 
 ## Architecture
-HTTP API that translates chat requests to an external OpenAI-compatible LLM provider (`/v1/chat/completions`). Communication with the provider is encapsulated in a concrete adapter so providers can be swapped without changing the API contract. No DB or cache.
+
+HTTP API that translates chat requests to an external LLM provider and returns
+the assistant response. The provider is resolved per-request through a
+`ChatProviderFactory`:
+
+1. `provider` field in the request body (if present) wins;
+2. otherwise the `CHAT_PROVIDER` environment variable;
+3. otherwise the default `openai`.
+
+Each provider has a dedicated adapter that knows its endpoint, auth header and
+request/response shape. Only the provider family is switchable; the public API
+contract (`POST /api/chat`, request/response schema, status codes) is identical
+across all implementations. A provider that is asked for but has no API key
+configured responds with `400 Bad Request`; an upstream failure responds with
+`502 Bad Gateway`.
+
+```
+POST /api/chat ──► ChatController ──► ChatProviderFactory ──► IChatProvider
+                                          │ openai      ──► OpenAiCompatibleChatProvider
+                                          │ openai-compatible ─► OpenAiCompatibleChatProvider  (custom base url)
+                                          │ azure       ──► AzureChatProvider
+                                          │ google      ──► GoogleChatProvider
+                                          │ anthropic   ──► AnthropicChatProvider
+```
 
 ## Implementations
+
 - **PHP**: Web (Plain `src/index.php`)
 - **Python**: Web (Plain `src/app.py`, Flask)
 - **CSharp**: Web (AspNetMinimalApi `src/Program.cs`)
@@ -14,58 +42,97 @@ HTTP API that translates chat requests to an external OpenAI-compatible LLM prov
 - **Ruby**: Web (Plain `src/server.rb`, WEBrick)
 - **Java**: Web (Spring Boot 3.3.4, Java 21; stateless, no DB/cache)
 
-Each Plain implementation exposes the same endpoints, request/response contract and env vars as the C# one.
+Each Plain implementation exposes the same endpoints, request/response contract
+and env vars as the C# one. The C# implementation is the reference contract.
 
 ## Adapters
-- **LLM**: a provider function/method that POSTs to `/v1/chat/completions`:
-  - C#: `IChatProvider` interface + `OpenAiCompatibleChatProvider` (HttpClient)
-  - Python: `complete_chat()` in `app.py` (urllib)
-  - Node.js: `completeChat()` in `server.js` (fetch)
-  - PHP: `completeChat()` in `index.php` (stream context)
-  - Ruby: `complete_chat()` in `server.rb` (Net::HTTP)
-  - Java: `IChatProvider` + `OpenAiCompatibleChatProvider` (RestTemplate), selected via `ChatProviderConfig`
-- Selected via env var: `CHAT_PROVIDER` (default `openai`).
+
+- **ChatProviderFactory**: maps a provider name → a concrete `IChatProvider`
+  (built from per-provider env vars). Present in C# (`Program.cs`), Node
+  (`server.js`), Python (`app.py`), PHP (`index.php`), Ruby (`server.rb`) and
+  Java (`ChatProviderConfig`).
+- **IChatProvider** contract: `completeChat(request) -> response` (each
+  language names it accordingly, e.g. `CompleteAsync` in C#,
+  `complete_chat` in Python/Ruby, `completeChat` in Node/PHP,
+  `completeChat` in Java).
+
+Per-provider adapters (one class/function per provider):
+  - **openai / openai-compatible** → `OpenAiCompatibleChatProvider`
+    (`POST {base_url}/v1/chat/completions`, `Authorization: Bearer {key}`,
+    OpenAI message/choice format).
+  - **azure** → `AzureChatProvider`
+    (`POST {endpoint}/openai/deployments/{deployment}/chat/completions?api-version=...`,
+    `api-key` header).
+  - **google** → `GoogleChatProvider`
+    (`POST {base_url}/v1beta/models/{model}:generateContent?key={key}`,
+    `contents[]` format).
+  - **anthropic** → `AnthropicChatProvider`
+    (`POST {base_url}/v1/messages`, `x-api-key` + `anthropic-version:
+    2023-06-01` headers, `messages[]` + `content[0].text` format).
+- Selected via the per-request `provider` field, falling back to
+  `CHAT_PROVIDER`.
 
 ## Env vars
-- `CHAT_PROVIDER` (default `openai`) — active LLM provider
-- `OPENAI_API_KEY` — provider API key
-- `OPENAI_BASE_URL` (default `https://api.openai.com/v1`) — OpenAI-compatible base URL
-- `CHAT_MODEL` (default `gpt-4o-mini`) — default model
-- `CHAT_TEMPERATURE` (default `0.7`) — generation temperature
-- `CHAT_MAX_TOKENS` (default `1024`) — response token limit
+
+Provider selection:
+- `CHAT_PROVIDER` (default `openai`) — active provider family:
+  `openai`, `openai-compatible`, `azure`, `google`, `anthropic`.
+
+Per-provider credentials (each provider reads only its own vars):
+- `OPENAI_API_KEY` (+ `OPENAI_BASE_URL`, default `https://api.openai.com/v1`)
+- `AZURE_OPENAI_API_KEY` (+ `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`)
+- `GOOGLE_API_KEY` (+ `GOOGLE_BASE_URL`, default `https://generativelanguage.googleapis.com`)
+- `ANTHROPIC_API_KEY` (+ `ANTHROPIC_BASE_URL`, default `https://api.anthropic.com`)
+
+Generation defaults (apply when the client omits the field):
+- `CHAT_MODEL` (default `gpt-4o-mini`)
+- `CHAT_TEMPERATURE` (default `0.7`)
+- `CHAT_MAX_TOKENS` (default `1024`)
 
 ## Endpoints
+
 - `GET /` → serves the chat UI (HTML)
-- `GET /health` → service status → `{ "status": "ok" }`
+- `GET /health` → `{ "status": "ok" }`
 - `POST /api/chat` → body:
   ```json
   {
     "messages": [{ "role": "user", "content": "Hello" }],
-    "model": "gpt-4o-mini",
-    "temperature": 0.7,
-    "max_tokens": 1024
+    "provider": "openai",          // optional; overrides CHAT_PROVIDER
+    "model": "gpt-4o-mini",        // optional; overrides CHAT_MODEL
+    "temperature": 0.7,            // optional
+    "max_tokens": 1024             // optional
   }
   ```
   → `200 OK`:
   ```json
   {
     "id": "chatcmpl-...",
+    "provider": "openai",
     "model": "gpt-4o-mini",
     "choices": [{ "role": "assistant", "content": "Hello! How can I help you?" }],
     "usage": { "prompt_tokens": 5, "completion_tokens": 12, "total_tokens": 17 }
   }
   ```
-  → `400` if `messages` is empty or invalid; `502` if the external provider fails.
+  → `400` if `messages` is empty/invalid, **or** if the requested provider has
+  no API key configured; `502` if the external provider fails.
 - `GET /openapi.json` → OpenAPI 3.0 spec of this API
 - `GET /swagger` → Swagger UI (HTML, loads spec from CDN)
 
 ## Behavior
-- Model/params sent by the client override the server defaults.
+
+- Request `provider` overrides `CHAT_PROVIDER`; `model`/`temperature`/`max_tokens`
+  override the server defaults.
 - If `messages` is empty or null → `400 Bad Request`.
-- If the external provider returns an error or does not respond → `502 Bad Gateway` with an error message.
+- If the selected provider has no API key configured → `400 Bad Request`
+  `{"error": "Provider '<name>' is not configured (missing API key)"}`.
+- If the external provider returns an error or does not respond → `502 Bad
+  Gateway` with an error message.
+- Each provider adapter normalizes its native response into the shared
+  `choices[].role` / `choices[].content` + `usage` shape.
 - The web UI calls `POST /api/chat` and displays the assistant response.
 
 ## Tests
+
 | Language | Framework | Where |
 |---|---|---|
 | C# | xUnit | `CSharp/Web/AspNetMinimalApi/src/tests/` |
@@ -75,12 +142,18 @@ Each Plain implementation exposes the same endpoints, request/response contract 
 | Ruby | minitest | `Ruby/Web/Plain/src/tests/` |
 | Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
-Tests do not require a real API key: the HTTP provider is tested against a mock/stub. They cover:
-1. `POST /api/chat` with a valid message returns the assistant response (against a mock provider).
+Tests do not require a real API key: the provider is tested against a mock/stub
+(or a mocked factory at the controller level). They cover:
+
+1. `POST /api/chat` with a valid message returns the assistant response
+   (against a mock provider) and echoes the resolved `provider`.
 2. `POST /api/chat` with empty `messages` returns `400`.
-3. External provider failure -> `502`.
+3. Request `provider` overrides `CHAT_PROVIDER`; `provider` with no key →
+   `400`.
+4. External provider failure → `502`.
 
 ## Containers / Ports
+
 | Language | Image | Port |
 |---|---|---|
 | C# | `mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine` | `3000:8080` |
@@ -90,9 +163,13 @@ Tests do not require a real API key: the HTTP provider is tested against a mock/
 | Ruby | `ruby:3.2-alpine` | `3000:3000` |
 | Java | `maven:3.9-eclipse-temurin-21` build / `eclipse-temurin:21-jre-alpine` runtime | `5000:5000` |
 
-Run with Podman: `podman compose up` from each `Web/<Impl>/` folder.
+Run with Podman: `podman compose up` from each `Web/<Impl>/` folder. Each
+compose file exposes `CHAT_PROVIDER` and the OpenAI family
+(`OPENAI_API_KEY`/`OPENAI_BASE_URL`) by default; the remaining provider keys
+are read from the environment at runtime when set.
 
 ## Folder structure
+
 ```
 ChatAI/
 ├── CSharp/Web/AspNetMinimalApi/
@@ -104,7 +181,11 @@ ChatAI/
 │       ├── wwwroot/index.html
 │       ├── Providers/
 │       │   ├── IChatProvider.cs
-│       │   └── OpenAiCompatibleChatProvider.cs
+│       │   ├── ChatProviderFactory.cs
+│       │   ├── OpenAiCompatibleChatProvider.cs
+│       │   ├── AzureChatProvider.cs
+│       │   ├── GoogleChatProvider.cs
+│       │   └── AnthropicChatProvider.cs
 │       └── tests/
 ├── Python/Web/Plain/
 │   ├── Dockerfile
@@ -120,6 +201,7 @@ ChatAI/
 │   └── src/
 │       ├── server.js
 │       ├── package.json
+│       ├── package-lock.json
 │       ├── public/index.html
 │       └── tests/
 ├── PHP/Web/Plain/
@@ -130,12 +212,14 @@ ChatAI/
 │       ├── template.html
 │       └── tests/
 ├── Ruby/Web/Plain/
-    ├── Dockerfile
-    ├── docker-compose.yml
-    └── src/
-        ├── server.rb
-        ├── Gemfile
-        ├── template.html
-        └── tests/
-└── Java/Web/SpringBoot/ (Dockerfile, docker-compose.yml + Spring Boot app in src/: WebController, ChatController, Providers/IChatProvider + OpenAiCompatibleChatProvider)
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── src/
+│       ├── server.rb
+│       ├── Gemfile
+│       ├── template.html
+│       └── tests/
+└── Java/Web/SpringBoot/ (Dockerfile, docker-compose.yml + Spring Boot app:
+    WebController/ChatController, provider/IChatProvider + ChatProviderFactory +
+    OpenAi/Azure/Google/Anthropic adapters, model/{ChatRequest,Message,ChatResponse,ChatChoice,ChatUsage})
 ```
