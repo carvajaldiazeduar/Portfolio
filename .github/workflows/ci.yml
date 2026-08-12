@@ -17,12 +17,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+          - db_driver: pgsql
+            db_host: postgres
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+          - db_driver: mysql
+            db_host: mariadb
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+          - db_driver: mongodb
+            db_host: mongo
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -78,12 +97,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+          - db_driver: pgsql
+            db_host: postgres
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+          - db_driver: mysql
+            db_host: mariadb
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+          - db_driver: mongodb
+            db_host: mongo
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -143,12 +181,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["/tmp/contacts.db", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: /tmp/contacts.db
+          - db_driver: pgsql
+            db_host: postgres
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+          - db_driver: mysql
+            db_host: mariadb
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+          - db_driver: mongodb
+            db_host: mongo
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -238,12 +295,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+          - db_driver: pgsql
+            db_host: postgres
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+          - db_driver: mysql
+            db_host: mariadb
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+          - db_driver: mongodb
+            db_host: mongo
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -375,12 +451,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql]
-        db_host: ["", "postgres", "mariadb"]
-        db_port: ["", "5432", "3306"]
-        db_user: ["", "postgres", "root"]
-        db_pass: ["", "postgres", "secret"]
-        db_file: ["", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+          - db_driver: pgsql
+            db_host: postgres
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+          - db_driver: mysql
+            db_host: mariadb
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
