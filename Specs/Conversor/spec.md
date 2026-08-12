@@ -12,6 +12,7 @@ App with no persistence. Pure conversion logic based on unit type and value. Sta
 - **CSharp**: Cli (`Cli/Conversor.cs`) + Web (AspNetMinimalApi `Program.cs`, Blazor)
 - **Node.js**: Cli (`Cli/conversor.js`) + Web (Express, NextJS, React)
 - **Ruby**: Cli (`Cli/conversor.rb`) + Web (RubyOnRails)
+- **Java**: Cli (plain Java + JUnit 5) + Web (Spring Boot 3.3.4, Java 21)
 
 ## Adapters
 None — no DB or cache.
@@ -34,6 +35,8 @@ None required. Web port set via compose.
 | Python | pytest | `Cli/tests/` and `Web/*/src/tests/` |
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
 | PHP | assert | `Cli/tests/` via `php -d zend.assertions=1 -d assert.exception=1`; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
+| Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
+| Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
-Per framework: Plain/Express/Flask on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`.
+Per framework: Plain/Express/Flask/Spring Boot on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`.

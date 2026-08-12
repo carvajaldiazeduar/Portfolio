@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../VectorAdapter.php';
+require_once __DIR__ . '/ChromaClient.php';
 
 class ChromaDB implements VectorStoreAdapter {
     private ?object $client = null;
@@ -7,14 +8,10 @@ class ChromaDB implements VectorStoreAdapter {
 
     public function connect(): void {
         if ($this->client !== null) return;
-        try {
-            $this->client = new \Chroma\Client(
-                getenv('CHROMA_HOST') ?: 'localhost',
-                (int)(getenv('CHROMA_PORT') ?: '8000')
-            );
-        } catch (Exception $e) {
-            $this->client = new \Chroma\Client();
-        }
+        $this->client = new \Chroma\Client(
+            getenv('CHROMA_HOST') ?: 'localhost',
+            (int)(getenv('CHROMA_PORT') ?: '8000')
+        );
     }
 
     public function addDocuments(array $documents, array $embeddings, array $metadata): void {

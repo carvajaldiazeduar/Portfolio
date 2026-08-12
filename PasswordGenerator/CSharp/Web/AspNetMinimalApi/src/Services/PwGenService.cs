@@ -18,13 +18,28 @@ public class PwGenService
 
     public string Generate(int length, bool useUpper, bool useLower, bool useDigits, bool useSymbols)
     {
-        var chars = "";
-        if (useUpper) chars += Upper;
-        if (useLower) chars += Lower;
-        if (useDigits) chars += Digits;
-        if (useSymbols) chars += Symbols;
-        if (chars == "") throw new ArgumentException("Select at least one character type");
-        var password = new string(Enumerable.Range(0, length).Select(_ => chars[Random.Shared.Next(chars.Length)]).ToArray());
+        var categories = new List<string>();
+        if (useUpper) categories.Add(Upper);
+        if (useLower) categories.Add(Lower);
+        if (useDigits) categories.Add(Digits);
+        if (useSymbols) categories.Add(Symbols);
+        if (categories.Count == 0)
+            throw new ArgumentException("Select at least one character type");
+        if (length < categories.Count)
+            throw new ArgumentException(
+                $"Password length must be at least {categories.Count} when {categories.Count} categories are enabled");
+
+        var rng = Random.Shared;
+        var passwordChars = new char[length];
+        var index = 0;
+        foreach (var cat in categories)
+            passwordChars[index++] = cat[rng.Next(cat.Length)];
+        var allChars = string.Concat(categories);
+        while (index < length)
+            passwordChars[index++] = allChars[rng.Next(allChars.Length)];
+        rng.Shuffle(passwordChars);
+        var password = new string(passwordChars);
+
         var entry = new PasswordEntry { Password = password, Length = length, CreatedAt = DateTime.UtcNow.ToString("o") };
         _db.PasswordEntries.Add(entry);
         _db.SaveChanges();

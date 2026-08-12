@@ -12,6 +12,7 @@ HTTP API that translates chat requests to an external OpenAI-compatible LLM prov
 - **CSharp**: Web (AspNetMinimalApi `src/Program.cs`)
 - **Node.js**: Web (Plain `src/server.js`, Express)
 - **Ruby**: Web (Plain `src/server.rb`, WEBrick)
+- **Java**: Web (Spring Boot 3.3.4, Java 21; stateless, no DB/cache)
 
 Each Plain implementation exposes the same endpoints, request/response contract and env vars as the C# one.
 
@@ -22,6 +23,7 @@ Each Plain implementation exposes the same endpoints, request/response contract 
   - Node.js: `completeChat()` in `server.js` (fetch)
   - PHP: `completeChat()` in `index.php` (stream context)
   - Ruby: `complete_chat()` in `server.rb` (Net::HTTP)
+  - Java: `IChatProvider` + `OpenAiCompatibleChatProvider` (RestTemplate), selected via `ChatProviderConfig`
 - Selected via env var: `CHAT_PROVIDER` (default `openai`).
 
 ## Env vars
@@ -71,11 +73,12 @@ Each Plain implementation exposes the same endpoints, request/response contract 
 | Node.js | Jest | `Node.js/Web/Plain/src/tests/` |
 | PHP | asserts | `PHP/Web/Plain/src/tests/` (not runnable as-is) |
 | Ruby | minitest | `Ruby/Web/Plain/src/tests/` |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 Tests do not require a real API key: the HTTP provider is tested against a mock/stub. They cover:
 1. `POST /api/chat` with a valid message returns the assistant response (against a mock provider).
 2. `POST /api/chat` with empty `messages` returns `400`.
-3. External provider failure → `502`.
+3. External provider failure -> `502`.
 
 ## Containers / Ports
 | Language | Image | Port |
@@ -85,6 +88,7 @@ Tests do not require a real API key: the HTTP provider is tested against a mock/
 | Python | `python:3.11-slim` | `5000:5000` |
 | Node.js | `node:20-alpine` | `3000:3000` |
 | Ruby | `ruby:3.2-alpine` | `3000:3000` |
+| Java | `maven:3.9-eclipse-temurin-21` build / `eclipse-temurin:21-jre-alpine` runtime | `5000:5000` |
 
 Run with Podman: `podman compose up` from each `Web/<Impl>/` folder.
 
@@ -125,7 +129,7 @@ ChatAI/
 │       ├── index.php
 │       ├── template.html
 │       └── tests/
-└── Ruby/Web/Plain/
+├── Ruby/Web/Plain/
     ├── Dockerfile
     ├── docker-compose.yml
     └── src/
@@ -133,4 +137,5 @@ ChatAI/
         ├── Gemfile
         ├── template.html
         └── tests/
+└── Java/Web/SpringBoot/ (Dockerfile, docker-compose.yml + Spring Boot app in src/: WebController, ChatController, Providers/IChatProvider + OpenAiCompatibleChatProvider)
 ```

@@ -6,14 +6,17 @@ Configurable ETL data pipeline: ingest data from sources (CSV/JSON), transform a
 ## Architecture
 Lightweight ETL pipeline in Python. Warehouse persistence via `DataWarehouseAdapter` (interface + factory + per-driver adapters) and optional cache. Pipelines are defined by name and run synchronously.
 
-Only a **Python** implementation exists.
+Python (Flask) and Java (Spring Boot) implementations exist.
 
 ## Implementations
 - **Python**: Web (Plain, Flask)
+- **Java**: Web (Spring Boot 3.3.4, Java 21; warehouse adapters — DuckDB default — + cache)
 
 ## Adapters
 - **Warehouse**: `warehouse_adapter.py` (ABC) + `warehouse_factory.py` + `adapters/{duckdb,bigquery,postgresql}.py`
+- **Java warehouse**: `DataWarehouseAdapter` + `WarehouseConfig` + `{DuckDb,BigQuery,Postgresql}Warehouse`
 - **Cache**: `cache_adapter.py` + `adapters/{redis,local}.py` + `cache_factory.py` (`create_cache`)
+- **Java cache**: `CacheAdapter`/`CacheConfig` (`LocalCache`/`RedisCache`)
 
 ## Env vars
 - `WAREHOUSE_DRIVER` (default `duckdb`) — `duckdb` | `bigquery` | `postgresql`
@@ -34,6 +37,7 @@ Only a **Python** implementation exists.
 | Language | Framework | Where |
 |---|---|---|
 | Python | pytest | `src/tests/` (from `src/`) |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose in `DataPipeline/Python/Web/Plain`. Port per framework.

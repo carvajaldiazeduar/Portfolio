@@ -9,6 +9,7 @@ on:
 # `sqlserver` (MSSQL) is exercised locally via `scripts/ci-local.sh` only,
 # because the mssql:2022 container defaults to encrypted connections that
 # need extra client tuning (see AGENTS.md "Local CI (multi-database)").
+# Java runs a subset: no mongodb (no JDBC driver in DataSourceConfig).
 jobs:
   csharp:
     name: C# (.NET 9) ${{ matrix.db_driver }}
@@ -16,12 +17,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services: {}
+          - db_driver: pgsql
+            db_host: 127.0.0.1
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+            services:
+              postgres:
+                image: postgres:16
+                ports: ['5432:5432']
+                env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - db_driver: mysql
+            db_host: 127.0.0.1
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+            services:
+              mariadb:
+                image: mariadb:11
+                ports: ['3306:3306']
+                env:
+                  MARIADB_ROOT_PASSWORD: secret
+                options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+          - db_driver: mongodb
+            db_host: 127.0.0.1
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services:
+              mongo:
+                image: mongo:7
+                ports: ['27017:27017']
+                options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -30,22 +72,7 @@ jobs:
       DB_PASSWORD: ${{ matrix.db_pass }}
       DB_FILE: ${{ matrix.db_file }}
       CACHE_TYPE: local
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: secret
-        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
-      mongo:
-        image: mongo:7
-        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+    services: ${{ matrix.services }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -77,12 +104,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services: {}
+          - db_driver: pgsql
+            db_host: 127.0.0.1
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+            services:
+              postgres:
+                image: postgres:16
+                ports: ['5432:5432']
+                env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - db_driver: mysql
+            db_host: 127.0.0.1
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+            services:
+              mariadb:
+                image: mariadb:11
+                ports: ['3306:3306']
+                env:
+                  MARIADB_ROOT_PASSWORD: secret
+                options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+          - db_driver: mongodb
+            db_host: 127.0.0.1
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services:
+              mongo:
+                image: mongo:7
+                ports: ['27017:27017']
+                options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -91,22 +159,7 @@ jobs:
       DB_PASSWORD: ${{ matrix.db_pass }}
       DB_FILE: ${{ matrix.db_file }}
       CACHE_TYPE: local
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: secret
-        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
-      mongo:
-        image: mongo:7
-        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+    services: ${{ matrix.services }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -142,12 +195,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["/tmp/contacts.db", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: /tmp/contacts.db
+            services: {}
+          - db_driver: pgsql
+            db_host: 127.0.0.1
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+            services:
+              postgres:
+                image: postgres:16
+                ports: ['5432:5432']
+                env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - db_driver: mysql
+            db_host: 127.0.0.1
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+            services:
+              mariadb:
+                image: mariadb:11
+                ports: ['3306:3306']
+                env:
+                  MARIADB_ROOT_PASSWORD: secret
+                options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+          - db_driver: mongodb
+            db_host: 127.0.0.1
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services:
+              mongo:
+                image: mongo:7
+                ports: ['27017:27017']
+                options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -156,22 +250,7 @@ jobs:
       DB_PASSWORD: ${{ matrix.db_pass }}
       DB_FILE: ${{ matrix.db_file }}
       CACHE_TYPE: local
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: secret
-        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
-      mongo:
-        image: mongo:7
-        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+    services: ${{ matrix.services }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -182,6 +261,20 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          # Wait for the database service to accept connections (avoids races with
+          # Prisma `db push` / first test connections right after service start).
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "pgsql" ]; then
+            for i in $(seq 1 30); do
+              if PGPASSWORD=$DB_PASSWORD psql -h "$DB_HOST" -U "$DB_USER" -c '\q' >/dev/null 2>&1; then break; fi
+              echo "waiting for postgres at $DB_HOST..."; sleep 2
+            done
+          fi
+          if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "mysql" ]; then
+            for i in $(seq 1 30); do
+              if mysql -h "$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e 'SELECT 1' >/dev/null 2>&1; then break; fi
+              echo "waiting for mysql at $DB_HOST..."; sleep 2
+            done
+          fi
           for db in contacts inboxes passwords tasks; do
             case "$DB_DRIVER" in
               pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
@@ -212,9 +305,18 @@ jobs:
             fi
             if [ -d "$d/prisma" ]; then
               db=$(sed -n "s/.*DB_NAME.*|| '\([^']*\)'.*/\1/p" "$d/server.js")
-              url="postgresql://postgres:postgres@localhost:5432/$db"
+              url="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$db"
               if [ "$DB_DRIVER" = "pgsql" ]; then
-                (cd "$d" && DATABASE_URL="$url" npx prisma generate && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate)
+                PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE \"$db\""
+                (cd "$d" && DATABASE_URL="$url" npx prisma generate)
+                pushed=0
+                for i in $(seq 1 40); do
+                  if (cd "$d" && DATABASE_URL="$url" npx prisma db push --accept-data-loss --skip-generate) >/dev/null 2>&1; then
+                    pushed=1; break
+                  fi
+                  echo "prisma db push attempt $i failed, retrying in 5s..."; sleep 5
+                done
+                [ "$pushed" = 1 ] || { echo "prisma db push failed after retries"; exit 1; }
                 (cd "$d" && DATABASE_URL="$url" npx jest --ci --runInBand --forceExit)
               else
                 echo "=== $d (skipped: prisma provider=$prov, driver=$cur) ==="
@@ -229,6 +331,9 @@ jobs:
                 [ $rc -ne 0 ] && exit 1
               fi
             fi
+            # Free disk space so the database service container stays healthy
+            # across the many sequential `npm install` runs in this job.
+            rm -rf "$d/node_modules" 2>/dev/null || true
           done
 
   php:
@@ -237,12 +342,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db_driver: [sqlite, pgsql, mysql, mongodb]
-        db_host: ["", "postgres", "mariadb", "mongo"]
-        db_port: ["", "5432", "3306", "27017"]
-        db_user: ["", "postgres", "root", ""]
-        db_pass: ["", "postgres", "secret", ""]
-        db_file: ["", "", "", ""]
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services: {}
+          - db_driver: pgsql
+            db_host: 127.0.0.1
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+            services:
+              postgres:
+                image: postgres:16
+                ports: ['5432:5432']
+                env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - db_driver: mysql
+            db_host: 127.0.0.1
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+            services:
+              mariadb:
+                image: mariadb:11
+                ports: ['3306:3306']
+                env:
+                  MARIADB_ROOT_PASSWORD: secret
+                options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+          - db_driver: mongodb
+            db_host: 127.0.0.1
+            db_port: "27017"
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services:
+              mongo:
+                image: mongo:7
+                ports: ['27017:27017']
+                options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
     env:
       DB_DRIVER: ${{ matrix.db_driver }}
       DB_HOST: ${{ matrix.db_host }}
@@ -251,22 +397,7 @@ jobs:
       DB_PASSWORD: ${{ matrix.db_pass }}
       DB_FILE: ${{ matrix.db_file }}
       CACHE_TYPE: local
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: secret
-        options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
-      mongo:
-        image: mongo:7
-        options: --health-cmd "mongosh --eval '1'" --health-interval 10s --health-timeout 5s --health-retries 30
+    services: ${{ matrix.services }}
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -366,4 +497,84 @@ jobs:
             src=$(dirname "$tdir")
             echo "=== $src ==="
             (cd "$src" && bundle install --quiet && RAILS_ENV=test DB_DRIVER=sqlite DB_FILE=/tmp/contacts_test.db bundle exec ruby -Itest -I. -e 'require "config/environment"; ActiveRecord::Base.connection.migration_context.migrate; Dir["test/**/*_test.rb"].sort.each { |f| require File.expand_path(f) }')
+          done
+
+  java:
+    name: Java (Maven) ${{ matrix.db_driver }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db_driver: sqlite
+            db_host: ""
+            db_port: ""
+            db_user: ""
+            db_pass: ""
+            db_file: ""
+            services: {}
+          - db_driver: pgsql
+            db_host: 127.0.0.1
+            db_port: "5432"
+            db_user: postgres
+            db_pass: postgres
+            db_file: ""
+            services:
+              postgres:
+                image: postgres:16
+                ports: ['5432:5432']
+                env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - db_driver: mysql
+            db_host: 127.0.0.1
+            db_port: "3306"
+            db_user: root
+            db_pass: secret
+            db_file: ""
+            services:
+              mariadb:
+                image: mariadb:11
+                ports: ['3306:3306']
+                env:
+                  MARIADB_ROOT_PASSWORD: secret
+                options: --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -psecret --silent" --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      DB_DRIVER: ${{ matrix.db_driver }}
+      DB_HOST: ${{ matrix.db_host }}
+      DB_PORT: ${{ matrix.db_port }}
+      DB_USER: ${{ matrix.db_user }}
+      DB_PASSWORD: ${{ matrix.db_pass }}
+      DB_FILE: ${{ matrix.db_file }}
+      CACHE_TYPE: local
+      # Temurin 21.0.11's C1 JIT crashes on ConcurrentHashMap::putVal (see AGENTS.md).
+      JAVA_TOOL_OPTIONS: -XX:-TieredCompilation
+    services: ${{ matrix.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install clients + create databases
+        if: matrix.db_driver != 'sqlite'
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for db in contacts inboxes passwords tasks; do
+            case "$DB_DRIVER" in
+              pgsql)   PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 || PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -c "CREATE DATABASE $db" 2>/dev/null || true ;;
+              mysql)   mysql -h $DB_HOST -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE IF NOT EXISTS $db" 2>/dev/null || true ;;
+            esac
+          done
+      - name: Test all Java projects
+        shell: bash
+        run: |
+          set -e
+          command -v mvn >/dev/null 2>&1 || sudo apt-get install -y -qq maven
+          for pom in $(find . -name pom.xml -not -path '*/target/*' | sort); do
+            echo "=== $pom ==="
+            mvn -q -f "$pom" test
           done

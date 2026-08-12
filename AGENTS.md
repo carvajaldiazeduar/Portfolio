@@ -138,13 +138,14 @@ Notes:
 `scripts/ci-local.sh` runs the full CI matrix inside Podman containers, booting
 disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7
 on an isolated `ci-local-net` network. It is invoked per job (or `all`):
-- `./scripts/ci-local.sh php`, `node`, `python`, `ruby`, `csharp`, `all`.
+- `./scripts/ci-local.sh php`, `node`, `python`, `ruby`, `csharp`, `java`, `all`.
 
 Per-language driver matrix (each project is exercised against every driver it
 actually supports; projects that reject a driver — e.g. a Prisma `provider =
 "postgresql"` schema — are reported as *skipped*, not failed):
 - PHP: `sqlite pgsql mysql mongodb` (PHP 8.2-cli lacks pdo_sqlsrv, so `sqlserver` is excluded; requires ≥8.3).
 - Node / Python / C#: `sqlite pgsql mysql sqlserver mongodb`.
+- Java: `sqlite pgsql mysql sqlserver` (no MongoDB JDBC driver in `DataSourceConfig`); the runner keeps a persistent `ci-local-m2` Maven volume and forces `-XX:-TieredCompilation` because Temurin 21.0.11's C1 JIT crashes on `ConcurrentHashMap::putVal`.
 - Ruby: `sqlite` (Rails, on PostgreSQL/MariaDB hosts where tested).
 
 At startup the script runs `podman container prune -f` to remove every **stopped**

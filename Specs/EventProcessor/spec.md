@@ -8,13 +8,15 @@ Async event processor: receives events via API, publishes them to a queue and co
 - **Worker** (`worker.js`): consumes events from the queue and processes them (persistence/log).
 - **Queue**: `QueueAdapter` (interface + factory + per-driver adapters).
 
-Only a **Node.js** implementation exists. No DB — only a queue.
+Node.js (Express) and Java (Spring Boot) implementations exist. No DB — only a queue.
 
 ## Implementations
 - **Node.js**: Web (Express) + separate worker
+- **Java**: Web (Spring Boot 3.3.4, Java 21) API + worker (worker profile)
 
 ## Adapters
 - **Queue**: `QueueAdapter` + `QueueFactory` + `adapters/{RedisQueue,RabbitMQ,Kafka,SQS}.js`
+- **Java queue**: `queue/` with `QueueAdapter` + `QueueConfig` (factory) + adapters `{InMemory,Redis,RabbitMq,Kafka,Sqs}`; worker via `JobWorker` + `JobRegistry`
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` (optional)
 
 ## Env vars
@@ -44,6 +46,7 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 | Language | Framework | Where |
 |---|---|---|
 | Node.js | Jest | `src/tests/` |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose: `event-processor-api` on `3000:3000` + `event-processor-worker` (separate service) + Redis on `6379:6379` + Prometheus on `9090:9090` + Grafana on `3001:3000`.

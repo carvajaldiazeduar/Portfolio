@@ -12,12 +12,14 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - **CSharp**: Cli + Web (AspNetMinimalApi with EF Core + Blazor)
 - **Node.js**: Cli + Web (Express, NextJS, React)
 - **Ruby**: Cli + Web (RubyOnRails)
+- **Java**: Cli + Web (Spring Boot 3.3.4, Java 21; EF Core equivalent via plain JDBC adapters in Cli)
 
 ## Adapters
 - **DB**: `DatabaseAdapter` + `Adapters/{PostgreSQL,MySQL,SQLite,SQLServer,MongoDB}` + `DatabaseFactory`
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (`CACHE_TYPE`, `REDIS_HOST`, `CACHE_TTL`)
 - C# Web uses EF Core (`TasksListDbContext`) instead of `DatabaseAdapter`.
 - Ruby uses Rails ORM + `Rails.cache` (`:redis_cache_store` / `:memory_store`).
+- Java Web uses Spring Boot JPA/Hibernate + Hikari (`DataSourceConfig`) + `CacheConfig` with `LocalCache`/`RedisCache` instead of `DatabaseAdapter`; Java Cli uses plain JDBC adapters.
 
 ## Env vars
 - `DB_DRIVER` (default `pgsql`), `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_FILE` (SQLite)
@@ -42,8 +44,10 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
 | PHP | assert | Cli via `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; frameworks via PHPUnit; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
+| Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
+| Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 
 ## Containers / Ports
-Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`.
+Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`.

@@ -10,13 +10,14 @@ PYTHON_CT="ci-local-python"
 PHP_CT="ci-local-php"
 RUBY_CT="ci-local-ruby"
 DOTNET_CT="ci-local-dotnet"
+JAVA_CT="ci-local-java"
 POSTGRES_CT="ci-local-postgres"
 MARIADB_CT="ci-local-mariadb"
 MSSQL_CT="ci-local-mssql"
 MONGO_CT="ci-local-mongo"
 
 DB_CT_NAMES=("$POSTGRES_CT" "$MARIADB_CT" "$MSSQL_CT" "$MONGO_CT")
-ALL_CTS=("$NODE_CT" "$PYTHON_CT" "$PHP_CT" "$RUBY_CT" "$DOTNET_CT" "${DB_CT_NAMES[@]}")
+ALL_CTS=("$NODE_CT" "$PYTHON_CT" "$PHP_CT" "$RUBY_CT" "$DOTNET_CT" "$JAVA_CT" "${DB_CT_NAMES[@]}")
 
 cleanup() {
   for c in "${ALL_CTS[@]}"; do
@@ -164,12 +165,15 @@ start_runner() {
 
 # PHP driver matrix (pdo_sqlsrv needs PHP >= 8.3 -> not available on php:8.2-cli)
 PHP_DRIVERS=(sqlite pgsql mysql mongodb)
+# Java's DataSourceConfig supports sqlite/pgsql/mysql/sqlserver (no mongodb JDBC driver)
+JAVA_DRIVERS=(sqlite pgsql mysql sqlserver)
 # Full matrix for languages with native drivers
 FULL_DRIVERS=(sqlite pgsql mysql sqlserver mongodb)
 
 drivers_for() {
   case "$1" in
     php) echo "${PHP_DRIVERS[*]}" ;;
+    java) echo "${JAVA_DRIVERS[*]}" ;;
     *)   echo "${FULL_DRIVERS[*]}" ;;
   esac
 }
@@ -182,6 +186,7 @@ dbs_for() {
     python) echo "postgres mariadb mssql mongo" ;;
     ruby)  echo "postgres mariadb" ;;
     csharp) echo "postgres mariadb mssql mongo" ;;
+    java)   echo "postgres mariadb mssql" ;;
     *)     echo "postgres mariadb mssql mongo" ;;
   esac
 }
@@ -328,16 +333,31 @@ run_csharp_tests() {
   [ "$failed" = 0 ] || { echo "ERROR: C# tests failed ($envs)"; exit 1; }
 }
 
+# --- Java ---
+run_java_tests() {
+  local envs="$1"
+  local failed=0
+  # Temurin 21.0.11 C1 crashes (SIGSEGV) compiling ConcurrentHashMap::putVal -> C2 only.
+  envs="$envs JAVA_TOOL_OPTIONS=-XX:-TieredCompilation"
+  while IFS= read -r pom; do
+    rel="${pom#"$ROOT"/}"
+    echo "=== $rel ==="
+    exec_in "$JAVA_CT" "$envs" sh -c "mvn -q -f '/app/$rel' test" || failed=1
+  done < <(find "$ROOT" -name pom.xml -not -path '*/target/*' | sort)
+  [ "$failed" = 0 ] || { echo "ERROR: Java tests failed ($envs)"; exit 1; }
+}
+
 # --- Ruby ---
 
 case "$JOB" in
-  all)   JOBS="node python php ruby csharp" ;;
+  all)   JOBS="node python php ruby csharp java" ;;
   node)  JOBS="node" ;;
   python) JOBS="python" ;;
   php)   JOBS="php" ;;
   ruby)  JOBS="ruby" ;;
   csharp) JOBS="csharp" ;;
-  *) echo "Usage: $0 [all|node|python|php|ruby|csharp]"; exit 1 ;;
+  java)   JOBS="java" ;;
+  *) echo "Usage: $0 [all|node|python|php|ruby|csharp|java]"; exit 1 ;;
 esac
 
 for job in $JOBS; do
@@ -407,15 +427,26 @@ for job in $JOBS; do
       done < <(find "$ROOT" -type d -path '*/RubyOnRails/src/test' | sort)
       ;;
 
-     csharp)
-      start_db_infra "$(dbs_for csharp)"
-      start_runner "$DOTNET_CT" mcr.microsoft.com/dotnet/sdk:9.0
-      echo ">>> C# (.NET 9)"
-      for driver in $(drivers_for csharp); do
-        echo ">>> C# drivers ($driver)"
-        run_csharp_tests "$(db_env "$driver" "Contacts/CSharp/Web/AspNetMinimalApi/src")"
-      done
-      ;;
+      csharp)
+        start_db_infra "$(dbs_for csharp)"
+        start_runner "$DOTNET_CT" mcr.microsoft.com/dotnet/sdk:9.0
+        echo ">>> C# (.NET 9)"
+        for driver in $(drivers_for csharp); do
+          echo ">>> C# drivers ($driver)"
+          run_csharp_tests "$(db_env "$driver" "Contacts/CSharp/Web/AspNetMinimalApi/src")"
+        done
+        ;;
+
+      java)
+        start_db_infra "$(dbs_for java)"
+        ensure_image docker.io/library/maven:3-eclipse-temurin-21
+        podman run -d --name "$JAVA_CT" --network "$NET" -v "$ROOT:/app" -v ci-local-m2:/root/.m2 -w /app docker.io/library/maven:3-eclipse-temurin-21 sleep infinity >/dev/null
+        echo ">>> Java (Maven)"
+        for driver in $(drivers_for java); do
+          echo ">>> Java drivers ($driver)"
+          run_java_tests "$(db_env "$driver" "Contacts/Java/Web/SpringBoot")"
+        done
+        ;;
   esac
 done
 
