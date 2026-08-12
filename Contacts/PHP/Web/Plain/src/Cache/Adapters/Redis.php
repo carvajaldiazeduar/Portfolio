@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../CacheAdapter.php';
 require_once __DIR__ . '/Local.php';
 
-class Redis implements CacheAdapter {
+class RedisAdapter implements CacheAdapter {
     private ?Redis $redis = null;
     private Local $fallback;
 
