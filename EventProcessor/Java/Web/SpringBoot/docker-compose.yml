@@ -1,0 +1,54 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  event-processor-api:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - QUEUE_DRIVER=${QUEUE_DRIVER:-redis}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    depends_on:
+      - redis
+
+  event-processor-worker:
+    build: .
+    command: --spring.profiles.active=worker --server.port=${WORKER_METRICS_PORT:3001}
+    environment:
+      - QUEUE_DRIVER=${QUEUE_DRIVER:-redis}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - WORKER_METRICS_PORT=${WORKER_METRICS_PORT:-3001}
+    depends_on:
+      - redis
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - event-processor-api
+      - event-processor-worker
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
+networks:
+  default:
+    name: event-network
+    driver: bridge

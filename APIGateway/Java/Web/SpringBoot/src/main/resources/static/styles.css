@@ -1,0 +1,21 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; padding: 20px; }
+.container { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; }
+h1 { color: #333; margin-bottom: 5px; }
+h2 { color: #444; margin: 25px 0 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+p { color: #666; margin-bottom: 15px; }
+.section { margin-bottom: 30px; }
+.form-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+input { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+button:hover { background: #0056b3; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+.hidden { display: none; }
+#token { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; resize: vertical; }
+.endpoint-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+.endpoint-buttons button { flex: 1; min-width: 150px; }
+.response-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+.response-box.error { background: #fff5f5; border-color: #feb2b2; }
+.status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+.status.success { background: #c6f6d5; color: #276749; }
+.status.error { background: #fed7d7; color: #c53030; }

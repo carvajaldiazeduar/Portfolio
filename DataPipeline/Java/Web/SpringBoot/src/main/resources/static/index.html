@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Data Pipeline</title></head>
+<body>
+<h1>ETL Data Pipeline</h1>
+<h2>Pipelines</h2>
+<div id="pipelines"></div>
+<h2>Run Pipeline</h2>
+<form id="runForm">
+<input name="name" placeholder="Pipeline name" required>
+<textarea name="query" placeholder="SQL query"></textarea>
+<button type="submit">Run</button>
+</form>
+<div id="result"></div>
+<script>
+document.getElementById('runForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const res = await fetch('/api/pipelines/' + form.name.value + '/run', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({query: form.query.value})
+  });
+  const data = await res.json();
+  document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+};
+</script>
+</body>
+</html>

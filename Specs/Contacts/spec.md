@@ -12,6 +12,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - **CSharp**: Cli + Web (AspNetMinimalApi with EF Core + Blazor)
 - **Node.js**: Cli + Web (Express, NextJS, React)
 - **Ruby**: Cli + Web (RubyOnRails)
+- **Java**: Cli + Web (Spring Boot 3.3.4, Java 21; EF Core equivalent via plain JDBC adapters in Cli)
 
 ## Adapters
 - **DB**: `DatabaseAdapter` + `Adapters/{PostgreSQL,MySQL,SQLite,SQLServer,MongoDB}` + `DatabaseFactory`
@@ -58,6 +59,8 @@ per-field message. Empty/whitespace-only values are treated as missing.
 | Node | Jest | `Cli/tests/` and `Web/*/src/tests/` |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
 | PHP | assert | Cli via `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; frameworks via PHPUnit; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
+| Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
+| Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 

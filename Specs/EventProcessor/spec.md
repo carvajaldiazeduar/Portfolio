@@ -12,6 +12,7 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 
 ## Implementations
 - **Node.js**: Web (Express) + separate worker
+- **Java**: Web (Spring Boot 3.3.4, Java 21) API + worker (worker profile)
 
 ## Adapters
 - **Queue**: `QueueAdapter` + `QueueFactory` + `adapters/{RedisQueue,RabbitMQ,Kafka,SQS}.js`
@@ -44,6 +45,7 @@ Only a **Node.js** implementation exists. No DB — only a queue.
 | Language | Framework | Where |
 |---|---|---|
 | Node.js | Jest | `src/tests/` |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose: `event-processor-api` on `3000:3000` + `event-processor-worker` (separate service) + Redis on `6379:6379` + Prometheus on `9090:9090` + Grafana on `3001:3000`.

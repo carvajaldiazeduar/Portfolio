@@ -1,0 +1,27 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: passwordgenerator-web
+  jackson:
+    default-property-inclusion: non_null
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+app:
+  db:
+    driver: ${DB_DRIVER:pgsql}
+    host: ${DB_HOST:localhost}
+    port: ${DB_PORT:5432}
+    name: ${DB_NAME:passwords}
+    user: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    file: ${DB_FILE:passwords.db}
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    ttl: ${CACHE_TTL:300}

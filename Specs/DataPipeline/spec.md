@@ -10,6 +10,7 @@ Only a **Python** implementation exists.
 
 ## Implementations
 - **Python**: Web (Plain, Flask)
+- **Java**: Web (Spring Boot 3.3.4, Java 21; warehouse adapters — DuckDB default — + cache)
 
 ## Adapters
 - **Warehouse**: `warehouse_adapter.py` (ABC) + `warehouse_factory.py` + `adapters/{duckdb,bigquery,postgresql}.py`
@@ -34,6 +35,7 @@ Only a **Python** implementation exists.
 | Language | Framework | Where |
 |---|---|---|
 | Python | pytest | `src/tests/` (from `src/`) |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose in `DataPipeline/Python/Web/Plain`. Port per framework.

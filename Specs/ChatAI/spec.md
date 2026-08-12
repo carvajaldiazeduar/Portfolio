@@ -12,6 +12,7 @@ HTTP API that translates chat requests to an external OpenAI-compatible LLM prov
 - **CSharp**: Web (AspNetMinimalApi `src/Program.cs`)
 - **Node.js**: Web (Plain `src/server.js`, Express)
 - **Ruby**: Web (Plain `src/server.rb`, WEBrick)
+- **Java**: Web (Spring Boot 3.3.4, Java 21; stateless, no DB/cache)
 
 Each Plain implementation exposes the same endpoints, request/response contract and env vars as the C# one.
 
@@ -71,11 +72,12 @@ Each Plain implementation exposes the same endpoints, request/response contract 
 | Node.js | Jest | `Node.js/Web/Plain/src/tests/` |
 | PHP | asserts | `PHP/Web/Plain/src/tests/` (not runnable as-is) |
 | Ruby | minitest | `Ruby/Web/Plain/src/tests/` |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 Tests do not require a real API key: the HTTP provider is tested against a mock/stub. They cover:
 1. `POST /api/chat` with a valid message returns the assistant response (against a mock provider).
 2. `POST /api/chat` with empty `messages` returns `400`.
-3. External provider failure → `502`.
+3. External provider failure -> `502`.
 
 ## Containers / Ports
 | Language | Image | Port |

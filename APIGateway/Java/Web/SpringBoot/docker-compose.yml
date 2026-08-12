@@ -1,0 +1,25 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-key-change-in-production}
+      - USERS_SERVICE_URL=${USERS_SERVICE_URL:-http://localhost:3001}
+      - ORDERS_SERVICE_URL=${ORDERS_SERVICE_URL:-http://localhost:3002}
+      - PRODUCTS_SERVICE_URL=${PRODUCTS_SERVICE_URL:-http://localhost:3003}
+      - CACHE_TYPE=${CACHE_TYPE:-local}
+      - REDIS_HOST=${REDIS_HOST:-localhost}
+    depends_on:
+      redis:
+        condition: service_healthy

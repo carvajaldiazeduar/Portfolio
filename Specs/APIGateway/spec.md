@@ -13,6 +13,7 @@ Only a **Node.js** implementation exists. No DB — only cache for rate limiting
 
 ## Implementations
 - **Node.js**: Web (Express) — only implementation
+- **Java**: Web (Spring Boot 3.3.4, Java 21; JWT auth + cache rate limiting + proxy)
 
 ## Adapters
 - **Cache**: `CacheAdapter` + `Adapters/{Redis,Local}` + `CacheFactory` (for rate limiting)
@@ -36,6 +37,7 @@ Only a **Node.js** implementation exists. No DB — only cache for rate limiting
 | Language | Framework | Where |
 |---|---|---|
 | Node.js | Jest | `src/tests/` |
+| Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose: API on `3000:3000`, Redis on `6379:6379`. No DB service.

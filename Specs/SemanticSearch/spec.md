@@ -12,6 +12,7 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 - **CSharp**: Web (AspNetMinimalApi, Blazor)
 - **Node.js**: Cli + Web (Plain, Express, NextJS, React)
 - **Ruby**: Cli + Web (RubyOnRails)
+- **Java**: Cli (plain Java + JUnit 5) + Web (Spring Boot 3.3.4, Java 21; vector store adapters instead of EF Core)
 
 ## Adapters
 - **Vector store**: `VectorStoreAdapter` + `Adapters/{ChromaDB,PgVector,Pinecone}` + `VectorStoreFactory`
@@ -42,6 +43,8 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 | PHP | assert | `Cli/tests/` via `php -d zend.assertions=1 -d assert.exception=1`; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 | C# | xUnit | `Web/AspNetMinimalApi/src/tests/` (placeholder) |
 | Ruby | Rails | `Web/RubyOnRails/src/` |
+| Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
+| Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
 
 ## Containers / Ports
 Compose adds a `chroma` service alongside Redis. API per framework: Plain/Express/Flask `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, C# `80`/`8000`.
