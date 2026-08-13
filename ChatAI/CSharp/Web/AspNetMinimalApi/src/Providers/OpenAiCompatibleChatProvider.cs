@@ -1,29 +1,35 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 public class OpenAiCompatibleChatProvider : IChatProvider
 {
     private readonly HttpClient _http;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
+    private readonly string _apiKey;
+    private readonly bool _ownsHttp;
 
-    public OpenAiCompatibleChatProvider(HttpClient? http = null)
+    public OpenAiCompatibleChatProvider(string baseUrl, string apiKey, int timeoutMs, HttpClient? http = null)
     {
-        var baseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
-        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
-        _http = http ?? new HttpClient { BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/") };
-        if (!string.IsNullOrEmpty(apiKey))
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        _apiKey = apiKey;
+        if (http == null)
+        {
+            _http = new HttpClient();
+            _http.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+            _http.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
+            _ownsHttp = true;
+        }
+        else
+        {
+            _http = http;
+        }
+        if (!string.IsNullOrEmpty(_apiKey))
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
     }
 
     public async Task<ChatResponse> CompleteAsync(ChatRequest request)
     {
-        var model = request.Model ?? Environment.GetEnvironmentVariable("CHAT_MODEL") ?? "gpt-4o-mini";
-        var temperature = request.Temperature ?? (double.TryParse(Environment.GetEnvironmentVariable("CHAT_TEMPERATURE"), out var t) ? t : 0.7);
-        var maxTokens = request.MaxTokens ?? (int.TryParse(Environment.GetEnvironmentVariable("CHAT_MAX_TOKENS"), out var mt) ? mt : 1024);
+        var model = request.Model ?? Env("CHAT_MODEL", "gpt-4o-mini");
+        var temperature = request.Temperature ?? DoubleEnv("CHAT_TEMPERATURE", 0.7);
+        var maxTokens = request.MaxTokens ?? IntEnv("CHAT_MAX_TOKENS", 1024);
 
         var payload = new
         {
@@ -33,77 +39,97 @@ public class OpenAiCompatibleChatProvider : IChatProvider
             max_tokens = maxTokens,
         };
 
-        using var response = await _http.PostAsJsonAsync("chat/completions", payload);
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http.PostAsJsonAsync("chat/completions", payload);
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new ProviderCallException("Provider error: " + (ex.Message ?? "timeout"));
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new ProviderCallException("Provider error: " + (ex.Message ?? "request failed"));
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"Provider error {(int)response.StatusCode}: {errorBody}");
+            throw new ProviderCallException($"Provider error {(int)response.StatusCode}: {errorBody}");
         }
 
         var body = await response.Content.ReadAsStringAsync();
-        var data = JsonSerializer.Deserialize<OpenAiCompletionResponse>(body, JsonOptions);
-        var choice = data?.Choices?.FirstOrDefault();
+        return ParseOpenAiResponse(body, model, "openai");
+    }
 
-        return new ChatResponse
+    internal static ChatResponse ParseOpenAiResponse(string? body, string model, string provider)
+    {
+        var resp = new ChatResponse { Model = model, Provider = provider };
+        if (string.IsNullOrEmpty(body))
         {
-            Id = data?.Id ?? "",
-            Model = data?.Model ?? model,
-            Choices = new List<ChatChoice>
+            resp.Id = "";
+            resp.Choices = new List<ChatChoice> { EmptyChoice() };
+            resp.Usage = new ChatUsage();
+            return resp;
+        }
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            resp.Id = root.TryGetProperty("id", out var id) ? (id.GetString() ?? "") : "";
+
+            var choices = new List<ChatChoice>();
+            if (root.TryGetProperty("choices", out var arr) && arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
             {
-                new ChatChoice
+                var first = arr[0];
+                if (first.TryGetProperty("message", out var msg))
                 {
-                    Role = choice?.Message?.Role ?? "assistant",
-                    Content = choice?.Message?.Content ?? "",
-                },
-            },
-            Usage = new ChatUsage
+                    choices.Add(new ChatChoice
+                    {
+                        Role = msg.TryGetProperty("role", out var r) ? (r.GetString() ?? "assistant") : "assistant",
+                        Content = msg.TryGetProperty("content", out var c) ? (c.GetString() ?? "") : "",
+                    });
+                }
+            }
+            if (choices.Count == 0)
+                choices.Add(EmptyChoice());
+            resp.Choices = choices;
+
+            resp.Usage = new ChatUsage();
+            if (root.TryGetProperty("usage", out var u) && u.ValueKind == JsonValueKind.Object)
             {
-                PromptTokens = data?.Usage?.PromptTokens ?? 0,
-                CompletionTokens = data?.Usage?.CompletionTokens ?? 0,
-                TotalTokens = data?.Usage?.TotalTokens ?? 0,
-            },
-        };
+                resp.Usage.PromptTokens = u.TryGetProperty("prompt_tokens", out var p) ? p.GetInt32() : 0;
+                resp.Usage.CompletionTokens = u.TryGetProperty("completion_tokens", out var c) ? c.GetInt32() : 0;
+                resp.Usage.TotalTokens = u.TryGetProperty("total_tokens", out var t) ? t.GetInt32() : 0;
+            }
+        }
+        catch
+        {
+            resp.Id = "";
+            resp.Choices = new List<ChatChoice> { EmptyChoice() };
+            resp.Usage = new ChatUsage();
+        }
+        return resp;
     }
 
-    private class OpenAiCompletionResponse
+    private static ChatChoice EmptyChoice() => new() { Role = "assistant", Content = "" };
+
+    private static string Env(string name, string fallback)
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = "";
-
-        [JsonPropertyName("model")]
-        public string Model { get; set; } = "";
-
-        [JsonPropertyName("choices")]
-        public List<OpenAiChoice>? Choices { get; set; }
-
-        [JsonPropertyName("usage")]
-        public OpenAiUsage? Usage { get; set; }
+        var v = Environment.GetEnvironmentVariable(name);
+        return string.IsNullOrWhiteSpace(v) ? fallback : v;
     }
 
-    private class OpenAiChoice
+    private static double DoubleEnv(string name, double fallback) =>
+        double.TryParse(Environment.GetEnvironmentVariable(name), out var d) ? d : fallback;
+
+    private static int IntEnv(string name, int fallback) =>
+        int.TryParse(Environment.GetEnvironmentVariable(name), out var i) ? i : fallback;
+
+    public void Dispose()
     {
-        [JsonPropertyName("message")]
-        public OpenAiMessage? Message { get; set; }
-    }
-
-    private class OpenAiMessage
-    {
-        [JsonPropertyName("role")]
-        public string Role { get; set; } = "";
-
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = "";
-    }
-
-    private class OpenAiUsage
-    {
-        [JsonPropertyName("prompt_tokens")]
-        public int PromptTokens { get; set; }
-
-        [JsonPropertyName("completion_tokens")]
-        public int CompletionTokens { get; set; }
-
-        [JsonPropertyName("total_tokens")]
-        public int TotalTokens { get; set; }
+        if (_ownsHttp) _http.Dispose();
     }
 }
