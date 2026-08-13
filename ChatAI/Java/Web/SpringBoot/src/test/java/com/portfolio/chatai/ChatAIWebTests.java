@@ -4,7 +4,10 @@ import com.portfolio.chatai.model.ChatChoice;
 import com.portfolio.chatai.model.ChatRequest;
 import com.portfolio.chatai.model.ChatResponse;
 import com.portfolio.chatai.model.ChatUsage;
+import com.portfolio.chatai.provider.ChatProviderFactory;
 import com.portfolio.chatai.provider.IChatProvider;
+import com.portfolio.chatai.provider.ProviderNotConfiguredException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +18,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,9 +40,19 @@ class ChatAIWebTests {
     private MockMvc mockMvc;
 
     @MockBean
+    private ChatProviderFactory factory;
+
+    @MockBean
     private IChatProvider provider;
 
     private static final String VALID_BODY = "{\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}]}";
+
+    @BeforeEach
+    void setupProviders() {
+        lenient().when(factory.resolve(isNull())).thenReturn("openai");
+        lenient().when(factory.create("openai")).thenReturn(provider);
+        lenient().when(factory.fallbackProvider()).thenReturn(null);
+    }
 
     @Test
     void indexServesHtml() throws Exception {
@@ -65,6 +79,7 @@ class ChatAIWebTests {
         ChatResponse mockResponse = new ChatResponse();
         mockResponse.setId("chatcmpl-test");
         mockResponse.setModel("gpt-4o-mini");
+        mockResponse.setProvider("openai");
         ChatChoice choice = new ChatChoice();
         choice.setRole("assistant");
         choice.setContent("Hello!");
@@ -75,13 +90,14 @@ class ChatAIWebTests {
         usage.setTotal_tokens(8);
         mockResponse.setUsage(usage);
 
-        when(provider.completeChat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(provider.completeChat(any())).thenReturn(mockResponse);
 
         mockMvc.perform(post("/api/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("chatcmpl-test"))
+                .andExpect(jsonPath("$.provider").value("openai"))
                 .andExpect(jsonPath("$.choices[0].role").value("assistant"))
                 .andExpect(jsonPath("$.choices[0].content").value("Hello!"))
                 .andExpect(jsonPath("$.usage.total_tokens").value(8));
@@ -91,9 +107,12 @@ class ChatAIWebTests {
     void chatClientOverridesModelAndMaxTokens() throws Exception {
         ChatResponse mockResponse = new ChatResponse();
         mockResponse.setId("id");
-        mockResponse.setChoices(List.of(emptyChoice()));
+        ChatChoice choice = new ChatChoice();
+        choice.setRole("assistant");
+        choice.setContent("");
+        mockResponse.setChoices(List.of(choice));
         mockResponse.setUsage(new ChatUsage());
-        when(provider.completeChat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(provider.completeChat(any())).thenReturn(mockResponse);
 
         String body = "{\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}],\"model\":\"gpt-4-turbo\",\"temperature\":0.2,\"max_tokens\":500}";
 
@@ -112,36 +131,121 @@ class ChatAIWebTests {
 
     @Test
     void chatEmptyMessagesReturnsBadRequest() throws Exception {
-        String body = "{\"messages\":[]}";
-
         mockMvc.perform(post("/api/chat")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                        .content("{\"messages\":[]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Messages must not be empty"));
     }
 
     @Test
     void chatMissingMessagesReturnsBadRequest() throws Exception {
-        String body = "{\"model\":\"gpt-4o-mini\"}";
-
         mockMvc.perform(post("/api/chat")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                        .content("{\"model\":\"gpt-4o-mini\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Messages must not be empty"));
     }
 
     @Test
     void chatProviderFailureReturnsBadGateway() throws Exception {
-        when(provider.completeChat(any(ChatRequest.class)))
-                .thenThrow(new RuntimeException("upstream provider failed"));
+        when(provider.completeChat(any())).thenThrow(new RuntimeException("upstream provider failed"));
 
         mockMvc.perform(post("/api/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().is5xxServerError())
                 .andExpect(jsonPath("$.error").exists());
+    }
+
+    // --- Nuevos tests de hot-switch / multi-provider / tolerancia ---
+
+    @Test
+    void requestProviderOverridesEnv() throws Exception {
+        when(factory.resolve("azure")).thenReturn("azure");
+        when(factory.create("azure")).thenReturn(provider);
+        ChatResponse mockResponse = new ChatResponse();
+        mockResponse.setId("chatcmpl-azure");
+        ChatChoice choice = new ChatChoice();
+        choice.setRole("assistant");
+        choice.setContent("from azure");
+        mockResponse.setChoices(List.of(choice));
+        mockResponse.setUsage(new ChatUsage());
+        when(provider.completeChat(any())).thenReturn(mockResponse);
+
+        String body = "{\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}],\"provider\":\"azure\"}";
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("azure"))
+                .andExpect(jsonPath("$.choices[0].content").value("from azure"));
+    }
+
+    @Test
+    void configuredProviderMissingKeyReturns400() throws Exception {
+        when(factory.resolve("azure")).thenReturn("azure");
+        when(factory.create("azure")).thenThrow(new ProviderNotConfiguredException("azure"));
+
+        String body = "{\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}],\"provider\":\"azure\"}";
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Provider 'azure' is not configured (missing API key)"));
+    }
+
+    @Test
+    void fallbackOnFailureReturns200() throws Exception {
+        when(factory.fallbackProvider()).thenReturn("azure");
+        when(factory.create("openai")).thenReturn(provider);
+        when(factory.create("azure")).thenReturn(provider);
+        ChatResponse fallbackResponse = new ChatResponse();
+        fallbackResponse.setId("chatcmpl-fb");
+        ChatChoice choice = new ChatChoice();
+        choice.setRole("assistant");
+        choice.setContent("fallback ok");
+        fallbackResponse.setChoices(List.of(choice));
+        fallbackResponse.setUsage(new ChatUsage());
+
+        when(provider.completeChat(any()))
+                .thenThrow(new RuntimeException("primary down"))
+                .thenReturn(fallbackResponse);
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("azure"))
+                .andExpect(jsonPath("$.choices[0].content").value("fallback ok"));
+    }
+
+    @Test
+    void fallbackMissingKeyReturns502() throws Exception {
+        when(factory.fallbackProvider()).thenReturn("azure");
+        when(factory.create("openai")).thenReturn(provider);
+        when(factory.create("azure")).thenThrow(new ProviderNotConfiguredException("azure"));
+        when(provider.completeChat(any())).thenThrow(new RuntimeException("primary timed out"));
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().is5xxServerError())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void providerTimeoutReturns502() throws Exception {
+        when(factory.create("openai")).thenReturn(provider);
+        when(provider.completeChat(any())).thenThrow(new RuntimeException("Read timed out: CHAT_TIMEOUT_MS exceeded"));
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().is5xxServerError())
+                .andExpect(jsonPath("$.error").value("Read timed out: CHAT_TIMEOUT_MS exceeded"));
     }
 
     private static ChatChoice emptyChoice() {

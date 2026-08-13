@@ -4,11 +4,20 @@ services:
     ports:
       - "3000:8080"
     environment:
-      - CHAT_PROVIDER=openai
+      - CHAT_PROVIDER=${CHAT_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GOOGLE_BASE_URL=${GOOGLE_BASE_URL:-https://generativelanguage.googleapis.com}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
       - CHAT_MODEL=${CHAT_MODEL:-gpt-4o-mini}
       - CHAT_TEMPERATURE=${CHAT_TEMPERATURE:-0.7}
       - CHAT_MAX_TOKENS=${CHAT_MAX_TOKENS:-1024}
+      - CHAT_TIMEOUT_MS=${CHAT_TIMEOUT_MS:-30000}
+      - CHAT_FALLBACK_PROVIDER=${CHAT_FALLBACK_PROVIDER:-}
     volumes:
       - .:/src

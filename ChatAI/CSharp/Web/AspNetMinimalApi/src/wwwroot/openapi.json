@@ -38,29 +38,33 @@
                 "type": "object",
                 "required": ["messages"],
                 "properties": {
-                  "messages": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "role": {
-                          "type": "string"
-                        },
-                        "content": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "model": {
-                    "type": "string"
-                  },
-                  "temperature": {
-                    "type": "number"
-                  },
-                  "max_tokens": {
-                    "type": "integer"
-                  }
+                "messages": {
+                     "type": "array",
+                     "items": {
+                       "type": "object",
+                       "properties": {
+                         "role": {
+                           "type": "string"
+                         },
+                         "content": {
+                           "type": "string"
+                         }
+                       }
+                     }
+                   },
+                   "provider": {
+                     "type": "string",
+                     "description": "Overrides CHAT_PROVIDER (openai, openai-compatible, azure, google, anthropic)"
+                   },
+                   "model": {
+                     "type": "string"
+                   },
+                   "temperature": {
+                     "type": "number"
+                   },
+                   "max_tokens": {
+                     "type": "integer"
+                   }
                 }
               }
             }
@@ -72,15 +76,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "model": {
-                      "type": "string"
-                    },
-                    "choices": {
+                   "type": "object",
+                   "properties": {
+                     "id": {
+                       "type": "string"
+                     },
+                     "provider": {
+                       "type": "string"
+                     },
+                     "model": {
+                       "type": "string"
+                     },
+                     "choices": {
                       "type": "array",
                       "items": {
                         "type": "object"

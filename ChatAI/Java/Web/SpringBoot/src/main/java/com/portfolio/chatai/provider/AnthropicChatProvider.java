@@ -18,14 +18,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OpenAiCompatibleChatProvider implements IChatProvider {
+public class AnthropicChatProvider implements IChatProvider {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
     private final String baseUrl;
     private final String apiKey;
 
-    public OpenAiCompatibleChatProvider(ObjectMapper mapper, String baseUrl, String apiKey, int timeoutMs) {
+    public AnthropicChatProvider(ObjectMapper mapper, String baseUrl, String apiKey, int timeoutMs) {
         this.mapper = mapper;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
@@ -46,75 +46,76 @@ public class OpenAiCompatibleChatProvider implements IChatProvider {
                 ? request.getMax_tokens()
                 : Integer.parseInt(System.getenv().getOrDefault("CHAT_MAX_TOKENS", "1024"));
 
+        List<Map<String, Object>> messages = new ArrayList<>();
+        String system = null;
+        for (var m : request.getMessages()) {
+            if ("system".equalsIgnoreCase(m.getRole())) {
+                system = m.getContent();
+                continue;
+            }
+            String role = "assistant".equalsIgnoreCase(m.getRole()) ? "assistant" : "user";
+            Map<String, Object> msg = new LinkedHashMap<>();
+            msg.put("role", role);
+            msg.put("content", m.getContent());
+            messages.add(msg);
+        }
+
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", model);
-        payload.put("messages", request.getMessages().stream()
-                .map(m -> Map.of("role", m.getRole(), "content", m.getContent()))
-                .toList());
-        payload.put("temperature", temperature);
+        if (system != null && !system.isBlank()) {
+            payload.put("system", system);
+        }
+        payload.put("messages", messages);
         payload.put("max_tokens", maxTokens);
+        payload.put("temperature", temperature);
 
-        String url = baseUrl.endsWith("/") ? baseUrl + "chat/completions"
-                : baseUrl + "/chat/completions";
+        String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String url = base + "/v1/messages";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (apiKey != null && !apiKey.isEmpty()) {
-            headers.setBearerAuth(apiKey);
-        }
+        headers.set("x-api-key", apiKey);
+        headers.set("anthropic-version", "2023-06-01");
 
-        ResponseEntity<String> response;
         try {
-            response = restTemplate.postForEntity(url, new HttpEntity<>(payload, headers), String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url,
+                    new HttpEntity<>(payload, headers), String.class);
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new RuntimeException("Provider error: HTTP " + response.getStatusCode().value());
             }
+            return parseAnthropicResponse(response.getBody(), model);
         } catch (RestClientException e) {
             throw new RuntimeException("Provider error: " + e.getMessage());
         }
-
-        return parseOpenAiResponse(mapper, response.getBody(), model);
     }
 
-    static ChatResponse parseOpenAiResponse(ObjectMapper mapper, String body, String model) {
+    @SuppressWarnings("unchecked")
+    private ChatResponse parseAnthropicResponse(String body, String model) {
         ChatResponse resp = new ChatResponse();
         resp.setModel(model);
-        resp.setProvider("openai");
-        if (body == null || body.isEmpty()) {
-            resp.setId("");
-            resp.setChoices(List.of(emptyChoice()));
-            resp.setUsage(new ChatUsage());
-            return resp;
-        }
+        resp.setProvider("anthropic");
         try {
             Map<String, Object> data = mapper.readValue(body, Map.class);
-            resp.setId((String) data.getOrDefault("id", ""));
-            List<Map<String, Object>> choices =
-                    (List<Map<String, Object>>) data.getOrDefault("choices", List.of());
-            List<ChatChoice> out = new ArrayList<>();
-            for (Map<String, Object> c : choices) {
-                Object msgObj = c.get("message");
-                if (msgObj instanceof Map) {
-                    Map<String, Object> msg = (Map<String, Object>) msgObj;
-                    ChatChoice choice = new ChatChoice();
-                    choice.setRole((String) msg.getOrDefault("role", "assistant"));
-                    choice.setContent((String) msg.getOrDefault("content", ""));
-                    out.add(choice);
+            List<Map<String, Object>> content = (List<Map<String, Object>>) data.getOrDefault("content", List.of());
+            String text = "";
+            for (Map<String, Object> c : content) {
+                if ("text".equals(c.get("type"))) {
+                    text += (String) c.getOrDefault("text", "");
                 }
             }
-            if (out.isEmpty()) {
-                out.add(emptyChoice());
-            }
-            resp.setChoices(out);
-            Map<String, Object> usageMap =
-                    (Map<String, Object>) data.getOrDefault("usage", Map.of());
+            ChatChoice choice = new ChatChoice();
+            choice.setRole("assistant");
+            choice.setContent(text);
+            resp.setChoices(List.of(choice));
+            Map<String, Object> usageMap = (Map<String, Object>) data.getOrDefault("usage", Map.of());
+            int in = ((Number) usageMap.getOrDefault("input_tokens", 0)).intValue();
+            int out = ((Number) usageMap.getOrDefault("output_tokens", 0)).intValue();
             ChatUsage usage = new ChatUsage();
-            usage.setPrompt_tokens(((Number) usageMap.getOrDefault("prompt_tokens", 0)).intValue());
-            usage.setCompletion_tokens(((Number) usageMap.getOrDefault("completion_tokens", 0)).intValue());
-            usage.setTotal_tokens(((Number) usageMap.getOrDefault("total_tokens", 0)).intValue());
+            usage.setPrompt_tokens(in);
+            usage.setCompletion_tokens(out);
+            usage.setTotal_tokens(in + out);
             resp.setUsage(usage);
         } catch (Exception e) {
-            resp.setId("");
             resp.setChoices(List.of(emptyChoice()));
             resp.setUsage(new ChatUsage());
         }

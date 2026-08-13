@@ -329,6 +329,7 @@ Project/
 | **DataPipeline** | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
 | **SemanticSearch** | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
 | **CloudLocal** | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
+| **ChatAI** | AI chat API that forwards messages to an OpenAI-compatible LLM provider via a swappable provider adapter. Stateless — no DB or cache. |
 
 ---
 
@@ -348,6 +349,7 @@ Project/
 | DataPipeline | No | Yes | Warehouse + Cache | Yes |
 | SemanticSearch | Yes | Yes | Vector store + Cache | Yes |
 | CloudLocal | No | Local services | AWS/GCP/Azure emulators | Yes |
+| ChatAI | No | Yes | No | Yes |
 
 ---
 
@@ -493,6 +495,7 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 | **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
 | **SemanticSearch (NextJS/React)** | `3000`/`5173` | `podman compose up` |
 | **SemanticSearch (C#)** | `80`/`8000` | `podman compose up` |
+| **ChatAI** | `3000`/`5000`/`8000` per impl (C# & Node & Ruby → `3000`, Java & Python → `5000`, PHP → `8000`) | `podman compose up` (from each `Web/<Impl>/` folder) |
 
 Example:
 ```bash

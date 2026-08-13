@@ -2,14 +2,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var providerName = Environment.GetEnvironmentVariable("CHAT_PROVIDER") ?? "openai";
-
-IChatProvider CreateProvider() => providerName switch
-{
-    _ => new OpenAiCompatibleChatProvider(),
-};
-
-builder.Services.AddSingleton<IChatProvider>(_ => CreateProvider());
+builder.Services.AddSingleton<ChatProviderFactory>();
 
 var app = builder.Build();
 
@@ -18,18 +11,49 @@ app.UseStaticFiles();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-app.MapPost("/api/chat", async (ChatRequest request, IChatProvider provider) =>
+app.MapPost("/api/chat", async (ChatRequest request, ChatProviderFactory factory) =>
 {
     if (request.Messages == null || request.Messages.Count == 0)
         return Results.BadRequest(new { error = "Messages must not be empty" });
 
+    var provider = factory.Resolve(request.Provider);
+
+    IChatProvider primary;
     try
     {
-        var response = await provider.CompleteAsync(request);
+        primary = factory.Create(provider);
+    }
+    catch (ProviderNotConfiguredException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+
+    try
+    {
+        var response = await primary.CompleteAsync(request);
+        response.Provider = provider;
         return Results.Ok(response);
     }
     catch (Exception ex)
     {
+        var fallback = factory.FallbackProvider();
+        if (!string.IsNullOrWhiteSpace(fallback))
+        {
+            try
+            {
+                var fb = factory.Create(fallback);
+                var response = await fb.CompleteAsync(request);
+                response.Provider = fallback;
+                return Results.Ok(response);
+            }
+            catch (ProviderNotConfiguredException) { /* fallback not configured -> 502 */ }
+            catch (ArgumentException) { /* fallback unsupported -> 502 */ }
+            catch { /* fallback failed -> 502 */ }
+        }
         return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status502BadGateway);
     }
 });
@@ -53,6 +77,9 @@ public class ChatRequest
 {
     [JsonPropertyName("messages")]
     public List<ChatMessage>? Messages { get; set; }
+
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
 
     [JsonPropertyName("model")]
     public string? Model { get; set; }
@@ -89,6 +116,9 @@ public class ChatResponse
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = "";
+
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = "";

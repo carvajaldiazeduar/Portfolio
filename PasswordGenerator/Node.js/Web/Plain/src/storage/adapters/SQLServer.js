@@ -15,6 +15,7 @@ class SQLServerAdapter extends DatabaseAdapter {
       database: process.env.DB_NAME || this.defaultDB,
       user: process.env.DB_USER || 'sa',
       password: process.env.DB_PASSWORD || 'Password123',
+      options: { encrypt: true, trustServerCertificate: true },
     });
   }
 

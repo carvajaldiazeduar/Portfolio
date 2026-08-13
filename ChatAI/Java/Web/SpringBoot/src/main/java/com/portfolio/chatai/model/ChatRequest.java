@@ -4,6 +4,7 @@ import java.util.List;
 
 public class ChatRequest {
     private List<Message> messages;
+    private String provider;
     private String model;
     private Double temperature;
     private Integer max_tokens;
@@ -14,6 +15,14 @@ public class ChatRequest {
 
     public void setMessages(List<Message> messages) {
         this.messages = messages;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 
     public String getModel() {
