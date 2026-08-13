@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Manager</title>
+
+    <link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+<div class="container">
+<h1>Contact Manager</h1>
+<div id="msg" class="msg"></div>
+<div class="form-row">
+<div class="field">
+<input type="text" id="name" placeholder="Name" required>
+<div class="field-error" id="name-error"></div>
+</div>
+<div class="field">
+<input type="text" id="phone" placeholder="Phone">
+<div class="field-error" id="phone-error"></div>
+</div>
+<div class="field">
+<input type="email" id="email" placeholder="Email">
+<div class="field-error" id="email-error"></div>
+</div>
+<button onclick="addContact()">Add</button>
+</div>
+<div class="search-row">
+<input type="text" id="search" placeholder="Search by name...">
+<button onclick="searchContacts()">Search</button>
+<button onclick="loadContacts()" style="background:#95a5a6">Clear</button>
+</div>
+<table>
+<thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead>
+<tbody id="contacts-body"></tbody>
+</table>
+</div>
+
+    <script src='app.js'></script>
+</body>
+</html>
+
+

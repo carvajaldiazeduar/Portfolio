@@ -13,6 +13,7 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 - **Node.js**: Cli + Web (Plain, Express, NextJS, React)
 - **Ruby**: Cli + Web (RubyOnRails)
 - **Java**: Cli (plain Java + JUnit 5) + Web (Spring Boot 3.3.4, Java 21; vector store adapters instead of EF Core)
+- **Elixir**: Cli (mix escript + ExUnit) + Web (Phoenix 1.8, Elixir 1.17; vector store adapters, no Repo)
 
 ## Adapters
 - **Vector store**: `VectorStoreAdapter` + `Adapters/{ChromaDB,PgVector,Pinecone}` + `VectorStoreFactory`
@@ -20,6 +21,7 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 - **C# EXCEPTION**: `SemanticSearch/CSharp` does NOT use EF Core or an external `Storage/`. It defines abstract `VectorStoreAdapter`/`CacheAdapter` **inline in `Program.cs`** with `Npgsql 7.0.0` + `StackExchange.Redis 2.7.0`. Do not add a DbContext there.
 - **PHP Plain EXCEPTION**: keeps its cache classes under `src/Storage/` (CacheAdapter, CacheFactory, Adapters/{Local,Redis}.php) and its vector drivers under `src/Storage/Adapters/{ChromaDB,PgVector,Pinecone}.php`. Do not "fix" it.
 - **Java EXCEPTION**: `SemanticSearch/Java/Web/SpringBoot` keeps vector stores under `vectorstore/` (`VectorStoreAdapter` + `VectorStoreConfig` + `{ChromaDbVectorStore,PgVectorStore,PineconeStore,InMemoryVectorStore}`, falling back to `InMemoryVectorStore` when Chroma is unreachable) and cache via `CacheAdapter`/`CacheConfig` (`LocalCache`/`RedisCache`). Don't add a DbContext there.
+- **Elixir EXCEPTION**: `SemanticSearch/Elixir` keeps its vector drivers under `src/lib/<app>/vectorstore/` (`VectorStoreAdapter` behaviour + `VectorStoreFactory` + `{ChromaDB,PgVector,Pinecone,InMemory}`) and cache via the same `CacheAdapter` (`CacheType` via `CACHE_TYPE`, `RedisCache` via Redix / `LocalCache` as an Agent under the supervisor). Don't add a Repo there.
 
 ## Env vars
 - `VECTOR_DRIVER` (default `chromadb`) — `chromadb` | `pinecone` | `pgvector`
@@ -46,6 +48,8 @@ Indexing + vector search. Vector persistence via `VectorStoreAdapter` (interface
 | Ruby | Rails | `Web/RubyOnRails/src/` |
 | Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
 | Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
+| Elixir Cli | ExUnit | `Elixir/Cli` via `mix test` |
+| Elixir Web | ExUnit + Phoenix.ConnTest | `Elixir/Web/Phoenix/src` via `mix test` |
 
 ## Containers / Ports
-Compose adds a `chroma` service alongside Redis. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, C# `80`/`8000`.
+Compose adds a `chroma` service alongside Redis. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, C# `80`/`8000`, Phoenix `4000` (`elixir:1.17-alpine`).

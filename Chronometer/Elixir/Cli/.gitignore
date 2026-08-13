@@ -1,0 +1,6 @@
+/_build/
+/deps/
+/chronometer_cli
+/elixir_buildpack*
+/.mix/
+/.elixir_ls/

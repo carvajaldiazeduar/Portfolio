@@ -1,0 +1,6 @@
+/_build/
+/deps/
+/calculator_cli
+/elixir_buildpack*
+/.mix/
+/.elixir_ls/

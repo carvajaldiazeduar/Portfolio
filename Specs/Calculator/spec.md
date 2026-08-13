@@ -13,6 +13,7 @@ App with no persistence. A single `calculate` operation that receives two number
 - **Node.js**: Cli (`Cli/calculator.js`) + Web (Express, NextJS, React)
 - **Ruby**: Cli (`Cli/calculator.rb`) + Web (RubyOnRails)
 - **Java**: Cli (plain Java + JUnit 5) + Web (Spring Boot 3.3.4, Java 21)
+- **Elixir**: Cli (mix escript + ExUnit) + Web (Phoenix 1.8, Elixir 1.17; no Ecto/cache)
 
 ## Adapters
 None — no DB or cache.
@@ -36,6 +37,8 @@ None required (no DB/cache). Web port set via compose.
 | PHP | assert | `Cli/tests/` via `php -d zend.assertions=1 -d assert.exception=1`; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 | Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
 | Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
+| Elixir Cli | ExUnit | `Elixir/Cli` via `mix test` |
+| Elixir Web | ExUnit + Phoenix.ConnTest | `Elixir/Web/Phoenix/src` via `mix test` |
 
 ## Containers / Ports
-Per framework: Plain/Express/Flask/Spring Boot on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`. C# web uses `mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine` images.
+Per framework: Plain/Express/Flask/Spring Boot on `5000`, Laravel/Django/Rails on `8000`, NextJS/React/Reflex on `3000`/`5173`, Phoenix on `4000`. C# web uses `mcr.microsoft.com/dotnet/{sdk,aspnet}:9.0-alpine` images. Elixir uses `elixir:1.17-alpine` images.

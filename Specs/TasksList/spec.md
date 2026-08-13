@@ -13,6 +13,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - **Node.js**: Cli + Web (Express, NextJS, React)
 - **Ruby**: Cli + Web (RubyOnRails)
 - **Java**: Cli + Web (Spring Boot 3.3.4, Java 21; EF Core equivalent via plain JDBC adapters in Cli)
+- **Elixir**: Cli (mix escript + ExUnit) + Web (Phoenix 1.8, Elixir 1.17 with Ecto)
 
 ## Adapters
 - **DB**: `DatabaseAdapter` + `Adapters/{PostgreSQL,MySQL,SQLite,SQLServer,MongoDB}` + `DatabaseFactory`
@@ -20,6 +21,7 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 - C# Web uses EF Core (`TasksListDbContext`) instead of `DatabaseAdapter`.
 - Ruby uses Rails ORM + `Rails.cache` (`:redis_cache_store` / `:memory_store`).
 - Java Web uses Spring Boot JPA/Hibernate + Hikari (`DataSourceConfig`) + `CacheConfig` with `LocalCache`/`RedisCache` instead of `DatabaseAdapter`; Java Cli uses plain JDBC adapters.
+- Elixir uses Ecto (`Task` schema + `src/priv/repo/migrations/`) + the same `CacheAdapter` behaviour (`CacheType` via `CACHE_TYPE`, `RedisCache` via Redix / `LocalCache` as an Agent under the supervisor).
 
 ## Env vars
 - `DB_DRIVER` (default `pgsql`), `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_FILE` (SQLite)
@@ -46,8 +48,10 @@ Classic CRUD over a database with cache. Persistence layer via `DatabaseAdapter`
 | PHP | assert | Cli via `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php`; frameworks via PHPUnit; Plain Web via assert + `php -S 127.0.0.1:8000 index.php` |
 | Java Cli | JUnit 5 (Maven) | `Java/Cli` via `mvn test` |
 | Java Web | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
+| Elixir Cli | ExUnit | `Elixir/Cli` via `mix test` |
+| Elixir Web | ExUnit + Phoenix.ConnTest | `Elixir/Web/Phoenix/src` via `mix test` |
 
 DB integration tests use `DB_DRIVER=sqlite` + `DB_FILE=test.db`.
 
 ## Containers / Ports
-Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`.
+Compose: PostgreSQL active (5432) + Redis (6379); MySQL/SQL Server/MongoDB commented out. API per framework: Plain/Express/Flask/Spring Boot `5000`, Laravel/Django/Rails `8000`, NextJS/React `3000`/`5173`, Phoenix `4000` (`elixir:1.17-alpine`).
