@@ -101,8 +101,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
             sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
@@ -221,8 +221,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
             sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
@@ -336,8 +336,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
             sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           # Wait for the database service to accept connections (avoids races with
@@ -496,8 +496,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
             sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
@@ -677,8 +677,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
           if [ "$DB_DRIVER" = "sqlserver" ]; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-            curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
+            curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
             sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y -qq mssql-tools18 2>/dev/null || true
           fi
           if [ -n "$DB_HOST" ] && [ "$DB_DRIVER" = "sqlserver" ]; then
