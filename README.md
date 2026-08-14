@@ -291,6 +291,21 @@ Project/
 │       │       └── public/ or templates/
 │       ├── Express/Flask/FastAPI/Django/Laravel/Symfony/RubyOnRails/NextJS/React/
 │       └── AspNetMinimalApi/Blazor/  (C# inline adapters in Program.cs)
+├── ChatAI/
+│   └── Web/  (per language)
+│       ├── Plain/       ← IChatProvider + ChatProviderFactory
+│       │   └── src/
+│       │       ├── providers/
+│       │       │   ├── IChatProvider.js/.py/.php/.rb    ← contract (completeChat)
+│       │       │   ├── ChatProviderFactory.js/.py/.php/.rb
+│       │       │   ├── OpenAiCompatibleChatProvider.js/.py/.php/.rb  ← openai + openai-compatible
+│       │       │   ├── AzureChatProvider.js/.py/.php/.rb
+│       │       │   ├── GoogleChatProvider.js/.py/.php/.rb
+│       │       │   └── AnthropicChatProvider.js/.py/.php/.rb
+│       │       ├── server.js/app.py/index.php/server.rb
+│       │       └── public/ or templates/
+│       ├── Flask/Express/RubyOnRails/SpringBoot/AspNetMinimalApi/
+│       └── Phoenix/  (Elixir: ChatController + lib/<app>/providers/)
 └── CloudLocal/
     ├── docker-compose.yml          ← AWS, GCP and Azure local emulator profiles
     ├── aws/
@@ -329,7 +344,91 @@ Project/
 | **DataPipeline** | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
 | **SemanticSearch** | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
 | **CloudLocal** | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
-| **ChatAI** | AI chat API that forwards messages to an OpenAI-compatible LLM provider via a swappable provider adapter. Stateless — no DB or cache. |
+| **ChatAI** | AI chat API that routes a message history to a swappable LLM provider (OpenAI-compatible, Azure, Google, Anthropic) via a `ChatProviderFactory`, and returns the normalized assistant response. Stateless — no DB or cache. |
+
+---
+
+## 🤖 ChatAI — Architecture
+
+ChatAI is a **stateless HTTP API** (no DB, no cache) that receives a message history, routes it to a configured LLM provider, and returns the assistant response in a normalized shape.
+
+### Provider abstraction
+
+Each provider family has a dedicated adapter implementing the `IChatProvider` contract (`completeChat(request) -> response`), so only the provider family is switchable — the public API contract stays identical across all of them:
+
+```
+POST /api/chat ──► ChatController ──► ChatProviderFactory ──► IChatProvider
+                                          │ openai      ──► OpenAiCompatibleChatProvider
+                                          │ openai-compatible ─► OpenAiCompatibleChatProvider  (custom base url)
+                                          │ azure       ──► AzureChatProvider
+                                          │ google      ──► GoogleChatProvider
+                                          │ anthropic   ──► AnthropicChatProvider
+```
+
+Provider resolution per request:
+
+1. `provider` field in the request body (if present) wins;
+2. otherwise the `CHAT_PROVIDER` environment variable;
+3. otherwise the default `openai`.
+
+Each adapter knows its own endpoint, auth header and request/response format, and normalizes the provider's native reply into a shared `choices[].role` / `choices[].content` + `usage` shape. In Elixir (Phoenix) provider HTTP calls are bounded with `Task.async`/`Task.yield(timeout)` for `CHAT_TIMEOUT_MS`.
+
+### Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | Chat UI (HTML) |
+| `GET` | `/health` | Liveness → `{"status": "ok"}` |
+| `POST` | `/api/chat` | Chat completion (see payload below) |
+| `GET` | `/openapi.json` | OpenAPI 3.0 spec |
+| `GET` | `/swagger` | Swagger UI |
+
+`POST /api/chat` request:
+
+```json
+{
+  "messages": [{ "role": "user", "content": "Hello" }],
+  "provider": "openai",       // optional; overrides CHAT_PROVIDER
+  "model": "gpt-4o-mini",     // optional; overrides CHAT_MODEL
+  "temperature": 0.7,         // optional
+  "max_tokens": 1024          // optional
+}
+```
+
+Response (`200 OK`):
+
+```json
+{
+  "id": "chatcmpl-...",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "choices": [{ "role": "assistant", "content": "Hello! How can I help you?" }],
+  "usage": { "prompt_tokens": 5, "completion_tokens": 12, "total_tokens": 17 }
+}
+```
+
+### Error handling
+
+- `400` if `messages` is empty/invalid, or the requested provider has no API key configured (`{"error": "Provider '<name>' is not configured (missing API key)"}`).
+- `502` if the upstream provider fails or does not respond within `CHAT_TIMEOUT_MS`.
+- `CHAT_FALLBACK_PROVIDER` (if set and its key is configured) is retried once after a provider failure before returning `502`.
+
+### Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `CHAT_PROVIDER` | `openai` | Active provider family: `openai`, `openai-compatible`, `azure`, `google`, `anthropic` |
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI / OpenAI-compatible credentials |
+| `AZURE_OPENAI_API_KEY` / `AZURE_OPENAI_ENDPOINT` / `AZURE_OPENAI_DEPLOYMENT` | — | Azure OpenAI credentials |
+| `GOOGLE_API_KEY` / `GOOGLE_BASE_URL` | `https://generativelanguage.googleapis.com` | Google Gemini credentials |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | Anthropic credentials |
+| `CHAT_MODEL` | `gpt-4o-mini` | Default model |
+| `CHAT_TEMPERATURE` | `0.7` | Default temperature |
+| `CHAT_MAX_TOKENS` | `1024` | Default max tokens |
+| `CHAT_TIMEOUT_MS` | `30000` | Per-provider HTTP timeout |
+| `CHAT_FALLBACK_PROVIDER` | _(disabled)_ | Fallback provider retried once on failure |
+
+Each provider reads only its own env vars; a compose file that only sets `OPENAI_API_KEY` works out of the box, while the other provider keys are read from the environment when set.
 
 ---
 
@@ -394,6 +493,7 @@ Each web project uses a different framework, with its own subfolder under `Web/(
 | **Node.js** | Plain (APIGateway, EventProcessor, CloudLocal AWS pipeline) | DatabaseAdapter (base class) + QueueAdapter | Redis/BullMQ, RabbitMQ, Kafka, SQS | Redis / Local |
 | **Python** | Plain (DataPipeline) | DataWarehouseAdapter (ABC) | duckdb (default), BigQuery, PostgreSQL | Redis / Local |
 | **multi** | Plain (SemanticSearch) | VectorStoreAdapter (interface/ABC/base) | chromadb (default), pgvector, pinecone | Redis / Local |
+| **multi** | Plain (ChatAI) | IChatProvider (interface/ABC/base) + ChatProviderFactory | openai/openai-compatible (default), azure, google, anthropic | None |
 
 ---
 
@@ -412,6 +512,7 @@ The **plain** variants implement the **Adapter** pattern with a base interface/c
 | CloudLocal AWS pipeline | _(none)_ | DatabaseAdapter → PostgreSQL / MySQL / SQLite / SQL Server / MongoDB / DynamoDB | `FileMetadata` (fileName, fileType, status, key) |
 | DataPipeline | _(none)_ | DataWarehouseAdapter → duckdb (default) / bigquery / postgresql | `SourceRecord` (source, data, processed) |
 | SemanticSearch | _(none)_ | VectorStoreAdapter → chromadb (default) / pgvector / pinecone | `Document` (id, text, embedding, metadata) |
+| ChatAI | _(none)_ | IChatProvider → openai/openai-compatible (default) / azure / google / anthropic | `ChatRequest` (messages, provider, model) |
 
 ### Supported databases
 
@@ -495,7 +596,7 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 | **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
 | **SemanticSearch (NextJS/React)** | `3000`/`5173` | `podman compose up` |
 | **SemanticSearch (C#)** | `80`/`8000` | `podman compose up` |
-| **ChatAI** | `3000`/`5000`/`8000` per impl (C# & Node & Ruby → `3000`, Java & Python → `5000`, PHP → `8000`) | `podman compose up` (from each `Web/<Impl>/` folder) |
+| **ChatAI** | `3000`/`4000`/`5000`/`8000` per impl (C# & Node & Ruby → `3000`, Elixir → `4000`, Java & Python → `5000`, PHP → `8000`) | `podman compose up` (from each `Web/<Impl>/` folder) |
 
 Example:
 ```bash
