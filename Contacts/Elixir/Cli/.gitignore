@@ -1,0 +1,11 @@
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix will write to when running `mix escript.build`.
+/contacts_cli
+
+# Trailing newlines and tabs in this file are significant.
+# Generated files should not be committed. Check into version control if desired.

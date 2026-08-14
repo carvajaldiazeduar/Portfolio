@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Chronometer API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "summary": "Get current stopwatch state",
+        "responses": {
+          "200": {
+            "description": "Current state and elapsed time"
+          }
+        }
+      }
+    },
+    "/start": {
+      "post": {
+        "summary": "Start the stopwatch",
+        "responses": {
+          "200": {
+            "description": "Stopwatch started"
+          }
+        }
+      }
+    },
+    "/pause": {
+      "post": {
+        "summary": "Pause the stopwatch",
+        "responses": {
+          "200": {
+            "description": "Stopwatch paused"
+          }
+        }
+      }
+    },
+    "/resume": {
+      "post": {
+        "summary": "Resume the stopwatch",
+        "responses": {
+          "200": {
+            "description": "Stopwatch resumed"
+          }
+        }
+      }
+    },
+    "/reset": {
+      "post": {
+        "summary": "Reset the stopwatch",
+        "responses": {
+          "200": {
+            "description": "Stopwatch reset"
+          }
+        }
+      }
+    }
+  }
+}

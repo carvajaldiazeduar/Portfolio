@@ -3,10 +3,10 @@
 ## General Structure
 
 ```
-Project/{PHP,Python,CSharp,Node.js,Ruby}/{Cli,Web}/{Framework}/src/
+Project/{PHP,Python,CSharp,Node.js,Ruby,Java,Elixir}/{Cli,Web}/{Framework}/src/
 ```
 
-There are **12 top-level items**: 7 core apps (Calculator, Chronometer, Contacts, Conversor, Inboxes, PasswordGenerator, TasksList) + specialized projects (APIGateway, DataPipeline, EventProcessor, SemanticSearch) + `CloudLocal/` (cloud emulator infra, not an app).
+There are **13 top-level items**: 7 core apps (Calculator, Chronometer, Contacts, Conversor, Inboxes, PasswordGenerator, TasksList) + specialized projects (APIGateway, ChatAI, DataPipeline, EventProcessor, SemanticSearch) + `CloudLocal/` (cloud emulator infra, not an app).
 
 ## Specs
 
@@ -24,6 +24,8 @@ There are **12 top-level items**: 7 core apps (Calculator, Chronometer, Contacts
 | EventProcessor (Node.js only) | `QueueAdapter` (QUEUE_DRIVER: redis/rabbitmq/kafka/sqs), no DB |
 | DataPipeline (Python only) | `DataWarehouseAdapter` (WAREHOUSE_DRIVER: duckdb/bigquery/postgresql, default duckdb) + cache |
 | SemanticSearch | `VectorStoreAdapter` (VECTOR_DRIVER: chromadb/pinecone/pgvector) + cache |
+
+Elixir (Phoenix) uses Ecto for DB-backed projects (Contacts, Inboxes, PasswordGenerator, TasksList) and implements the same `CacheAdapter` behavior (`CacheType` via `CACHE_TYPE`). Stateless projects (Calculator, Chronometer, Conversor) skip Ecto and cache. ChatAI (Elixir) is stateless — no DB/cache.
 
 New specialized projects (DataPipeline, SemanticSearch) are covered in README.md alongside APIGateway, EventProcessor and CloudLocal.
 
@@ -68,8 +70,19 @@ New specialized projects (DataPipeline, SemanticSearch) are covered in README.md
 - **Migrations**: `src/db/migrate/*.rb`. The container build runs `rails db:prepare` on startup
 - Projects without DB (Calculator, Chronometer, Conversor, SemanticSearch): no `database.yml`, models, or cache initializer
 
+### Elixir (Phoenix)
+- **Indentation**: 2 spaces
+- **Entry**: `src/lib/<app>/` (Application + Endpoint + Router + Controllers). Server on port 4000
+- **Framework**: Phoenix `~> 1.8`, Elixir 1.17. Full MVC — `src/lib/<app>_web/` (controllers/router) + `src/lib/<app>/` (contexts/schemas)
+- **ORM**: Ecto `~> 3.13` — `src/lib/<app>/repo.ex` + `src/lib/<app>/<context>/<schema>.ex` + `src/priv/repo/migrations/`. Runtime repo config builds the adapter from `DB_DRIVER` (postgrex/myxql/tds/ecto_sqlite3/mongodb_ecto)
+- **Cache**: `src/lib/<app>/cache/` — `CacheAdapter` behaviour + `CacheFactory` (`create_cache/1` returns `RedisCache`/`LocalCache` by `CACHE_TYPE`). LocalCache is an Agent (GenServer) under the app supervisor; RedisCache uses Redix
+- **Tests**: ExUnit (`mix test`) run from `src/`; Phoenix controller tests use `Phoenix.ConnTest` (`src/test/<app>_web/controllers/`)
+- **Actors (OTP)**: Chronometer Web keeps the stopwatch state in a supervised `GenServer`. ChatAI bounds provider HTTP calls with `Task.async`/`Task.yield(timeout)` for `CHAT_TIMEOUT_MS`
+- **Projects without DB** (Calculator, Chronometer, Conversor, ChatAI): no Repo, no migrations, no cache files
+- **EXCEPTION**: `SemanticSearch/Elixir` keeps its vector drivers under `src/lib/<app>/vectorstore/` (`VectorStoreAdapter` behaviour + `VectorStoreFactory` + `{ChromaDB,PgVector,Pinecone,InMemory}`) and cache via the same `CacheAdapter`. Don't add a Repo there.
+
 ### ORM Frameworks
-- Laravel, Symfony, Flask, FastAPI, Django, Express, RubyOnRails — use their own ORM + cache. C# Web uses EF Core. Do not modify ORM framework structure unless requested.
+- Laravel, Symfony, Flask, FastAPI, Django, Express, RubyOnRails, Phoenix (Ecto) — use their own ORM + cache. C# Web uses EF Core. Do not modify ORM framework structure unless requested.
 
 ## Databases
 
@@ -128,6 +141,7 @@ Recommended commands (run in the project folder):
 | C#       | xUnit     | `dotnet test` | from `src/tests/` (no .sln; the test csproj lives there) |
 | Node.js  | Jest      | `npm test` | run from `src/` for web plain; from project root for Cli |
 | Ruby     | Rails     | `rails test` | from `src/` |
+| Elixir   | ExUnit    | `mix test` | run from `src/` (mix project) |
 
 Notes:
 - Python/Node plain tests import via `src/`, so `pytest` / `npm test` must be executed inside `src/`, not the framework folder.
@@ -138,7 +152,7 @@ Notes:
 `scripts/ci-local.sh` runs the full CI matrix inside Podman containers, booting
 disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7
 on an isolated `ci-local-net` network. It is invoked per job (or `all`):
-- `./scripts/ci-local.sh php`, `node`, `python`, `ruby`, `csharp`, `java`, `all`.
+- `./scripts/ci-local.sh php`, `node`, `python`, `ruby`, `csharp`, `java`, `elixir`, `all`.
 
 Per-language driver matrix (each project is exercised against every driver it
 actually supports; projects that reject a driver — e.g. a Prisma `provider =
@@ -146,6 +160,7 @@ actually supports; projects that reject a driver — e.g. a Prisma `provider =
 - PHP: `sqlite pgsql mysql mongodb` (PHP 8.2-cli lacks pdo_sqlsrv, so `sqlserver` is excluded; requires ≥8.3).
 - Node / Python / C#: `sqlite pgsql mysql sqlserver mongodb`.
 - Java: `sqlite pgsql mysql sqlserver` (no MongoDB JDBC driver in `DataSourceConfig`); the runner keeps a persistent `ci-local-m2` Maven volume and forces `-XX:-TieredCompilation` because Temurin 21.0.11's C1 JIT crashes on `ConcurrentHashMap::putVal`.
+- Elixir: `sqlite pgsql mysql sqlserver mongodb` (Ecto adapters: ecto_sqlite3/postgrex/myxql/tds/mongodb_ecto).
 - Ruby: `sqlite` (Rails, on PostgreSQL/MariaDB hosts where tested).
 
 The `sqlserver` jobs use the `mcr.microsoft.com/mssql/server:2022-latest` image, which
@@ -174,7 +189,10 @@ the `ci-local-*` containers + network on exit.
 10. **Run Tests**: run the relevant tests for touched projects; broader tests only for shared conventions, cross-project changes, or high-risk edits
 11. **Environment examples**: keep `.env.example` aligned with documented DB/cache variables
 12. **Review tests after every change**: whenever a task finishes, review (and run) all tests for that change to validate nothing is broken — see Verification Strategy
-13. **Branches**: Always create a new branch from main for new changes so they can be reviewed before merging.
+13. **Branches**: Always create a new branch from main for new changes so they can be reviewed before merging. Name it after the scope: `feat/<language>` for a new language port, `feat/<project>` for a project feature, `fix/<short-description>` for fixes.
+14. **Spec-first workflow**: always build the plan from `Specs/<Project>/spec.md` first. If the plan changes behavior, update the spec before touching code.
+15. **Tests before code**: define the tests the spec requires before implementing, then implement until they pass.
+16. **All tests green before push**: never commit or push changes until every test for the touched projects passes (`mix test`, `pytest`, `dotnet test`, `npm test`, `rails test`, etc.). If a blocker prevents running tests, report it instead of pushing.
 
 ## Verification Strategy
 

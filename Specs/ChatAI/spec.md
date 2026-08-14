@@ -41,6 +41,7 @@ POST /api/chat ──► ChatController ──► ChatProviderFactory ──► 
 - **Node.js**: Web (Plain `src/server.js`, Express)
 - **Ruby**: Web (Plain `src/server.rb`, WEBrick)
 - **Java**: Web (Spring Boot 3.3.4, Java 21; stateless, no DB/cache)
+- **Elixir**: Web (Phoenix 1.8, Elixir 1.17; stateless, no DB/cache). Provider HTTP calls are bounded with `Task.async`/`Task.yield(timeout)` for `CHAT_TIMEOUT_MS`.
 
 Each Plain implementation exposes the same endpoints, request/response contract
 and env vars as the C# one. The C# implementation is the reference contract.
@@ -49,12 +50,12 @@ and env vars as the C# one. The C# implementation is the reference contract.
 
 - **ChatProviderFactory**: maps a provider name → a concrete `IChatProvider`
   (built from per-provider env vars). Present in C# (`Program.cs`), Node
-  (`server.js`), Python (`app.py`), PHP (`index.php`), Ruby (`server.rb`) and
-  Java (`ChatProviderConfig`).
+  (`server.js`), Python (`app.py`), PHP (`index.php`), Ruby (`server.rb`),
+  Java (`ChatProviderConfig`) and Elixir (`ChatProviderFactory`).
 - **IChatProvider** contract: `completeChat(request) -> response` (each
   language names it accordingly, e.g. `CompleteAsync` in C#,
   `complete_chat` in Python/Ruby, `completeChat` in Node/PHP,
-  `completeChat` in Java).
+  `completeChat` in Java, `complete_chat/1` in Elixir).
 
 Per-provider adapters (one class/function per provider):
   - **openai / openai-compatible** → `OpenAiCompatibleChatProvider`
@@ -153,6 +154,7 @@ Resilience and failover:
 | PHP | asserts | `PHP/Web/Plain/src/tests/` (not runnable as-is) |
 | Ruby | minitest | `Ruby/Web/Plain/src/tests/` |
 | Java | JUnit + Spring MockMvc (Maven) | `Java/Web/SpringBoot` via `mvn test` |
+| Elixir | ExUnit + Phoenix.ConnTest | `Elixir/Web/Phoenix/src` via `mix test` |
 
 Tests do not require a real API key: the provider is tested against a mock/stub
 (or a mocked factory at the controller level). They cover:
@@ -177,6 +179,7 @@ Tests do not require a real API key: the provider is tested against a mock/stub
 | Node.js | `node:20-alpine` | `3000:3000` |
 | Ruby | `ruby:3.2-alpine` | `3000:3000` |
 | Java | `maven:3.9-eclipse-temurin-21` build / `eclipse-temurin:21-jre-alpine` runtime | `5000:5000` |
+| Elixir | `elixir:1.17-alpine` | `4000:4000` |
 
 Run with Podman: `podman compose up` from each `Web/<Impl>/` folder. Each
 compose file exposes `CHAT_PROVIDER` and the OpenAI family
@@ -237,4 +240,7 @@ ChatAI/
 └── Java/Web/SpringBoot/ (Dockerfile, docker-compose.yml + Spring Boot app:
     WebController/ChatController, provider/IChatProvider + ChatProviderFactory +
     OpenAi/Azure/Google/Anthropic adapters, model/{ChatRequest,Message,ChatResponse,ChatChoice,ChatUsage})
+└── Elixir/Web/Phoenix/ (Dockerfile, docker-compose.yml + `src/` Phoenix app:
+    `lib/<app>_web/` router + ChatController, `lib/<app>/providers/` IChatProvider +
+    ChatProviderFactory + {OpenAiCompatible,Azure,Google,Anthropic} adapters)
 ```

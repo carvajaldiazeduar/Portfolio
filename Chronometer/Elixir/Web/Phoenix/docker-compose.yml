@@ -1,0 +1,6 @@
+services:
+  # ─── Calculator: no database, no cache ──────────────────────────
+  web:
+    build: .
+    ports:
+      - "4000:4000"
