@@ -25,3 +25,13 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 contacts-*.tar
 
+# SQLite databases and journal files (created when DB_DRIVER=sqlite).
+db.sqlite3
+dev.db
+*.db
+*.sqlite
+*.sqlite3
+*-shm
+*-wal
+contacts
+

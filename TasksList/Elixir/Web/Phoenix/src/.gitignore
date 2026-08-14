@@ -23,5 +23,15 @@ erl_crash.dump
 /tmp/
 
 # Ignore package tarball (built via "mix hex.build").
-contacts-*.tar
+tasks_list-*.tar
+
+# SQLite databases and journal files (created when DB_DRIVER=sqlite).
+db.sqlite3
+dev.db
+*.db
+*.sqlite
+*.sqlite3
+*-shm
+*-wal
+tasks_list
 
