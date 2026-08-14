@@ -277,18 +277,6 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced local
 
 ---
 
-## 💡 Learnings & Roadmap
-
-- Implementing the same domain (e.g. `Contacts`) across 5+ different languages made it easier to directly compare ORM handling, dependency injection, and environment-based configuration.
-- The Adapter pattern kept business logic fully decoupled from the chosen database engine, making it straightforward to switch from PostgreSQL to MongoDB without touching the rest of the code.
-
-**Next steps:**
-- [x] CI/CD with GitHub Actions (build + test per project)
-- [x] Observability and metrics (Prometheus/Grafana) in EventProcessor
-- [x] API documentation (OpenAPI/Swagger) for the REST projects
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License — see [LICENSE](./LICENSE) for details.
