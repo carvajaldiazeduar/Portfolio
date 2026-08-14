@@ -82,7 +82,7 @@ public class ChromaDBAdapter : VectorStoreAdapter
         var collectionName = Environment.GetEnvironmentVariable("VECTOR_COLLECTION") ?? "documents";
         if (!_collections.ContainsKey(collectionName))
         {
-            _collections[collectionName] = _client!.GetType().GetMethod("GetOrCreateCollection")!.Invoke(_client, new object[] { collectionName });
+            _collections[collectionName] = _client!.GetType().GetMethod("GetOrCreateCollection")!.Invoke(_client, new object[] { collectionName })!;
         }
         var collection = _collections[collectionName];
         var ids = documents.Select((_, i) => $"doc_{i}").ToList();
@@ -95,7 +95,7 @@ public class ChromaDBAdapter : VectorStoreAdapter
         var collectionName = Environment.GetEnvironmentVariable("VECTOR_COLLECTION") ?? "documents";
         if (!_collections.ContainsKey(collectionName)) return new List<SearchResult>();
         var collection = _collections[collectionName];
-        var results = collection.GetType().GetMethod("Query")!.Invoke(collection, new object[] { new[] { queryEmbedding }, nResults });
+        var results = collection.GetType().GetMethod("Query")!.Invoke(collection, new object[] { new[] { queryEmbedding }, nResults })!;
         var docs = results.GetType().GetProperty("Documents")!.GetValue(results) as System.Collections.IEnumerable;
         var metas = results.GetType().GetProperty("Metadatas")!.GetValue(results) as System.Collections.IEnumerable;
         var dists = results.GetType().GetProperty("Distances")!.GetValue(results) as System.Collections.IEnumerable;
@@ -144,7 +144,7 @@ public class PineconeAdapter : VectorStoreAdapter
         if (_index != null) return;
         var pinecone = Type.GetType("Pinecone.Pinecone, Pinecone") ?? throw new Exception("Pinecone not available");
         var apiKey = Environment.GetEnvironmentVariable("PINECONE_API_KEY") ?? "";
-        var client = Activator.CreateInstance(pinecone, new object[] { apiKey });
+        var client = Activator.CreateInstance(pinecone, new object[] { apiKey })!;
         var indexName = Environment.GetEnvironmentVariable("PINECONE_INDEX") ?? "documents";
         _index = client.GetType().GetMethod("Index")!.Invoke(client, new object[] { indexName });
     }
@@ -164,7 +164,7 @@ public class PineconeAdapter : VectorStoreAdapter
     public override async Task<List<SearchResult>> Search(float[] queryEmbedding, int nResults = 5)
     {
         await Connect();
-        var results = _index!.GetType().GetMethod("Query")!.Invoke(_index, new object[] { queryEmbedding, nResults, true });
+        var results = _index!.GetType().GetMethod("Query")!.Invoke(_index, new object[] { queryEmbedding, nResults, true })!;
         var matches = results.GetType().GetProperty("Matches")!.GetValue(results) as System.Collections.IEnumerable;
         return matches!.Cast<object>().Select(m =>
         {
