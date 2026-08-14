@@ -66,7 +66,7 @@ public class ChatProviderFactory
     };
 
     public virtual string DeploymentFor(string provider) =>
-        provider == "azure" ? Env("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-mini") : null;
+        provider == "azure" ? Env("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-mini") : null!;
 
     public virtual IChatProvider Create(string provider)
     {

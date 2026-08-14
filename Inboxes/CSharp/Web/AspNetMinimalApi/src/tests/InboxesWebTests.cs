@@ -102,6 +102,6 @@ public class InboxesWebTests : IClassFixture<WebApplicationFactory<Program>>
         var list = await _client.GetAsync("/api/messages");
         var msgs = await list.Content.ReadFromJsonAsync<List<Dictionary<string, object>>>();
         Assert.Single(msgs!);
-        Assert.Equal("keep", msgs[0]["subject"].ToString());
+        Assert.Equal("keep", msgs![0]["subject"].ToString());
     }
 }

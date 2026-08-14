@@ -46,7 +46,7 @@ while (true)
     }
 
     var op = operations[choice!];
-    object result = choice switch
+    object? result = choice switch
     {
         "1" => Calculator.Add(num1, num2),
         "2" => Calculator.Subtract(num1, num2),
