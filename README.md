@@ -1,11 +1,10 @@
-
 # 💼 Professional Software Development Portfolio
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Languages](https://img.shields.io/badge/languages-PHP%20%7C%20Python%20%7C%20C%23%20%7C%20Node.js%20%7C%20Ruby-blue)
 ![Podman](https://img.shields.io/badge/containerized-Podman-892CA0)
 
-A portfolio of software projects where I implement **the same set of applications across multiple languages and frameworks** (PHP, Python, C#, Node.js and Ruby), keeping consistent architecture throughout: the **Adapter** pattern for persistence, **Factory** for driver selection, two-level caching (Redis/local), and unit tests in every implementation.
+A portfolio of software projects where I implement **the same set of applications across multiple languages and frameworks** (PHP, Python, C#, Node.js, Ruby, Java, Elixir), keeping consistent architecture throughout: the **Adapter** pattern for persistence, **Factory** for driver selection, two-level caching (Redis/local), and unit tests in every implementation.
 
 The goal is twofold: to compare how the same problem is solved across different ecosystems, and to demonstrate mastery of design patterns, best practices (SOLID, clean code), and infrastructure-agnostic architecture.
 
@@ -26,31 +25,31 @@ PostgreSQL and Redis are started by the compose files for web projects. If you r
 
 ---
 
-## 🚀 Quick Start
+## 🧩 Projects
 
-Want to explore something quickly? Pick your entry point:
+Every project folder ships its own `README.md` with **architecture, patterns, logic, endpoints, env vars and tests** — the table below links to them. The [specs](Specs/) document the full contract per project.
 
-- **See a full CRUD project with DB + cache:**
-  ```bash
-  cd Contacts/Python/Web/FastAPI
-  podman compose up
-  ```
-- **See the Adapter pattern in action (no ORM, direct connection):**
-  → `PHP/Web/Plain/src/Storage/` or `Python/Web/Plain/src/storage/`
-- **See an ETL data pipeline with a configurable warehouse:**
-  → `DataPipeline/Python/Web/Plain`
-- **See semantic search over a vector store:**
-  → `SemanticSearch/Python/Web/Flask` or `SemanticSearch/Node.js/Web/Plain`
-- **See local cloud services:**
-  → `CloudLocal` (AWS LocalStack, GCP emulators, Azure Azurite/Cosmos DB)
-- **See an API Gateway with JWT and rate limiting:**
-  → `APIGateway/Node.js/Web/Plain`
+| Project | Description |
+|---|---|
+| [**Calculator**](Calculator/README.md) | Basic arithmetic (add, subtract, multiply, divide). No persistence. |
+| [**Chronometer**](Chronometer/README.md) | Digital stopwatch with start/pause/resume/reset/lap. No persistence. |
+| [**Contacts**](Contacts/README.md) | Contact manager (CRUD) with **database + cache**. |
+| [**Conversor**](Conversor/README.md) | Unit converter (length, mass, temperature, currency). No persistence. |
+| [**Inboxes**](Inboxes/README.md) | Message inbox (CRUD) with **database + cache**. |
+| [**PasswordGenerator**](PasswordGenerator/README.md) | Secure password generator with **history persisted in DB + cache**. |
+| [**TasksList**](TasksList/README.md) | Task list (CRUD) with **database + cache**. |
+| [**APIGateway**](APIGateway/README.md) | Lightweight proxy/gateway with JWT validation, rate limiting, and service routing. |
+| [**EventProcessor**](EventProcessor/README.md) | Async job queue processor (Redis/RabbitMQ/Kafka/SQS) with worker + observability. |
+| [**DataPipeline**](DataPipeline/README.md) | Configurable ETL pipeline into a warehouse (duckdb/bigquery/postgresql). |
+| [**SemanticSearch**](SemanticSearch/README.md) | Semantic search over documents via a vector store (chromadb/pgvector/pinecone). |
+| [**CloudLocal**](CloudLocal/README.md) | Local cloud service lab for AWS, GCP and Azure (LocalStack, emulators, Azurite, Cosmos DB). |
+| [**ChatAI**](ChatAI/README.md) | AI chat API routing to a swappable LLM provider (OpenAI-compatible, Azure, Google, Anthropic). Stateless. |
 
 ---
 
-## ▶️ How to Run a Project
+## 🚀 Quick Start
 
-Choose any web implementation, enter its folder, and start the stack with Podman:
+Pick any web implementation, enter its folder, and start the stack with Podman:
 
 ```bash
 cd Contacts/Python/Web/FastAPI
@@ -75,362 +74,22 @@ Use `.env.example` as a reference for database and cache variables. Compose file
 
 ## 📁 Structure
 
-Every project with persistence follows the same folder pattern (Storage/Cache with an interface + Factory + Adapters). Here's a full example (PHP Plain); every other language replicates this same logic adapted to its own syntax.
-
-<details>
-<summary><strong>View full structure tree</strong></summary>
+Every project follows the same shape:
 
 ```
-Project/
-├── PHP/
-│   ├── Cli/
-│   └── Web/
-│       ├── Laravel/
-│       ├── Symfony/
-│       └── Plain/
-│           ├── src/
-│           │   ├── Storage/
-│           │   │   ├── DatabaseAdapter.php      ← interface
-│           │   │   ├── DatabaseFactory.php
-│           │   │   └── Adapters/
-│           │   │       ├── PostgreSQL.php
-│           │   │       ├── MySQL.php
-│           │   │       ├── SQLite.php
-│           │   │       ├── SQLServer.php
-│           │   │       └── MongoDB.php
-│           │   ├── Cache/
-│           │   │   ├── CacheAdapter.php          ← interface
-│           │   │   ├── CacheFactory.php
-│           │   │   └── Adapters/
-│           │   │       ├── Redis.php
-│           │   │       └── Local.php
-│           │   ├── index.php
-│           │   └── template.html
-│           ├── Dockerfile
-│           └── docker-compose.yml
-├── Python/
-│   ├── Cli/
-│   ├── Reflex/
-│   └── Web/
-│       ├── Flask/                 ← SQLAlchemy + cache.py
-│       ├── FastAPI/               ← async SQLAlchemy
-│       ├── Django/                ← Django ORM
-│       └── Plain/
-│           ├── src/
-│           │   ├── storage/
-│           │   │   ├── __init__.py
-│           │   │   ├── database_adapter.py       ← ABC
-│           │   │   ├── database_factory.py
-│           │   │   └── adapters/
-│           │   │       ├── __init__.py
-│           │   │       ├── postgresql.py
-│           │   │       ├── mysql.py
-│           │   │       ├── sqlite.py
-│           │   │       ├── sqlserver.py
-│           │   │       └── mongodb.py
-│           │   ├── cache/
-│           │   │   ├── __init__.py
-│           │   │   ├── cache_adapter.py          ← ABC
-│           │   │   ├── cache_factory.py
-│           │   │   └── adapters/
-│           │   │       ├── __init__.py
-│           │   │       ├── redis.py
-│           │   │       └── local.py
-│           │   ├── app.py
-│           │   ├── templates/index.html
-│           │   └── requirements.txt
-│           ├── Dockerfile
-│           └── docker-compose.yml
-├── CSharp/
-│   ├── Cli/
-│   └── Web/
-│       ├── AspNetMinimalApi/      ← IDatabaseAdapter + ICacheAdapter
-│       │   └── src/
-│       │       ├── Storage/
-│       │       │   ├── IDatabaseAdapter.cs
-│       │       │   ├── DatabaseFactory.cs
-│       │       │   └── Adapters/
-│       │       │       ├── PostgreSQL.cs
-│       │       │       ├── MySQL.cs
-│       │       │       ├── SQLite.cs
-│       │       │       ├── SQLServer.cs
-│       │       │       └── MongoDB.cs
-│       │       ├── Cache/
-│       │       │   ├── ICacheAdapter.cs
-│       │       │   ├── CacheFactory.cs
-│       │       │   └── Adapters/
-│       │       │       ├── Redis.cs
-│       │       │       └── Local.cs
-│       │       ├── Services/
-│       │       │   ├── ContactService.cs          ← per project
-│       │       │   └── Contact.cs                 ← model
-│       │       ├── Program.cs
-│       │       └── wwwroot/
-│       ├── Blazor/                 ← same pattern as AspNetMinimalApi
-│       └── MAUI/
-├── Ruby/
-│   ├── Cli/
-│   └── Web/
-│       └── RubyOnRails/            ← Rails full MVC + ERB + ActiveRecord
-│           ├── src/
-│           │   ├── app/
-│           │   │   ├── controllers/
-│           │   │   ├── models/
-│           │   │   └── views/
-│           │   ├── config/
-│           │   │   ├── application.rb    ← DatabaseUrl.build (ENV["DATABASE_URL"])
-│           │   │   ├── database.yml      ← only `url: <%= ENV["DATABASE_URL"] %>`
-│           │   │   ├── routes.rb
-│           │   │   └── initializers/cache.rb
-│           │   ├── db/migrate/
-│           │   ├── config.ru
-│           │   └── Gemfile
-│           ├── Dockerfile
-│           └── docker-compose.yml
-├── Node.js/
-│   ├── Cli/
-│   └── Web/
-│       ├── Express/               ← Prisma + cache.js
-│       ├── React/
-│       ├── NextJS/
-│       └── Plain/
-│           ├── src/
-│           │   ├── storage/
-│           │   │   ├── DatabaseAdapter.js        ← base class
-│           │   │   ├── DatabaseFactory.js
-│           │   │   └── adapters/
-│           │   │       ├── PostgreSQL.js
-│           │   │       ├── MySQL.js
-│           │   │       ├── SQLite.js
-│           │   │       ├── SQLServer.js
-│           │   │       └── MongoDB.js
-│           │   ├── cache/
-│           │   │   ├── CacheAdapter.js           ← base class
-│           │   │   ├── CacheFactory.js
-│           │   │   └── adapters/
-│           │   │       ├── Redis.js
-│           │   │       └── Local.js
-│           │   ├── server.js
-│           │   └── public/
-│           ├── Dockerfile
-│           └── docker-compose.yml
-├── APIGateway/
-│   └── Node.js/
-│       └── Web/
-│           └── Plain/
-│               ├── src/
-│               │   ├── middleware/
-│               │   │   ├── auth.js          ← JWT validation
-│               │   │   ├── rateLimit.js     ← Token bucket rate limiting
-│               │   │   └── proxy.js         ← Service routing
-│               │   ├── cache/
-│               │   │   ├── CacheAdapter.js
-│               │   │   ├── CacheFactory.js
-│               │   │   └── adapters/
-│               │   │       ├── Redis.js
-│               │   │       └── Local.js
-│               │   ├── server.js
-│               │   └── public/
-│               ├── Dockerfile
-│               └── docker-compose.yml
-├── EventProcessor/
-│   └── Node.js/
-│       └── Web/
-│           └── Plain/
-│               ├── src/
-│               │   ├── queue/
-│               │   │   ├── QueueAdapter.js          ← base class
-│               │   │   ├── QueueFactory.js
-│               │   │   └── adapters/
-│               │   │       ├── RabbitMQ.js
-│               │   │       ├── Kafka.js
-│               │   │       ├── SQS.js
-│               │   │       └── Redis.js
-│               │   ├── server.js
-│               │   ├── worker.js
-│               │   └── public/
-│               ├── Dockerfile
-│               └── docker-compose.yml
-├── DataPipeline/
-│   └── Python/
-│       └── Web/
-│           └── Plain/
-│               ├── src/
-│               │   ├── storage/
-│               │   │   ├── warehouse_adapter.py     ← ABC
-│               │   │   ├── warehouse_factory.py
-│               │   │   └── adapters/
-│               │   │       ├── duckdb.py            ← default
-│               │   │       ├── bigquery.py
-│               │   │       └── postgresql.py
-│               │   ├── cache/
-│               │   │   ├── cache_adapter.py         ← ABC
-│               │   │   ├── cache_factory.py
-│               │   │   └── adapters/
-│               │   │       ├── redis.py
-│               │   │       └── local.py
-│               │   ├── app.py
-│               │   ├── templates/
-│               │   └── requirements.txt
-│               ├── Dockerfile
-│               └── docker-compose.yml
-├── SemanticSearch/
-│   ├── Cli/  (per language)
-│   └── Web/
-│       ├── Plain/       ← VectorStoreAdapter + CacheAdapter
-│       │   └── src/
-│       │       ├── storage/
-│       │       │   ├── VectorAdapter.js/.py/.php    ← interface/ABC
-│       │       │   ├── VectorFactory.js/.py/.php
-│       │       │   └── adapters/
-│       │       │       ├── ChromaDB.js/.py/.php     ← default
-│       │       │       ├── PgVector.js/.py/.php
-│       │       │       └── Pinecone.js/.py/.php
-│       │       ├── cache/   ← CacheAdapter + Redis/Local
-│       │       ├── server.js/app.py/index.php
-│       │       └── public/ or templates/
-│       ├── Express/Flask/FastAPI/Django/Laravel/Symfony/RubyOnRails/NextJS/React/
-│       └── AspNetMinimalApi/Blazor/  (C# inline adapters in Program.cs)
-├── ChatAI/
-│   └── Web/  (per language)
-│       ├── Plain/       ← IChatProvider + ChatProviderFactory
-│       │   └── src/
-│       │       ├── providers/
-│       │       │   ├── IChatProvider.js/.py/.php/.rb    ← contract (completeChat)
-│       │       │   ├── ChatProviderFactory.js/.py/.php/.rb
-│       │       │   ├── OpenAiCompatibleChatProvider.js/.py/.php/.rb  ← openai + openai-compatible
-│       │       │   ├── AzureChatProvider.js/.py/.php/.rb
-│       │       │   ├── GoogleChatProvider.js/.py/.php/.rb
-│       │       │   └── AnthropicChatProvider.js/.py/.php/.rb
-│       │       ├── server.js/app.py/index.php/server.rb
-│       │       └── public/ or templates/
-│       ├── Flask/Express/RubyOnRails/SpringBoot/AspNetMinimalApi/
-│       └── Phoenix/  (Elixir: ChatController + lib/<app>/providers/)
-└── CloudLocal/
-    ├── docker-compose.yml          ← AWS, GCP and Azure local emulator profiles
-    ├── aws/
-    │   └── localstack/
-    │       └── pipeline/           ← LocalStack + Terraform + Node.js pipeline demo
-    ├── gcp/
-    │   ├── pubsub/
-    │   ├── firestore/
-    │   ├── bigtable/
-    │   └── storage/
-    ├── azure/
-    │   ├── azurite/
-    │   └── cosmosdb/
-    └── shared/
-        ├── scripts/
-        └── healthchecks/
+Project/{Language}/{Cli,Web}/{Framework}/src/
 ```
 
-</details>
+Persistence-backed projects use the **Adapter + Factory** pattern: a `DatabaseAdapter` interface/ABC/base class with one implementation per driver (`PostgreSQL`, `MySQL`, `SQLite`, `SQLServer`, `MongoDB`), selected at runtime via `DatabaseFactory` from `DB_DRIVER`. Cache uses the same pattern (`CacheAdapter` + `CacheFactory`) with Redis and a local in-memory fallback, selected via `CACHE_TYPE`.
 
----
+Specialized projects swap the persistence adapter for their own:
+- **DataPipeline** → `DataWarehouseAdapter` (duckdb/bigquery/postgresql)
+- **SemanticSearch** → `VectorStoreAdapter` (chromadb/pgvector/pinecone)
+- **EventProcessor** → `QueueAdapter` (redis/rabbitmq/kafka/sqs)
+- **APIGateway** → cache only (rate limiting), no DB
+- **ChatAI** → `IChatProvider` abstraction over LLM providers, no DB/cache
 
-## 🧩 Projects
-
-| Project | Description |
-|---|---|---|
-| [**Calculator**](Calculator/README.md) | Calculator with basic operations (add, subtract, multiply, divide). No persistence. |
-| [**Chronometer**](Chronometer/README.md) | Digital stopwatch. No persistence. |
-| [**Contacts**](Contacts/README.md) | Contact manager (CRUD) with **database + cache**. |
-| [**Conversor**](Conversor/README.md) | Unit converter (length, weight, temperature). No persistence. |
-| [**Inboxes**](Inboxes/README.md) | Inbox system with **database + cache**. |
-| [**PasswordGenerator**](PasswordGenerator/README.md) | Secure password generator with **history persisted in DB + cache**. |
-| [**TasksList**](TasksList/README.md) | Task list (CRUD) with **database + cache**. |
-| [**APIGateway**](APIGateway/README.md) | Lightweight proxy/gateway with JWT validation, rate limiting (Redis/Token Bucket), and service routing. |
-| [**EventProcessor**](EventProcessor/README.md) | Async job queue processor with RabbitMQ/Kafka/SQS/Redis support, retry mechanisms, and dead-letter queues. |
-| [**DataPipeline**](DataPipeline/README.md) | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
-| [**SemanticSearch**](SemanticSearch/README.md) | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
-| [**CloudLocal**](CloudLocal/README.md) | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
-| [**ChatAI**](ChatAI/README.md) | AI chat API that routes a message history to a swappable LLM provider (OpenAI-compatible, Azure, Google, Anthropic) via a `ChatProviderFactory`, and returns the normalized assistant response. Stateless — no DB or cache. |
-
-> Every project folder ships its own `README.md` with architecture, patterns and logic details; the table above links to them. The [specs](Specs/) document the full contract (endpoints, env vars, tests) per project.
-
----
-
-## 🤖 ChatAI — Architecture
-
-ChatAI is a **stateless HTTP API** (no DB, no cache) that receives a message history, routes it to a configured LLM provider, and returns the assistant response in a normalized shape.
-
-### Provider abstraction
-
-Each provider family has a dedicated adapter implementing the `IChatProvider` contract (`completeChat(request) -> response`), so only the provider family is switchable — the public API contract stays identical across all of them:
-
-```
-POST /api/chat ──► ChatController ──► ChatProviderFactory ──► IChatProvider
-                                          │ openai      ──► OpenAiCompatibleChatProvider
-                                          │ openai-compatible ─► OpenAiCompatibleChatProvider  (custom base url)
-                                          │ azure       ──► AzureChatProvider
-                                          │ google      ──► GoogleChatProvider
-                                          │ anthropic   ──► AnthropicChatProvider
-```
-
-Provider resolution per request:
-
-1. `provider` field in the request body (if present) wins;
-2. otherwise the `CHAT_PROVIDER` environment variable;
-3. otherwise the default `openai`.
-
-Each adapter knows its own endpoint, auth header and request/response format, and normalizes the provider's native reply into a shared `choices[].role` / `choices[].content` + `usage` shape. In Elixir (Phoenix) provider HTTP calls are bounded with `Task.async`/`Task.yield(timeout)` for `CHAT_TIMEOUT_MS`.
-
-### Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | Chat UI (HTML) |
-| `GET` | `/health` | Liveness → `{"status": "ok"}` |
-| `POST` | `/api/chat` | Chat completion (see payload below) |
-| `GET` | `/openapi.json` | OpenAPI 3.0 spec |
-| `GET` | `/swagger` | Swagger UI |
-
-`POST /api/chat` request:
-
-```json
-{
-  "messages": [{ "role": "user", "content": "Hello" }],
-  "provider": "openai",       // optional; overrides CHAT_PROVIDER
-  "model": "gpt-4o-mini",     // optional; overrides CHAT_MODEL
-  "temperature": 0.7,         // optional
-  "max_tokens": 1024          // optional
-}
-```
-
-Response (`200 OK`):
-
-```json
-{
-  "id": "chatcmpl-...",
-  "provider": "openai",
-  "model": "gpt-4o-mini",
-  "choices": [{ "role": "assistant", "content": "Hello! How can I help you?" }],
-  "usage": { "prompt_tokens": 5, "completion_tokens": 12, "total_tokens": 17 }
-}
-```
-
-### Error handling
-
-- `400` if `messages` is empty/invalid, or the requested provider has no API key configured (`{"error": "Provider '<name>' is not configured (missing API key)"}`).
-- `502` if the upstream provider fails or does not respond within `CHAT_TIMEOUT_MS`.
-- `CHAT_FALLBACK_PROVIDER` (if set and its key is configured) is retried once after a provider failure before returning `502`.
-
-### Environment variables
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `CHAT_PROVIDER` | `openai` | Active provider family: `openai`, `openai-compatible`, `azure`, `google`, `anthropic` |
-| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI / OpenAI-compatible credentials |
-| `AZURE_OPENAI_API_KEY` / `AZURE_OPENAI_ENDPOINT` / `AZURE_OPENAI_DEPLOYMENT` | — | Azure OpenAI credentials |
-| `GOOGLE_API_KEY` / `GOOGLE_BASE_URL` | `https://generativelanguage.googleapis.com` | Google Gemini credentials |
-| `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | Anthropic credentials |
-| `CHAT_MODEL` | `gpt-4o-mini` | Default model |
-| `CHAT_TEMPERATURE` | `0.7` | Default temperature |
-| `CHAT_MAX_TOKENS` | `1024` | Default max tokens |
-| `CHAT_TIMEOUT_MS` | `30000` | Per-provider HTTP timeout |
-| `CHAT_FALLBACK_PROVIDER` | _(disabled)_ | Fallback provider retried once on failure |
-
-Each provider reads only its own env vars; a compose file that only sets `OPENAI_API_KEY` works out of the box, while the other provider keys are read from the environment when set.
+The detailed architecture of each project (diagrams, adapters, data model, endpoints, logic) lives in the project's own `README.md`.
 
 ---
 
@@ -457,7 +116,7 @@ Each provider reads only its own env vars; a compose file that only sets `OPENAI
 ## 🧱 Architecture Principles
 
 - Same domain behavior across languages and frameworks.
-- Adapter pattern for persistence and cache in plain implementations.
+- Adapter pattern for persistence, cache, queue, warehouse and vector store in plain implementations.
 - Factory pattern for runtime driver selection.
 - PostgreSQL as the default database, with MySQL, SQLite, SQL Server and MongoDB support where implemented.
 - Redis as the preferred cache, with local in-memory fallback.
@@ -468,55 +127,34 @@ Each provider reads only its own env vars; a compose file that only sets `OPENAI
 
 ## 🛠️ Technologies
 
-Each web project uses a different framework, with its own subfolder under `Web/(framework)/src/`.
-
 ### ORM frameworks
 
 | Language | Frameworks | ORM | Cache |
 |----------|-----------|-----|-------|
 | **PHP** | Laravel, Symfony | Eloquent / Doctrine | Redis / Local |
 | **Python** | Flask, FastAPI, Django | SQLAlchemy / Django ORM | Redis / Local |
-| **C#** | _(none — see note below)_ | — | — |
 | **Node.js** | Express | Prisma | Redis / Local |
 | **Ruby** | RubyOnRails | ActiveRecord | Redis / Local |
-
-> **Note:** C# doesn't include a "full-ORM" framework (like Laravel/Django) because Blazor and MAUI focus on UI/client concerns; instead, both follow the same Adapter pattern as the plain ASP.NET Minimal API version, keeping consistency with the rest of the repo.
+| **C#** | AspNetMinimalApi, Blazor | EF Core | Redis / Local |
+| **Java** | Spring Boot | JPA/Hibernate | Redis / Local |
+| **Elixir** | Phoenix | Ecto | Redis / Local |
 
 ### Plain code frameworks (no ORM, direct connection)
 
-| Language | Framework | DB Adapter | Drivers | Cache |
-|----------|-----------|-----------|---------|-------|
-| **PHP** | Plain | DatabaseAdapter (interface) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
-| **Python** | Plain | DatabaseAdapter (ABC) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
-| **C#** | AspNetMinimalApi | IDatabaseAdapter (interface) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
-| **C#** | Blazor | IDatabaseAdapter (interface) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
-| **Node.js** | Plain | DatabaseAdapter (base class) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
-| **Node.js** | Plain (APIGateway) | CacheAdapter (base class) | Redis (rate limiting) | Redis / Local |
-| **Node.js** | Plain (APIGateway, EventProcessor, CloudLocal AWS pipeline) | DatabaseAdapter (base class) + QueueAdapter | Redis/BullMQ, RabbitMQ, Kafka, SQS | Redis / Local |
-| **Python** | Plain (DataPipeline) | DataWarehouseAdapter (ABC) | duckdb (default), BigQuery, PostgreSQL | Redis / Local |
-| **multi** | Plain (SemanticSearch) | VectorStoreAdapter (interface/ABC/base) | chromadb (default), pgvector, pinecone | Redis / Local |
-| **multi** | Plain (ChatAI) | IChatProvider (interface/ABC/base) + ChatProviderFactory | openai/openai-compatible (default), azure, google, anthropic | None |
+| Language | Framework | Adapter | Drivers | Cache |
+|----------|-----------|---------|---------|-------|
+| **PHP / Python / C# / Node.js** | Plain | DatabaseAdapter (interface/ABC/base) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
+| **Node.js** | Plain (APIGateway) | CacheAdapter (rate limiting) | Redis | Redis / Local |
+| **Node.js** | Plain (EventProcessor) | QueueAdapter | Redis, RabbitMQ, Kafka, SQS | Redis / Local |
+| **Python** | Plain (DataPipeline) | DataWarehouseAdapter | duckdb (default), BigQuery, PostgreSQL | Redis / Local |
+| **multi** | Plain (SemanticSearch) | VectorStoreAdapter | chromadb (default), pgvector, pinecone | Redis / Local |
+| **multi** | Plain (ChatAI) | IChatProvider + ChatProviderFactory | openai/openai-compatible (default), azure, google, anthropic | None |
 
 ---
 
-## 🗄️ Database
+## 🗄️ Database & ⚡ Cache
 
-Projects with persistence use an **ORM** in the full frameworks and **direct connection** in the plain variants.
-
-The **plain** variants implement the **Adapter** pattern with a base interface/class and one implementation per database engine, selected at runtime via `DatabaseFactory` based on `DB_DRIVER`.
-
-| Project | ORM (frameworks) | Plain (adapter pattern) | Models |
-|----------|-----------------|------------------------|---------|
-| Contacts | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → PostgreSQL / MySQL / SQLite / SQL Server / MongoDB | `Contact` (name, phone, email) |
-| Inboxes | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → 5 drivers | `Message` (sender, subject, body, read) |
-| PasswordGenerator | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → 5 drivers | `PasswordEntry` (password, length) |
-| TasksList | Eloquent / SQLAlchemy / Prisma / ActiveRecord | DatabaseAdapter → 5 drivers | `Task` (title, description, completed) |
-| CloudLocal AWS pipeline | _(none)_ | DatabaseAdapter → PostgreSQL / MySQL / SQLite / SQL Server / MongoDB / DynamoDB | `FileMetadata` (fileName, fileType, status, key) |
-| DataPipeline | _(none)_ | DataWarehouseAdapter → duckdb (default) / bigquery / postgresql | `SourceRecord` (source, data, processed) |
-| SemanticSearch | _(none)_ | VectorStoreAdapter → chromadb (default) / pgvector / pinecone | `Document` (id, text, embedding, metadata) |
-| ChatAI | _(none)_ | IChatProvider → openai/openai-compatible (default) / azure / google / anthropic | `ChatRequest` (messages, provider, model) |
-
-### Supported databases
+Projects with persistence use an **ORM** in the full frameworks and **direct connection** in the plain variants, always behind the same env-driven configuration.
 
 Connection via environment variables `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`:
 
@@ -529,18 +167,7 @@ Connection via environment variables `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME
 | SQLite | `sqlite` | — (uses `DB_FILE`) |
 | **DynamoDB** (AWS simulation) | `dynamodb` | — (uses `AWS_ENDPOINT_URL`) |
 
----
-
-## ⚡ Cache
-
-A two-level **cache adapter** pattern is implemented (same `CacheAdapter` interface, with Redis and local implementations):
-
-| Level | Implementation | Requirement |
-|-------|---------------|-----------|
-| **Redis** (preferred) | redis-py / ioredis / StackExchange.Redis / \Redis | Redis server |
-| **Local** (fallback) | dict / Map / ConcurrentDictionary / array | None |
-
-Controlled by the environment variable `CACHE_TYPE`:
+Cache is a two-level **CacheAdapter** pattern controlled by `CACHE_TYPE`:
 - `redis` (default) — Uses Redis. Falls back to local if there is no connection.
 - `local` — Always uses the in-memory cache.
 
@@ -566,7 +193,7 @@ REDIS_HOST=redis:6379
 CACHE_TTL=300
 ```
 
-See `.env.example` for a reusable template. Ruby on Rails projects build `DATABASE_URL` internally from these values where needed.
+Specialized projects add their own variables (`WAREHOUSE_DRIVER`, `VECTOR_DRIVER`, `QUEUE_DRIVER`, `CHAT_PROVIDER`, etc.) — see each project's `README.md`. See `.env.example` for a reusable template. Ruby on Rails projects build `DATABASE_URL` internally from these values where needed.
 
 ---
 
@@ -576,35 +203,24 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 
 | Framework | Port | Command |
 |-----------|--------|---------|
-| PHP Plain | `8000` | `podman compose up` |
-| PHP Laravel | `8000` | `podman compose up` |
-| PHP Symfony | `8000` | `podman compose up` |
-| Python Plain | `5000` | `podman compose up` |
-| Python Flask | `5000` | `podman compose up` |
-| Python Django | `8000` | `podman compose up` |
-| Python FastAPI | `8000` | `podman compose up` |
-| Python Reflex | `3000` | `podman compose up` |
-| C# AspNetMinimalApi | `5000` | `podman compose up` |
-| C# Blazor | `5000` | `podman compose up` |
-| Node.js Plain | `3000` | `podman compose up` |
-| Node.js Express | `3000` | `podman compose up` |
-| Node.js React (Vite) | `5173` | `podman compose up` |
-| Node.js NextJS | `3000` | `podman compose up` |
-| Ruby RubyOnRails | `3000` | `podman compose up` |
+| PHP (Plain/Laravel/Symfony) | `8000` | `podman compose up` |
+| Python (Plain/Flask) | `5000` | `podman compose up` |
+| Python (Django/FastAPI) | `8000` | `podman compose up` |
+| Python (Reflex) | `3000` | `podman compose up` |
+| C# (AspNetMinimalApi/Blazor) | `5000` | `podman compose up` |
+| Node.js (Plain/Express/NextJS) | `3000` | `podman compose up` |
+| Node.js (React/Vite) | `5173` | `podman compose up` |
+| Ruby (RubyOnRails) | `3000` | `podman compose up` |
+| Java (Spring Boot) | `5000` | `podman compose up` |
+| Elixir (Phoenix) | `4000` | `podman compose up` |
 | **APIGateway (Plain)** | `3000` | `podman compose up` |
-| **EventProcessor (Plain)** | `3000` | `podman compose up` (adds Prometheus on `9090` and Grafana on `3001` for metrics) |
+| **EventProcessor (Plain)** | `3000` | `podman compose up` (adds Prometheus on `9090` and Grafana on `3001`) |
 | **DataPipeline (Plain)** | `5000` | `podman compose up` |
 | **SemanticSearch (Plain/Flask/Express)** | `5000` | `podman compose up` (adds a `chroma` service) |
 | **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
 | **SemanticSearch (NextJS/React)** | `3000`/`5173` | `podman compose up` |
 | **SemanticSearch (C#)** | `80`/`8000` | `podman compose up` |
-| **ChatAI** | `3000`/`4000`/`5000`/`8000` per impl (C# & Node & Ruby → `3000`, Elixir → `4000`, Java & Python → `5000`, PHP → `8000`) | `podman compose up` (from each `Web/<Impl>/` folder) |
-
-Example:
-```bash
-cd Contacts/Python/Web/Plain
-podman compose up
-```
+| **ChatAI** | per impl (C#/Node/Ruby `3000`, Elixir `4000`, Java/Python `5000`, PHP `8000`) | `podman compose up` |
 
 > **Why not rename to `Podmanfile`?** Podman can build standard `Dockerfile` files, and keeping `Dockerfile` + `docker-compose.yml` preserves compatibility with OCI tooling, IDEs and CI systems.
 
@@ -614,10 +230,10 @@ podman compose up
 
 - **Separate files**: JS, CSS and HTML in independent files per framework.
 - **Indentation**: 4 spaces for PHP, Python, C#; 2 spaces for Node.js/React/Express/Ruby.
-- **ORM** used in full frameworks (Laravel, Symfony, Flask, FastAPI, Django, Express, RubyOnRails). **Adapter pattern** (DatabaseAdapter + 5 drivers) in plain variants.
-- **Cache**: CacheAdapter (interface) with RedisCache (default) and LocalCache (fallback) in plain; Redis/Local via `cache.py` in ORM frameworks; `Rails.cache` (redis_cache_store with memory_store fallback) in RubyOnRails.
-- **DB config**: individual variables `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_FILE` (SQLite). `DATABASE_URL` is not used in plain. In RubyOnRails, `database.yml` uses `url: <%= ENV["DATABASE_URL"] %>` (URL built by `DatabaseUrl.build` in `application.rb`).
-- **Design patterns**: Adapter (DB, Cache), Factory, SOLID, clean code.
+- **ORM** used in full frameworks (Laravel, Symfony, Flask, FastAPI, Django, Express, RubyOnRails, EF Core, JPA, Ecto). **Adapter pattern** (DatabaseAdapter + 5 drivers) in plain variants.
+- **Cache**: CacheAdapter (interface) with RedisCache (default) and LocalCache (fallback).
+- **DB config**: individual variables `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_FILE` (SQLite). `DATABASE_URL` is not used in plain. In RubyOnRails, `database.yml` uses `url: <%= ENV["DATABASE_URL"] %>`.
+- **Design patterns**: Adapter (DB, Cache, Queue, Warehouse, Vector store), Factory, SOLID, clean code.
 
 ---
 
@@ -627,53 +243,24 @@ Each implementation includes unit tests using the standard framework for each la
 
 | Language | Framework | Command |
 |----------|-----------|---------|
-| PHP | PHPUnit (frameworks) / assert (Plain CLI + Web) | `vendor/bin/phpunit` · Plain: `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php` (Web contra `php -S 127.0.0.1:8000 index.php`) |
+| PHP | PHPUnit (frameworks) / assert (Plain CLI + Web) | `vendor/bin/phpunit` · Plain: `php -d zend.assertions=1 -d assert.exception=1 tests/*Test.php` |
 | Python | pytest | `pytest` |
 | C# | xUnit | `dotnet test` |
 | Node.js | Jest | `npm test` |
 | Ruby | RubyOnRails | `rails test` |
+| Java | JUnit 5 / Spring MockMvc | `mvn test` |
+| Elixir | ExUnit | `mix test` |
 
 > **Note:** database-backed projects require the `DB_DRIVER`, `DB_*` variables set for integration tests. Use `DB_DRIVER=sqlite` with `DB_FILE=test.db` for test environments.
 
-Examples:
-
-```bash
-cd Contacts/Python/Web/FastAPI
-pytest
-```
-
-```bash
-cd Contacts/Node.js/Web/Plain
-npm test
-```
-
-```bash
-cd Contacts/CSharp/Web/AspNetMinimalApi
-dotnet test
-```
-
-```bash
-cd Contacts/Ruby/Web/RubyOnRails/src
-rails test
-```
-
 ### Running CI locally with only Podman
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced locally without installing any language toolchains. `scripts/ci-local.sh` runs the same 6 jobs (node, python, php, ruby, csharp, java) inside Podman containers, booting disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7 on an isolated `ci-local-net` network (these won't conflict with a local PostgreSQL on `:5432`). At startup it removes every stopped Podman container (`podman container prune -f`) so leftover containers from previous runs don't interfere:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced locally without installing any language toolchains. `scripts/ci-local.sh` runs the same jobs (node, python, php, ruby, csharp, java, elixir) inside Podman containers, booting disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7 on an isolated `ci-local-net` network:
 
 ```bash
 ./scripts/ci-local.sh          # run all CI jobs
 ./scripts/ci-local.sh node     # run a single job
 ```
-
-Per-language driver matrix (projects that don't support a given driver are skipped, not failed):
-
-| Language | Drivers exercised |
-|:---:|---|
-| PHP | `sqlite pgsql mysql mongodb` (pdo_sqlsrv needs PHP ≥ 8.3, so `sqlserver` is excluded on `php:8.2`) |
-| Node / Python / C# | `sqlite pgsql mysql sqlserver mongodb` |
-| Java | `sqlite pgsql mysql sqlserver` (Java's `DataSourceConfig` has no MongoDB JDBC driver) |
-| Ruby | `sqlite` (Rails; plain Ruby uses SQLite) |
 
 ---
 
@@ -692,7 +279,7 @@ Per-language driver matrix (projects that don't support a given driver are skipp
 
 ## 💡 Learnings & Roadmap
 
-- Implementing the same domain (e.g. `Contacts`) across 5 different languages made it easier to directly compare ORM handling, dependency injection, and environment-based configuration.
+- Implementing the same domain (e.g. `Contacts`) across 5+ different languages made it easier to directly compare ORM handling, dependency injection, and environment-based configuration.
 - The Adapter pattern kept business logic fully decoupled from the chosen database engine, making it straightforward to switch from PostgreSQL to MongoDB without touching the rest of the code.
 
 **Next steps:**
