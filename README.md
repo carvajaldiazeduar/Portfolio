@@ -1,7 +1,7 @@
 # 💼 Professional Software Development Portfolio
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-![Languages](https://img.shields.io/badge/languages-PHP%20%7C%20Python%20%7C%20C%23%20%7C%20Node.js%20%7C%20Ruby-blue)
+![Languages](https://img.shields.io/badge/languages-PHP%20%7C%20Python%20%7C%20C%23%20%7C%20Node.js%20%7C%20Ruby%20%7C%20Java%20%7C%20Elixir-blue)
 ![Podman](https://img.shields.io/badge/containerized-Podman-892CA0)
 
 A portfolio of software projects where I implement **the same set of applications across multiple languages and frameworks** (PHP, Python, C#, Node.js, Ruby, Java, Elixir), keeping consistent architecture throughout: the **Adapter** pattern for persistence, **Factory** for driver selection, two-level caching (Redis/local), and unit tests in every implementation.
@@ -20,6 +20,8 @@ The goal is twofold: to compare how the same problem is solved across different 
 - .NET 9 SDK for C# projects
 - Node.js 20+ and npm for Node.js projects
 - Ruby 3+ and Bundler for Ruby on Rails projects
+- Java 21+ and Maven for Java projects
+- Elixir 1.17+ and Mix for Elixir projects
 
 PostgreSQL and Redis are started by the compose files for web projects. If you run projects without containers, install and configure those services locally or switch to SQLite/local cache where supported.
 
@@ -143,7 +145,7 @@ The detailed architecture of each project (diagrams, adapters, data model, endpo
 
 | Language | Framework | Adapter | Drivers | Cache |
 |----------|-----------|---------|---------|-------|
-| **PHP / Python / C# / Node.js** | Plain | DatabaseAdapter (interface/ABC/base) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
+| **PHP / Python / Node.js** | Plain | DatabaseAdapter (interface/ABC/base) | PostgreSQL, MySQL, SQLite, SQL Server, MongoDB | Redis / Local |
 | **Node.js** | Plain (APIGateway) | CacheAdapter (rate limiting) | Redis | Redis / Local |
 | **Node.js** | Plain (EventProcessor) | QueueAdapter | Redis, RabbitMQ, Kafka, SQS | Redis / Local |
 | **Python** | Plain (DataPipeline) | DataWarehouseAdapter | duckdb (default), BigQuery, PostgreSQL | Redis / Local |
@@ -215,11 +217,10 @@ Each web framework includes `Dockerfile`, `docker-compose.yml` and `.dockerignor
 | Elixir (Phoenix) | `4000` | `podman compose up` |
 | **APIGateway (Plain)** | `3000` | `podman compose up` |
 | **EventProcessor (Plain)** | `3000` | `podman compose up` (adds Prometheus on `9090` and Grafana on `3001`) |
-| **DataPipeline (Plain)** | `5000` | `podman compose up` |
+| **DataPipeline (SpringBoot)** | `5000` | `podman compose up` |
 | **SemanticSearch (Plain/Flask/Express)** | `5000` | `podman compose up` (adds a `chroma` service) |
 | **SemanticSearch (Laravel/Django/Rails)** | `8000` | `podman compose up` |
 | **SemanticSearch (NextJS/React)** | `3000`/`5173` | `podman compose up` |
-| **SemanticSearch (C#)** | `80`/`8000` | `podman compose up` |
 | **ChatAI** | per impl (C#/Node/Ruby `3000`, Elixir `4000`, Java/Python `5000`, PHP `8000`) | `podman compose up` |
 
 > **Why not rename to `Podmanfile`?** Podman can build standard `Dockerfile` files, and keeping `Dockerfile` + `docker-compose.yml` preserves compatibility with OCI tooling, IDEs and CI systems.
@@ -255,7 +256,7 @@ Each implementation includes unit tests using the standard framework for each la
 
 ### Running CI locally with only Podman
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced locally without installing any language toolchains. `scripts/ci-local.sh` runs the same jobs (node, python, php, ruby, csharp, java, elixir) inside Podman containers, booting disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7 on an isolated `ci-local-net` network:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) can be reproduced locally without installing any language toolchains. `scripts/ci-local.sh` runs the same jobs (node, python, php, ruby, csharp, java) inside Podman containers, booting disposable Postgres 16, MariaDB 11 (mysql), SQL Server 2022 (sqlserver) and MongoDB 7 on an isolated `ci-local-net` network:
 
 ```bash
 ./scripts/ci-local.sh          # run all CI jobs
