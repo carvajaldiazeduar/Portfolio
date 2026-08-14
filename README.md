@@ -14,7 +14,10 @@ The goal is twofold: to compare how the same problem is solved across different 
 
 ## ✅ Prerequisites
 
-- Podman with Compose support (`podman compose`)
+To **run** any project you only need **Podman with Compose support** (`podman compose`). Every web framework ships a `Dockerfile` + `docker-compose.yml`, so the language runtime, dependencies and services (PostgreSQL, Redis) are all provisioned inside the container — no host toolchain required.
+
+The language toolchains below are **only needed for local development without containers** (running or testing directly on the host):
+
 - PHP 8+, Composer and PHPUnit for PHP projects
 - Python 3.11+ and pytest for Python projects
 - .NET 9 SDK for C# projects
@@ -23,7 +26,7 @@ The goal is twofold: to compare how the same problem is solved across different 
 - Java 21+ and Maven for Java projects
 - Elixir 1.17+ and Mix for Elixir projects
 
-PostgreSQL and Redis are started by the compose files for web projects. If you run projects without containers, install and configure those services locally or switch to SQLite/local cache where supported.
+PostgreSQL and Redis are started by the compose files for web projects. If you run projects without containers, install and configure those services locally or switch to SQLite/local cache where supported. To run the CI matrix locally you also only need Podman — see [Running CI locally](#running-ci-locally-with-only-podman).
 
 ---
 
