@@ -3,39 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact Manager</title>
+<title>Inbox</title>
 
     <link rel='stylesheet' href='styles.css'>
 </head>
 <body>
-<div class="container">
-<h1>Contact Manager</h1>
-<div id="msg" class="msg"></div>
-<div class="form-row">
-<div class="field">
-<input type="text" id="name" placeholder="Name" required>
-<div class="field-error" id="name-error"></div>
-</div>
-<div class="field">
-<input type="text" id="phone" placeholder="Phone">
-<div class="field-error" id="phone-error"></div>
-</div>
-<div class="field">
-<input type="email" id="email" placeholder="Email">
-<div class="field-error" id="email-error"></div>
-</div>
-<button onclick="addContact()">Add</button>
-</div>
-<div class="search-row">
-<input type="text" id="search" placeholder="Search by name...">
-<button onclick="searchContacts()">Search</button>
-<button onclick="loadContacts()" style="background:#95a5a6">Clear</button>
-</div>
-<table>
-<thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead>
-<tbody id="contacts-body"></tbody>
+<h1>Inbox</h1>
+
+<h2>Send Message</h2>
+<form id="send-form">
+  <input type="text" id="from" placeholder="From" required>
+  <input type="text" id="subject" placeholder="Subject" required>
+  <textarea id="body" placeholder="Body" rows="3"></textarea>
+  <button type="submit">Send</button>
+</form>
+
+<h2>Messages</h2>
+<table id="messages-table">
+  <thead><tr><th>ID</th><th>From</th><th>Subject</th><th>Status</th><th>Date</th><th></th></tr></thead>
+  <tbody id="messages-body"></tbody>
 </table>
+
+<div id="message-detail" style="display:none;">
+  <h3>Message Detail</h3>
+  <p><strong>From:</strong> <span id="detail-from"></span></p>
+  <p><strong>Subject:</strong> <span id="detail-subject"></span></p>
+  <p><strong>Date:</strong> <span id="detail-date"></span></p>
+  <p><strong>Body:</strong></p>
+  <p id="detail-body"></p>
+  <button onclick="document.getElementById('message-detail').style.display='none'">Close</button>
 </div>
+
 
     <script src='app.js'></script>
 </body>

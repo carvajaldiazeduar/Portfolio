@@ -25,13 +25,11 @@ defmodule Inboxes.MessagesService do
         :error
 
       message ->
-        message
-        |> Ecto.Changeset.change(read: true)
-        |> Repo.update!()
+        updated = message |> Ecto.Changeset.change(read: true) |> Repo.update!()
 
-        Cache.set("message:#{id}", Message.to_dto(message), default_ttl())
+        Cache.set("message:#{id}", Message.to_dto(updated), default_ttl())
         invalidate_list()
-        {:ok, message}
+        {:ok, updated}
     end
   end
 

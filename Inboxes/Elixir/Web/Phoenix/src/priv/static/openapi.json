@@ -1,36 +1,36 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Contacts API",
+    "title": "Inboxes API",
     "version": "1.0.0"
   },
   "paths": {
-    "/api/contacts": {
+    "/api/messages": {
       "get": {
-        "summary": "List all contacts",
+        "summary": "List all messages",
         "responses": {
           "200": {
-            "description": "List of contacts"
+            "description": "List of messages"
           }
         }
       },
       "post": {
-        "summary": "Create a contact",
+        "summary": "Create a message",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name"],
+                "required": ["subject"],
                 "properties": {
-                  "name": {
+                  "sender": {
                     "type": "string"
                   },
-                  "phone": {
+                  "subject": {
                     "type": "string"
                   },
-                  "email": {
+                  "body": {
                     "type": "string"
                   }
                 }
@@ -40,34 +40,14 @@
         },
         "responses": {
           "200": {
-            "description": "Created contact"
+            "description": "Created message"
           }
         }
       }
     },
-    "/api/contacts/search": {
+    "/api/messages/{id}": {
       "get": {
-        "summary": "Search contacts by name",
-        "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Search results"
-          }
-        }
-      }
-    },
-    "/api/contacts/{id}": {
-      "delete": {
-        "summary": "Delete a contact",
+        "summary": "Get a message by id",
         "parameters": [
           {
             "name": "id",
@@ -80,7 +60,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Contact deleted"
+            "description": "Message details"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a message",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message deleted"
           }
         }
       }

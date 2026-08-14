@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: contacts
+      POSTGRES_DB: inboxes
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -20,7 +20,7 @@ services:
   # db:
   #   image: mysql:8
   #   environment:
-  #     MYSQL_DATABASE: contacts
+  #     MYSQL_DATABASE: inboxes
   #     MYSQL_USER: user
   #     MYSQL_PASSWORD: password
   #     MYSQL_ROOT_PASSWORD: rootpassword
@@ -39,7 +39,7 @@ services:
   #   environment:
   #     ACCEPT_EULA: "Y"
   #     MSSQL_SA_PASSWORD: "Password123"
-  #     MSSQL_DB: contacts
+  #     MSSQL_DB: inboxes
   #   ports:
   #     - "1433:1433"
   #   volumes:
@@ -69,7 +69,7 @@ services:
       DB_DRIVER: pgsql
       DB_HOST: db
       DB_PORT: "5432"
-      DB_NAME: contacts
+      DB_NAME: inboxes
       DB_USER: postgres
       DB_PASSWORD: postgres
       CACHE_TYPE: redis

@@ -6,7 +6,7 @@ defmodule InboxesWeb.Endpoint do
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_contacts_key",
+    key: "_inboxes_key",
     signing_salt: "hq7Fqz1/",
     same_site: "Lax"
   ]

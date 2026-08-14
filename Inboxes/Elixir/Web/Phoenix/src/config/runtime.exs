@@ -11,7 +11,7 @@ end
 driver = System.get_env("DB_DRIVER", "pgsql")
 host = System.get_env("DB_HOST", "db")
 port = System.get_env("DB_PORT", port_for.(driver))
-name = System.get_env("DB_NAME", "contacts")
+name = System.get_env("DB_NAME", "inboxes")
 user = System.get_env("DB_USER", "postgres")
 password = System.get_env("DB_PASSWORD", "postgres")
 file = System.get_env("DB_FILE", "db.sqlite3")
@@ -59,7 +59,7 @@ repo_opts =
       ]
   end
 
-config :inboxes, Contacts.Repo, Keyword.put(repo_opts, :pool_size, String.to_integer(pool_size))
+config :inboxes, Inboxes.Repo, Keyword.put(repo_opts, :pool_size, String.to_integer(pool_size))
 
 if System.get_env("PHX_SERVER") do
   config :inboxes, InboxesWeb.Endpoint, server: true

@@ -1,4 +1,4 @@
-defmodule Contacts.MixProject do
+defmodule Inboxes.MixProject do
   use Mix.Project
 
   def project do
@@ -19,7 +19,7 @@ defmodule Contacts.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Contacts.Application, []},
+      mod: {Inboxes.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        input, textarea, button { display: block; width: 100%; margin: 8px 0; padding: 8px; }
+        textarea { resize: vertical; }
+        .task { padding: 10px; border: 1px solid #ddd; margin: 8px 0; border-radius: 4px; }
+        .task.completed { background: #e8ffe8; text-decoration: line-through; }
+        .task-actions { margin-top: 8px; }
+        .task-actions button { display: inline; width: auto; margin-right: 8px; }
+        .completed-label { color: green; font-weight: bold; }

@@ -8,7 +8,7 @@
 import Config
 
 config :inboxes,
-  ecto_repos: [Contacts.Repo],
+  ecto_repos: [Inboxes.Repo],
   generators: [timestamp_type: :utc_datetime],
   cache_type: System.get_env("CACHE_TYPE", "local"),
   redis_host: System.get_env("REDIS_HOST", "localhost:6379"),
@@ -22,7 +22,7 @@ config :inboxes, InboxesWeb.Endpoint,
     formats: [json: InboxesWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Contacts.PubSub,
+  pubsub_server: Inboxes.PubSub,
   live_view: [signing_salt: "mJeiOfyA"]
 
 # Configure Elixir's Logger

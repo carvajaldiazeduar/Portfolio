@@ -7,22 +7,22 @@ db_driver = System.get_env("DB_DRIVER", "sqlite")
 repo_conf =
   case db_driver do
     "mysql" ->
-      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "3306")), username: System.get_env("DB_USER", "root"), password: System.get_env("DB_PASSWORD", ""), database: System.get_env("DB_NAME", "contacts_test")]
+      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "3306")), username: System.get_env("DB_USER", "root"), password: System.get_env("DB_PASSWORD", ""), database: System.get_env("DB_NAME", "inboxes_test")]
 
     "sqlserver" ->
-      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "1433")), username: System.get_env("DB_USER", "sa"), password: System.get_env("DB_PASSWORD", ""), database: System.get_env("DB_NAME", "contacts_test")]
+      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "1433")), username: System.get_env("DB_USER", "sa"), password: System.get_env("DB_PASSWORD", ""), database: System.get_env("DB_NAME", "inboxes_test")]
 
     "mongodb" ->
-      [url: System.get_env("DATABASE_URL", "mongodb://localhost:27017/contacts_test")]
+      [url: System.get_env("DATABASE_URL", "mongodb://localhost:27017/inboxes_test")]
 
     "pgsql" ->
-      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "5432")), username: System.get_env("DB_USER", "postgres"), password: System.get_env("DB_PASSWORD", "postgres"), database: System.get_env("DB_NAME", "contacts_test")]
+      [hostname: System.get_env("DB_HOST", "localhost"), port: String.to_integer(System.get_env("DB_PORT", "5432")), username: System.get_env("DB_USER", "postgres"), password: System.get_env("DB_PASSWORD", "postgres"), database: System.get_env("DB_NAME", "inboxes_test")]
 
     _ ->
       [database: System.get_env("DB_FILE", "test.db")]
   end
 
-config :inboxes, Contacts.Repo,
+config :inboxes, Inboxes.Repo,
   Keyword.merge(repo_conf, pool: Ecto.Adapters.SQL.Sandbox, pool_size: 10)
 
 config :inboxes, :cache_type, System.get_env("CACHE_TYPE", "local")
