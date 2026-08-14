@@ -331,20 +331,22 @@ Project/
 ## 🧩 Projects
 
 | Project | Description |
-|---|---|
-| **Calculator** | Calculator with basic operations (add, subtract, multiply, divide). No persistence. |
-| **Chronometer** | Digital stopwatch. No persistence. |
-| **Contacts** | Contact manager (CRUD) with **database + cache**. |
-| **Conversor** | Unit converter (length, weight, temperature). No persistence. |
-| **Inboxes** | Inbox system with **database + cache**. |
-| **PasswordGenerator** | Secure password generator with **history persisted in DB + cache**. |
-| **TasksList** | Task list (CRUD) with **database + cache**. |
-| **APIGateway** | Lightweight proxy/gateway with JWT validation, rate limiting (Redis/Token Bucket), and service routing. |
-| **EventProcessor** | Async job queue processor with RabbitMQ/Kafka/SQS/Redis support, retry mechanisms, and dead-letter queues. |
-| **DataPipeline** | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
-| **SemanticSearch** | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
-| **CloudLocal** | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
-| **ChatAI** | AI chat API that routes a message history to a swappable LLM provider (OpenAI-compatible, Azure, Google, Anthropic) via a `ChatProviderFactory`, and returns the normalized assistant response. Stateless — no DB or cache. |
+|---|---|---|
+| [**Calculator**](Calculator/README.md) | Calculator with basic operations (add, subtract, multiply, divide). No persistence. |
+| [**Chronometer**](Chronometer/README.md) | Digital stopwatch. No persistence. |
+| [**Contacts**](Contacts/README.md) | Contact manager (CRUD) with **database + cache**. |
+| [**Conversor**](Conversor/README.md) | Unit converter (length, weight, temperature). No persistence. |
+| [**Inboxes**](Inboxes/README.md) | Inbox system with **database + cache**. |
+| [**PasswordGenerator**](PasswordGenerator/README.md) | Secure password generator with **history persisted in DB + cache**. |
+| [**TasksList**](TasksList/README.md) | Task list (CRUD) with **database + cache**. |
+| [**APIGateway**](APIGateway/README.md) | Lightweight proxy/gateway with JWT validation, rate limiting (Redis/Token Bucket), and service routing. |
+| [**EventProcessor**](EventProcessor/README.md) | Async job queue processor with RabbitMQ/Kafka/SQS/Redis support, retry mechanisms, and dead-letter queues. |
+| [**DataPipeline**](DataPipeline/README.md) | Configurable ETL data pipeline: ingest from CSV/JSON, transform and load into a warehouse (duckdb/bigquery/postgresql). |
+| [**SemanticSearch**](SemanticSearch/README.md) | Semantic search over documents using a vector store (chromadb/pgvector/pinecone) with embeddings and similarity search. |
+| [**CloudLocal**](CloudLocal/README.md) | Local cloud service lab for AWS, GCP and Azure using LocalStack, Google Cloud SDK emulators, fake-gcs-server, Azurite and Cosmos DB Emulator. |
+| [**ChatAI**](ChatAI/README.md) | AI chat API that routes a message history to a swappable LLM provider (OpenAI-compatible, Azure, Google, Anthropic) via a `ChatProviderFactory`, and returns the normalized assistant response. Stateless — no DB or cache. |
+
+> Every project folder ships its own `README.md` with architecture, patterns and logic details; the table above links to them. The [specs](Specs/) document the full contract (endpoints, env vars, tests) per project.
 
 ---
 
