@@ -14,6 +14,24 @@ There are **13 top-level items**: 7 core apps (Calculator, Chronometer, Contacts
 - Every project (including new ones like `ChatAI`) gets a `Specs/<Project>/spec.md`.
 - **When a project's behavior changes, update its spec to stay in sync.**
 
+## Memory
+
+`MEMORY.md` (repo root) is the persistent, cross-session knowledge file. It is
+**not** a substitute for `AGENTS.md` (rules/conventions) or `Specs/` (behavior
+contracts) — it holds operational knowledge: known spec↔code discrepancies,
+broken builds, env gotchas, and recorded decisions (with `[ACTIVE]` /
+`[KNOWN-BROKEN]` / `[WIP]` / `[RESOLVED]` markers).
+
+- **Read** `MEMORY.md` at the start of every session (before touching code).
+- **Write** to it when you discover a discrepancy, a broken build, an env
+  gotcha, or when you make a decision worth remembering.
+- **Keep it lean**: one line per entry plus a pointer; no paragraphs.
+- **Resolve**: when a fix aligns code with the spec, update the spec and move
+  the entry to the *Resolved* log (date / item / resolved by), or delete it.
+- **Sweep**: periodically reconcile `MEMORY.md` vs `Specs/` vs code
+  (branch `docs/memory-sweep`).
+- **Commits**: use `docs(memory): ...` for MEMORY.md changes.
+
 ## Persistence
 
 | Project | Storage pattern |
