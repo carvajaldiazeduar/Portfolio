@@ -99,3 +99,7 @@ module.exports.resetMessages = async () => {
   await prisma.message.deleteMany();
   await cache.delete('messages:all');
 };
+
+if (require.main === module) {
+  app.listen(process.env.PORT || 3000, () => console.log('Server running'));
+}
