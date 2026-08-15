@@ -108,3 +108,7 @@ module.exports.validateContact = validateContact;
 module.exports.resetContacts = async () => {
   await prisma.contact.deleteMany();
 };
+
+if (require.main === module) {
+  app.listen(process.env.PORT || 3000, () => console.log('Server running'));
+}

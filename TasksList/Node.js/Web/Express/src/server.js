@@ -80,3 +80,7 @@ module.exports.resetTasks = async () => {
   await prisma.task.deleteMany();
   await cache.delete('tasks:all');
 };
+
+if (require.main === module) {
+  app.listen(process.env.PORT || 3000, () => console.log('Server running'));
+}
