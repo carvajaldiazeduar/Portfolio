@@ -36,8 +36,9 @@ def search():
         return jsonify(cached)
     embedding = [0.0] * int(os.getenv("VECTOR_DIMENSION", "1536"))
     results = vector_store.search(embedding, n_results=5)
-    cache.set(f"search:{query}", results, ttl=CACHE_TTL)
-    return jsonify({"query": query, "results": results})
+    payload = {"query": query, "results": results}
+    cache.set(f"search:{query}", payload, ttl=CACHE_TTL)
+    return jsonify(payload)
 
 
 @app.route("/api/collections", methods=["GET"])

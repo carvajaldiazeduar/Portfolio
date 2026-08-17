@@ -45,6 +45,10 @@ Legend: `[ACTIVE]` · `[KNOWN-BROKEN]` · `[WIP]` · `[RESOLVED]`
   `ConcurrentHashMap::putVal` → force `-XX:-TieredCompilation` (already in CI).
 - `[ACTIVE]` mssql 2022: encrypted connections by default; `sqlcmd` requires `-C`
   (trust server certificate).
+- `[ACTIVE]` SemanticSearch Python (chromadb): the adapter caches the
+  collection per process instance; after a web restart `/api/search` returns
+  `[]` until at least one document is uploaded in that instance (preexisting
+  quirk, not a RAG failure).
 
 ## Recorded decisions
 
@@ -66,4 +70,6 @@ Legend: `[ACTIVE]` · `[KNOWN-BROKEN]` · `[WIP]` · `[RESOLVED]`
 
 | Date | Item | Resolved by |
 |---|---|---|
+| 2026-08-17 | SemanticSearch Python: the Dockerfile copied `src/requirements.txt` (path does not exist; file is at repo root) → compose build failed. Fixed to `COPY requirements.txt`. | ChatAI RAG e2e |
+| 2026-08-17 | SemanticSearch Python: `/api/search` cached the bare `results` list instead of `{query, results}` → inconsistent response shape that broke ChatAI RAG `retrieve_context`. Fixed to cache the full payload (matches spec). | ChatAI RAG e2e |
 | 2026-08-14 | Node.js Express + Prisma (Contacts/Inboxes/TasksList): `server.js` without `app.listen()` → `node server.js` did not open a port (tests only). Added `require.main === module` guard. | Benchmark |
