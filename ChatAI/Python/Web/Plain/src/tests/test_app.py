@@ -77,3 +77,65 @@ def test_chat_provider_failure(client, monkeypatch):
     monkeypatch.setattr(chat_app, "complete_chat", _boom)
     response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hi"}]})
     assert response.status_code == 502
+
+
+def test_chat_rag_injects_context(client, monkeypatch):
+    monkeypatch.setattr(chat_app, "RAG_ENABLED", True)
+    monkeypatch.setattr(chat_app, "retrieve_context", lambda q: ["Doc about X", "Doc about Y"])
+    captured = {}
+
+    def _capture(messages, model, temperature, max_tokens):
+        captured["messages"] = messages
+        return _fake_complete(messages, model, temperature, max_tokens)
+
+    monkeypatch.setattr(chat_app, "complete_chat", _capture)
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "What is X?"}]})
+    assert response.status_code == 200
+    assert captured["messages"][0]["role"] == "system"
+    assert "Doc about X" in captured["messages"][0]["content"]
+    assert "Doc about Y" in captured["messages"][0]["content"]
+    assert captured["messages"][1] == {"role": "user", "content": "What is X?"}
+
+
+def test_chat_rag_no_documents(client, monkeypatch):
+    monkeypatch.setattr(chat_app, "RAG_ENABLED", True)
+    monkeypatch.setattr(chat_app, "retrieve_context", lambda q: [])
+    captured = {}
+
+    def _capture(messages, model, temperature, max_tokens):
+        captured["messages"] = messages
+        return _fake_complete(messages, model, temperature, max_tokens)
+
+    monkeypatch.setattr(chat_app, "complete_chat", _capture)
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hi"}]})
+    assert response.status_code == 200
+    assert captured["messages"] == [{"role": "user", "content": "Hi"}]
+
+
+def test_chat_rag_disabled_no_retrieval(client, monkeypatch):
+    monkeypatch.setattr(chat_app, "RAG_ENABLED", False)
+    calls = []
+    monkeypatch.setattr(chat_app, "retrieve_context", lambda q: calls.append(q) or [])
+    monkeypatch.setattr(chat_app, "complete_chat", _fake_complete)
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hi"}]})
+    assert response.status_code == 200
+    assert calls == []
+
+
+def test_chat_rag_fail_soft(client, monkeypatch):
+    monkeypatch.setattr(chat_app, "RAG_ENABLED", True)
+
+    def _boom(query):
+        raise Exception("search service down")
+
+    monkeypatch.setattr(chat_app, "retrieve_context", _boom)
+    captured = {}
+
+    def _capture(messages, model, temperature, max_tokens):
+        captured["messages"] = messages
+        return _fake_complete(messages, model, temperature, max_tokens)
+
+    monkeypatch.setattr(chat_app, "complete_chat", _capture)
+    response = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Hi"}]})
+    assert response.status_code == 200
+    assert captured["messages"] == [{"role": "user", "content": "Hi"}]
