@@ -211,6 +211,7 @@ the `ci-local-*` containers + network on exit.
 14. **Spec-first workflow**: always build the plan from `Specs/<Project>/spec.md` first. If the plan changes behavior, update the spec before touching code.
 15. **Tests before code**: define the tests the spec requires before implementing, then implement until they pass.
 16. **All tests green before push**: never commit or push changes until every test for the touched projects passes (`mix test`, `pytest`, `dotnet test`, `npm test`, `rails test`, etc.). If a blocker prevents running tests, report it instead of pushing.
+17. **Documentation language**: all Markdown files (`.md`), including `MEMORY.md`, `Specs/*/spec.md` and READMEs, must be written in English.
 
 ## Verification Strategy
 
