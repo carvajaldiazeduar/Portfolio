@@ -57,9 +57,10 @@ Leyenda: `[ACTIVE]` · `[KNOWN-BROKEN]` · `[WIP]` · `[RESOLVED]`
   para correr varias instancias en paralelo.
 - `[ACTIVE]` ChatAI RAG: recuperación vía HTTP a SemanticSearch
   (`RAG_ENABLED`/`RAG_SEARCH_URL`/`RAG_TOP_K`), inyecta docs como mensaje
-  `system` y es fail-soft. Reference = Python (Web/Plain); pendiente portar a
-  Node/PHP/Ruby/C#/Java/Elixir. Limitación: embeddings de SemanticSearch son
-  dummy (`[0.0]*VECTOR_DIMENSION`) → la relevancia de la búsqueda es placeholder.
+  `system` y es fail-soft. Reference = Python (Web/Plain). Portado a todos los
+  lenguajes (Node/PHP/Ruby/C#/Java/Elixir). Limitación: embeddings de
+  SemanticSearch son dummy (`[0.0]*VECTOR_DIMENSION`) → la relevancia de la
+  búsqueda es placeholder.
 
 ## Log de resueltos
 

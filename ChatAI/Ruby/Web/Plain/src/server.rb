@@ -4,7 +4,8 @@ require 'uri'
 require 'webrick'
 
 class ChatServer
-  attr_accessor :base_url, :api_key, :default_model, :default_temperature, :default_max_tokens
+  attr_accessor :base_url, :api_key, :default_model, :default_temperature, :default_max_tokens,
+                :rag_enabled, :rag_search_url, :rag_top_k, :timeout_ms
 
   def initialize
     @base_url = ENV['OPENAI_BASE_URL'] || 'https://api.openai.com/v1'
@@ -12,6 +13,23 @@ class ChatServer
     @default_model = ENV['CHAT_MODEL'] || 'gpt-4o-mini'
     @default_temperature = (ENV['CHAT_TEMPERATURE'] || '0.7').to_f
     @default_max_tokens = (ENV['CHAT_MAX_TOKENS'] || '1024').to_i
+    @rag_enabled = %w[1 true yes].include?(ENV['RAG_ENABLED'].to_s.downcase)
+    @rag_search_url = ENV['RAG_SEARCH_URL'] || 'http://semantic-search:5000/api/search'
+    @rag_top_k = (ENV['RAG_TOP_K'] || '3').to_i
+    @timeout_ms = (ENV['CHAT_TIMEOUT_MS'] || '30000').to_i
+  end
+
+  def retrieve_context(query)
+    uri = URI(@rag_search_url)
+    uri.query = URI.encode_www_form('q' => query, 'k' => @rag_top_k)
+    response = Net::HTTP.start(uri.host, uri.port,
+                               open_timeout: @timeout_ms / 1000.0,
+                               read_timeout: @timeout_ms / 1000.0) do |http|
+      http.get(uri)
+    end
+    return [] unless response.is_a?(Net::HTTPSuccess)
+    data = JSON.parse(response.body)
+    (data['results'] || []).map { |r| r['document'] }.compact.reject(&:empty?)
   end
 
   def complete_chat(messages, model, temperature, max_tokens)
@@ -96,8 +114,25 @@ class ChatServer
       temperature = input['temperature'] || @default_temperature
       max_tokens = input['max_tokens'] || @default_max_tokens
 
+      messages = input['messages']
+      if @rag_enabled
+        last_user = messages.reverse.find { |m| m['role'] == 'user' }
+        unless last_user.nil?
+          begin
+            documents = retrieve_context(last_user['content'].to_s)
+            if documents.any?
+              context = "Use the following context to answer the user's question:\n\n" \
+                        + documents.map { |d| "- #{d}" }.join("\n")
+              messages = [{ 'role' => 'system', 'content' => context }] + messages
+            end
+          rescue StandardError => e
+            warn "RAG retrieval failed: #{e.message}"
+          end
+        end
+      end
+
       begin
-        result = complete_chat(input['messages'], model, temperature, max_tokens)
+        result = complete_chat(messages, model, temperature, max_tokens)
         res.body = JSON.generate(normalize_result(result, model))
       rescue StandardError => e
         res.status = 502

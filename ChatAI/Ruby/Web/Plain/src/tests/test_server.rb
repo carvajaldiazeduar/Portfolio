@@ -75,4 +75,63 @@ class ChatServerTest < Minitest::Test
     response = post('/api/chat', { 'messages' => [{ 'role' => 'user', 'content' => 'Hi' }] })
     assert_equal '502', response.code
   end
+
+  def test_chat_rag_injects_context
+    @chat.rag_enabled = true
+    captured = nil
+    @chat.define_singleton_method(:retrieve_context) { |_query| ['Doc about X', 'Doc about Y'] }
+    @chat.define_singleton_method(:complete_chat) do |messages, _model, _temperature, _max_tokens|
+      captured = messages
+      {
+        'id' => 'chatcmpl-test',
+        'model' => 'gpt-4o-mini',
+        'choices' => [{ 'message' => { 'role' => 'assistant', 'content' => 'Hello!' } }],
+        'usage' => { 'prompt_tokens' => 5, 'completion_tokens' => 3, 'total_tokens' => 8 }
+      }
+    end
+
+    response = post('/api/chat', { 'messages' => [{ 'role' => 'user', 'content' => 'What is X?' }] })
+    assert_equal '200', response.code
+    assert_equal 'system', captured[0]['role']
+    assert_includes captured[0]['content'], 'Doc about X'
+    assert_includes captured[0]['content'], 'Doc about Y'
+    assert_equal({ 'role' => 'user', 'content' => 'What is X?' }, captured[1])
+  end
+
+  def test_chat_rag_disabled_does_not_retrieve
+    @chat.rag_enabled = false
+    retrieved = false
+    @chat.define_singleton_method(:retrieve_context) { |_query| retrieved = true; [] }
+    @chat.define_singleton_method(:complete_chat) do |_messages, _model, _temperature, _max_tokens|
+      {
+        'id' => 'chatcmpl-test',
+        'model' => 'gpt-4o-mini',
+        'choices' => [{ 'message' => { 'role' => 'assistant', 'content' => 'Hello!' } }],
+        'usage' => { 'prompt_tokens' => 5, 'completion_tokens' => 3, 'total_tokens' => 8 }
+      }
+    end
+
+    response = post('/api/chat', { 'messages' => [{ 'role' => 'user', 'content' => 'Hi' }] })
+    assert_equal '200', response.code
+    refute retrieved
+  end
+
+  def test_chat_rag_fail_soft
+    @chat.rag_enabled = true
+    captured = nil
+    @chat.define_singleton_method(:retrieve_context) { |_query| raise 'search service down' }
+    @chat.define_singleton_method(:complete_chat) do |messages, _model, _temperature, _max_tokens|
+      captured = messages
+      {
+        'id' => 'chatcmpl-test',
+        'model' => 'gpt-4o-mini',
+        'choices' => [{ 'message' => { 'role' => 'assistant', 'content' => 'Hello!' } }],
+        'usage' => { 'prompt_tokens' => 5, 'completion_tokens' => 3, 'total_tokens' => 8 }
+      }
+    end
+
+    response = post('/api/chat', { 'messages' => [{ 'role' => 'user', 'content' => 'Hi' }] })
+    assert_equal '200', response.code
+    assert_equal [{ 'role' => 'user', 'content' => 'Hi' }], captured
+  end
 end

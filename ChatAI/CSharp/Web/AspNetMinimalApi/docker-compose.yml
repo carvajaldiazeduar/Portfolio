@@ -19,5 +19,8 @@ services:
       - CHAT_MAX_TOKENS=${CHAT_MAX_TOKENS:-1024}
       - CHAT_TIMEOUT_MS=${CHAT_TIMEOUT_MS:-30000}
       - CHAT_FALLBACK_PROVIDER=${CHAT_FALLBACK_PROVIDER:-}
+      - RAG_ENABLED=${RAG_ENABLED:-false}
+      - RAG_SEARCH_URL=${RAG_SEARCH_URL:-http://semantic-search:5000/api/search}
+      - RAG_TOP_K=${RAG_TOP_K:-3}
     volumes:
       - .:/src

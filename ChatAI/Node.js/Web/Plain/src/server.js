@@ -58,6 +58,29 @@ function timeoutMs() {
   return Number.isFinite(raw) && raw > 0 ? raw : 30000;
 }
 
+function ragEnabled() {
+  return ['1', 'true', 'yes'].includes((process.env.RAG_ENABLED || '').toLowerCase());
+}
+
+function ragTopK() {
+  const raw = parseInt(env('RAG_TOP_K', '3'), 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
+async function retrieveContext(query) {
+  const url = `${env('RAG_SEARCH_URL', 'http://semantic-search:5000/api/search')}?q=${encodeURIComponent(query)}&k=${ragTopK()}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs());
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map((r) => r.document).filter(Boolean);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function requestDefaults(body) {
   const model = body.model || env('CHAT_MODEL', 'gpt-4o-mini');
   const temperature = body.temperature != null ? body.temperature : parseFloat(env('CHAT_TEMPERATURE', '0.7'));
@@ -203,6 +226,22 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: err.message });
     }
     throw err;
+  }
+
+  if (ragEnabled()) {
+    const userMsg = [...body.messages].reverse().find((m) => m.role === 'user');
+    if (userMsg) {
+      try {
+        const documents = await retrieveContext(userMsg.content || '');
+        if (documents.length) {
+          const context = 'Use the following context to answer the user\'s question:\n\n'
+            + documents.map((d) => `- ${d}`).join('\n');
+          body.messages = [{ role: 'system', content: context }, ...body.messages];
+        }
+      } catch (err) {
+        console.error(`RAG retrieval failed: ${err.message}`);
+      }
+    }
   }
 
   try {

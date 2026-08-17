@@ -1,7 +1,15 @@
 package com.portfolio.chatai.provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class ChatProviderFactory {
@@ -29,6 +37,53 @@ public class ChatProviderFactory {
             return Integer.parseInt(System.getenv().getOrDefault("CHAT_TIMEOUT_MS", "30000"));
         } catch (NumberFormatException e) {
             return 30000;
+        }
+    }
+
+    public boolean ragEnabled() {
+        String raw = System.getenv("RAG_ENABLED");
+        return raw != null && List.of("1", "true", "TRUE", "yes").contains(raw);
+    }
+
+    public String ragSearchUrl() {
+        return System.getenv().getOrDefault("RAG_SEARCH_URL", "http://semantic-search:5000/api/search");
+    }
+
+    public int ragTopK() {
+        try {
+            return Integer.parseInt(System.getenv().getOrDefault("RAG_TOP_K", "3"));
+        } catch (NumberFormatException e) {
+            return 3;
+        }
+    }
+
+    public List<String> retrieveContext(String query) {
+        try {
+            String url = ragSearchUrl() + "?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&k=" + ragTopK();
+            SimpleClientHttpRequestFactory httpFactory = new SimpleClientHttpRequestFactory();
+            httpFactory.setConnectTimeout(timeoutMs());
+            httpFactory.setReadTimeout(timeoutMs());
+            RestTemplate restTemplate = new RestTemplate(httpFactory);
+            Map<String, Object> data = restTemplate.getForObject(url, Map.class);
+            if (data == null) {
+                return List.of();
+            }
+            Object resultsObj = data.get("results");
+            if (!(resultsObj instanceof List)) {
+                return List.of();
+            }
+            List<String> documents = new ArrayList<>();
+            for (Object result : (List<?>) resultsObj) {
+                if (result instanceof Map<?, ?> resultMap) {
+                    Object document = resultMap.get("document");
+                    if (document instanceof String doc && !doc.isBlank()) {
+                        documents.add(doc);
+                    }
+                }
+            }
+            return documents;
+        } catch (Exception e) {
+            return List.of();
         }
     }
 
