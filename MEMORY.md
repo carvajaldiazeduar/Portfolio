@@ -62,9 +62,13 @@ Legend: `[ACTIVE]` · `[KNOWN-BROKEN]` · `[WIP]` · `[RESOLVED]`
 - `[ACTIVE]` ChatAI RAG: retrieval over HTTP to SemanticSearch
   (`RAG_ENABLED`/`RAG_SEARCH_URL`/`RAG_TOP_K`), injects docs as a `system`
   message and is fail-soft. Reference = Python (Web/Plain). Ported to all
-  languages (Node/PHP/Ruby/C#/Java/Elixir). Limitation: SemanticSearch
-  embeddings are dummy (`[0.0]*VECTOR_DIMENSION`) → search relevance is a
-  placeholder.
+  languages (Node/PHP/Ruby/C#/Java/Elixir). Merged via PR #9. Limitation:
+  SemanticSearch embeddings are dummy (`[0.0]*VECTOR_DIMENSION`) → search
+  relevance is a placeholder.
+- `[RESOLVED]` GitHub Actions CI: jobs without `timeout-minutes` ran forever
+  when a step hung; the culprit was `sudo apt-get update` (runner network
+  flakiness, `-qq` hid progress) in the DB-setup steps. Fixed with
+  `timeout-minutes: 20` on all jobs + bounded `timeout 120` apt-get retries.
 
 ## Resolved log
 
