@@ -33,6 +33,9 @@ defmodule ChatAIWeb.ChatControllerTest do
       System.delete_env("CHAT_PROVIDER")
       System.delete_env("CHAT_FALLBACK_PROVIDER")
       System.delete_env("CHAT_TIMEOUT_MS")
+      System.delete_env("RAG_ENABLED")
+      System.delete_env("RAG_SEARCH_URL")
+      System.delete_env("RAG_TOP_K")
     end)
 
     if tags[:database] == :sandbox do
@@ -202,5 +205,63 @@ defmodule ChatAIWeb.ChatControllerTest do
     assert body["provider"] == "anthropic"
     assert body["choices"] |> List.first() |> Map.get("content") == "Hi from anthropic"
     assert body["usage"]["total_tokens"] == 8
+  end
+
+  test "RAG injects context as a system message", %{conn: conn} do
+    System.put_env("OPENAI_API_KEY", "test-key")
+    System.put_env("RAG_ENABLED", "true")
+
+    search_ok =
+      Jason.encode!(%{
+        results: [%{document: "Doc about X"}, %{document: "Doc about Y"}]
+      })
+
+    MockHttp.set_responses([{:ok, search_ok}, {:ok, @openai_ok}])
+
+    conn =
+      post(conn, "/api/chat", %{messages: [%{role: "user", content: "What is X?"}]})
+
+    assert json_response(conn, 200)["choices"] |> List.first() |> Map.get("content") == "Hello!"
+    {url, payload} = MockHttp.last_request()
+    assert payload.messages |> List.first() |> Map.get(:role) == "system"
+    assert payload.messages |> List.first() |> Map.get(:content) =~ "Doc about X"
+    assert payload.messages |> List.first() |> Map.get(:content) =~ "Doc about Y"
+    assert payload.messages |> List.last() |> Map.get(:content) == "What is X?"
+    assert url == "https://api.openai.com/v1/chat/completions"
+  end
+
+  test "RAG disabled does not call the search service", %{conn: conn} do
+    System.put_env("OPENAI_API_KEY", "test-key")
+    MockHttp.set_responses([{:ok, @openai_ok}])
+
+    conn = post(conn, "/api/chat", %{messages: [%{role: "user", content: "Hi"}]})
+
+    assert json_response(conn, 200)["id"] == "chatcmpl-test"
+    {_url, payload} = MockHttp.last_request()
+    assert payload.messages == [%{role: "user", content: "Hi"}]
+  end
+
+  test "RAG search failure is fail-soft", %{conn: conn} do
+    System.put_env("OPENAI_API_KEY", "test-key")
+    System.put_env("RAG_ENABLED", "true")
+    MockHttp.set_responses([{:error, "Provider error: HTTP 503"}, {:ok, @openai_ok}])
+
+    conn = post(conn, "/api/chat", %{messages: [%{role: "user", content: "Hi"}]})
+
+    assert json_response(conn, 200)["id"] == "chatcmpl-test"
+    {_url, payload} = MockHttp.last_request()
+    assert payload.messages == [%{role: "user", content: "Hi"}]
+  end
+
+  test "RAG no documents does not prepend a system message", %{conn: conn} do
+    System.put_env("OPENAI_API_KEY", "test-key")
+    System.put_env("RAG_ENABLED", "true")
+    MockHttp.set_responses([{:ok, Jason.encode!(%{results: []})}, {:ok, @openai_ok}])
+
+    conn = post(conn, "/api/chat", %{messages: [%{role: "user", content: "Hi"}]})
+
+    assert json_response(conn, 200)["id"] == "chatcmpl-test"
+    {_url, payload} = MockHttp.last_request()
+    assert payload.messages == [%{role: "user", content: "Hi"}]
   end
 end

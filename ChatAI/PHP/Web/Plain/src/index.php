@@ -22,8 +22,12 @@ if ($path === "/swagger") {
 $defaultModel = getenv("CHAT_MODEL") ?: "gpt-4o-mini";
 $defaultTemperature = (float)(getenv("CHAT_TEMPERATURE") ?: 0.7);
 $defaultMaxTokens = (int)(getenv("CHAT_MAX_TOKENS") ?: 1024);
+$timeoutMs = (int)(getenv("CHAT_TIMEOUT_MS") ?: 30000);
 $apiKey = getenv("OPENAI_API_KEY") ?: "";
 $baseUrl = rtrim(getenv("OPENAI_BASE_URL") ?: "https://api.openai.com/v1", "/");
+$ragEnabled = in_array(strtolower(getenv("RAG_ENABLED") ?: ""), ["1", "true", "yes"], true);
+$ragSearchUrl = rtrim(getenv("RAG_SEARCH_URL") ?: "http://semantic-search:5000/api/search", "/");
+$ragTopK = (int)(getenv("RAG_TOP_K") ?: 3);
 
 function completeChat(array $messages, string $model, float $temperature, int $maxTokens, string $apiKey, string $baseUrl): array
 {
@@ -55,6 +59,30 @@ function completeChat(array $messages, string $model, float $temperature, int $m
     return json_decode($body, true) ?: [];
 }
 
+function retrieveContext(string $query, string $searchUrl, int $topK, float $timeoutSec): array
+{
+    $url = $searchUrl . "?q=" . urlencode($query) . "&k=" . $topK;
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => $timeoutSec,
+            "ignore_errors" => true,
+        ],
+    ]);
+    $body = file_get_contents($url, false, $context);
+    if ($body === false) {
+        return [];
+    }
+    $data = json_decode($body, true) ?: [];
+    $documents = [];
+    foreach (($data["results"] ?? []) as $result) {
+        if (isset($result["document"]) && $result["document"] !== "") {
+            $documents[] = $result["document"];
+        }
+    }
+    return $documents;
+}
+
 if ($method === "GET" && ($path === "/" || $path === "/index.php")) {
     header("Content-Type: text/html");
     echo file_get_contents(__DIR__ . "/template.html");
@@ -79,8 +107,31 @@ if ($method === "POST" && $path === "/api/chat") {
     $temperature = isset($input["temperature"]) ? (float)$input["temperature"] : $defaultTemperature;
     $maxTokens = isset($input["max_tokens"]) ? (int)$input["max_tokens"] : $defaultMaxTokens;
 
+    $messages = $input["messages"];
+    if ($ragEnabled) {
+        $lastUser = null;
+        foreach (array_reverse($messages) as $message) {
+            if (isset($message["role"]) && $message["role"] === "user") {
+                $lastUser = $message["content"] ?? "";
+                break;
+            }
+        }
+        if ($lastUser !== null) {
+            try {
+                $documents = retrieveContext($lastUser, $ragSearchUrl, $ragTopK, $timeoutMs / 1000);
+            } catch (Throwable $e) {
+                $documents = [];
+            }
+            if (count($documents) > 0) {
+                $context = "Use the following context to answer the user's question:\n\n"
+                    . implode("\n", array_map(static fn($document) => "- " . $document, $documents));
+                array_unshift($messages, ["role" => "system", "content" => $context]);
+            }
+        }
+    }
+
     try {
-        $result = completeChat($input["messages"], $model, $temperature, $maxTokens, $apiKey, $baseUrl);
+        $result = completeChat($messages, $model, $temperature, $maxTokens, $apiKey, $baseUrl);
     } catch (Throwable $e) {
         http_response_code(502);
         echo json_encode(["error" => $e->getMessage()]);

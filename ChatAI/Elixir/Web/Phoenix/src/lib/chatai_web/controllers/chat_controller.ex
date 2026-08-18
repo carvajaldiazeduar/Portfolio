@@ -20,6 +20,7 @@ defmodule ChatAIWeb.ChatController do
     if request == nil or request.messages == [] do
       error(conn, 400, %{error: "Messages must not be empty"})
     else
+      request = ChatProviderFactory.apply_rag(request)
       provider = ChatProviderFactory.resolve(request.provider)
 
       try do

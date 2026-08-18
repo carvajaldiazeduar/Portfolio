@@ -45,8 +45,24 @@ afterEach(() => {
   delete process.env.AZURE_OPENAI_API_KEY;
   delete process.env.GOOGLE_API_KEY;
   delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.RAG_ENABLED;
+  delete process.env.RAG_SEARCH_URL;
+  delete process.env.RAG_TOP_K;
   delete global.fetch;
 });
+
+function mockFetchWithRag(documents) {
+  global.fetch = jest.fn((url) => {
+    if (String(url).includes('/api/search')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ results: documents.map((document) => ({ document, metadata: {}, distance: 0 })) }),
+      });
+    }
+    return Promise.resolve({ ok: true, json: async () => OPENAI_OK });
+  });
+  return global.fetch;
+}
 
 describe('ChatAI API', () => {
   test('GET / returns HTML', async () => {
@@ -211,5 +227,64 @@ describe('ChatAI API', () => {
     expect(url).toBe('https://api.anthropic.com/v1/messages');
     expect(opts.headers['x-api-key']).toBe('a-key');
     expect(opts.headers['anthropic-version']).toBe('2023-06-01');
+  });
+
+  test('RAG injects context as a system message', async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.RAG_ENABLED = 'true';
+    const fetchMock = mockFetchWithRag(['Doc about X', 'Doc about Y']);
+    const res = await request(app).post('/api/chat').send({
+      messages: [{ role: 'user', content: 'What is X?' }],
+    });
+    expect(res.statusCode).toBe(200);
+    const searchUrl = fetchMock.mock.calls.map((c) => c[0]).find((u) => String(u).includes('/api/search'));
+    expect(searchUrl).toContain('q=What%20is%20X%3F');
+    expect(searchUrl).toContain('k=3');
+    const providerCall = fetchMock.mock.calls.map((c) => c[0]).find((u) => !String(u).includes('/api/search'));
+    const payload = JSON.parse(fetchMock.mock.calls.find((c) => c[0] === providerCall)[1].body);
+    expect(payload.messages[0].role).toBe('system');
+    expect(payload.messages[0].content).toContain('Doc about X');
+    expect(payload.messages[0].content).toContain('Doc about Y');
+    expect(payload.messages[1]).toEqual({ role: 'user', content: 'What is X?' });
+  });
+
+  test('RAG disabled does not call the search service', async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    mockFetchReturning(OPENAI_OK);
+    const res = await request(app).post('/api/chat').send({
+      messages: [{ role: 'user', content: 'Hi' }],
+    });
+    expect(res.statusCode).toBe(200);
+    const urls = global.fetch.mock.calls.map((c) => c[0]);
+    expect(urls.some((u) => String(u).includes('/api/search'))).toBe(false);
+  });
+
+  test('RAG search failure is fail-soft', async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.RAG_ENABLED = 'true';
+    global.fetch = jest.fn((url) => {
+      if (String(url).includes('/api/search')) {
+        return Promise.resolve({ ok: false, status: 503, text: async () => 'down' });
+      }
+      return Promise.resolve({ ok: true, json: async () => OPENAI_OK });
+    });
+    const res = await request(app).post('/api/chat').send({
+      messages: [{ role: 'user', content: 'Hi' }],
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.choices[0].content).toBe('Hello!');
+  });
+
+  test('RAG no documents does not prepend a system message', async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.RAG_ENABLED = 'true';
+    const fetchMock = mockFetchWithRag([]);
+    const res = await request(app).post('/api/chat').send({
+      messages: [{ role: 'user', content: 'Hi' }],
+    });
+    expect(res.statusCode).toBe(200);
+    const providerCall = fetchMock.mock.calls.map((c) => c[0]).find((u) => !String(u).includes('/api/search'));
+    const payload = JSON.parse(fetchMock.mock.calls.find((c) => c[0] === providerCall)[1].body);
+    expect(payload.messages).toEqual([{ role: 'user', content: 'Hi' }]);
   });
 });

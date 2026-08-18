@@ -16,6 +16,7 @@ jobs:
   csharp:
     name: C# (.NET 9) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -99,7 +100,8 @@ jobs:
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for i in 1 2 3; do timeout 120 sudo apt-get update -qq && break; echo "apt-get update attempt $i failed"; sleep 5; done
+          for i in 1 2 3; do timeout 120 sudo apt-get install -y -qq postgresql-client default-mysql-client && break; echo "apt-get install attempt $i failed"; sleep 5; done
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
@@ -130,6 +132,7 @@ jobs:
   python:
     name: Python (pytest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -219,7 +222,8 @@ jobs:
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for i in 1 2 3; do timeout 120 sudo apt-get update -qq && break; echo "apt-get update attempt $i failed"; sleep 5; done
+          for i in 1 2 3; do timeout 120 sudo apt-get install -y -qq postgresql-client default-mysql-client && break; echo "apt-get install attempt $i failed"; sleep 5; done
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
@@ -251,6 +255,7 @@ jobs:
   node:
     name: Node.js (Jest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -334,7 +339,8 @@ jobs:
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for i in 1 2 3; do timeout 120 sudo apt-get update -qq && break; echo "apt-get update attempt $i failed"; sleep 5; done
+          for i in 1 2 3; do timeout 120 sudo apt-get install -y -qq postgresql-client default-mysql-client && break; echo "apt-get install attempt $i failed"; sleep 5; done
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
@@ -425,6 +431,7 @@ jobs:
   php:
     name: PHP (lint + assert) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -494,7 +501,8 @@ jobs:
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for i in 1 2 3; do timeout 120 sudo apt-get update -qq && break; echo "apt-get update attempt $i failed"; sleep 5; done
+          for i in 1 2 3; do timeout 120 sudo apt-get install -y -qq postgresql-client default-mysql-client && break; echo "apt-get install attempt $i failed"; sleep 5; done
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true
@@ -564,6 +572,7 @@ jobs:
   ruby:
     name: Ruby (minitest)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
@@ -600,6 +609,7 @@ jobs:
   java:
     name: Java (Maven) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -675,7 +685,8 @@ jobs:
         if: matrix.db_driver != 'sqlite'
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client default-mysql-client
+          for i in 1 2 3; do timeout 120 sudo apt-get update -qq && break; echo "apt-get update attempt $i failed"; sleep 5; done
+          for i in 1 2 3; do timeout 120 sudo apt-get install -y -qq postgresql-client default-mysql-client && break; echo "apt-get install attempt $i failed"; sleep 5; done
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg || true
             curl --retry 3 --retry-connrefused --retry-delay 2 -fsSL "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list >/dev/null || true

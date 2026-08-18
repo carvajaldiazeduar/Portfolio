@@ -41,6 +41,10 @@ public class FakeChatProviderFactory : ChatProviderFactory
     public string? FallbackOverride { get; set; }
     public IChatProvider? ProviderInstance { get; set; }
     public string? ThrowOnCreateProvider { get; set; }
+    public bool UseRag { get; set; }
+    public List<string>? RagDocuments { get; set; }
+    public int RagCallCount { get; set; }
+    public string? LastQuery { get; set; }
 
     public override string Resolve(string? requested) =>
         !string.IsNullOrWhiteSpace(requested) ? requested : (ResolvedOverride ?? base.Resolve(requested));
@@ -55,6 +59,15 @@ public class FakeChatProviderFactory : ChatProviderFactory
     }
 
     public override int TimeoutMs() => 30000;
+
+    public override bool RagEnabled() => UseRag;
+
+    public override Task<List<string>?> RetrieveContextAsync(string query)
+    {
+        RagCallCount++;
+        LastQuery = query;
+        return Task.FromResult(RagDocuments);
+    }
 }
 
 public class StubHttpMessageHandler : HttpMessageHandler
@@ -362,5 +375,81 @@ public class ChatAITests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
         var data = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains("CHAT_TIMEOUT_MS", data.GetProperty("error").GetString());
+    }
+
+    // --- RAG ---
+
+    [Fact]
+    public async Task Chat_RagEnabled_InsertsSystemMessage()
+    {
+        var provider = new FakeChatProvider();
+        var factory = new FakeChatProviderFactory
+        {
+            ProviderInstance = provider,
+            ResolvedOverride = "openai",
+            UseRag = true,
+            RagDocuments = new List<string> { "Doc about X", "Doc about Y" },
+        };
+        var client = ClientWithFactory(factory);
+
+        var response = await client.PostAsJsonAsync("/api/chat", new
+        {
+            messages = new[] { new { role = "user", content = "What is X?" } },
+        });
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("What is X?", factory.LastQuery);
+        var messages = provider.LastRequest!.Messages!;
+        Assert.Equal("system", messages[0].Role);
+        Assert.Contains("Doc about X", messages[0].Content);
+        Assert.Contains("Doc about Y", messages[0].Content);
+        Assert.Equal("user", messages[1].Role);
+        Assert.Equal("What is X?", messages[1].Content);
+    }
+
+    [Fact]
+    public async Task Chat_RagDisabled_DoesNotRetrieve()
+    {
+        var provider = new FakeChatProvider();
+        var factory = new FakeChatProviderFactory
+        {
+            ProviderInstance = provider,
+            ResolvedOverride = "openai",
+            UseRag = false,
+            RagDocuments = new List<string> { "Doc about X" },
+        };
+        var client = ClientWithFactory(factory);
+
+        var response = await client.PostAsJsonAsync("/api/chat", new
+        {
+            messages = new[] { new { role = "user", content = "Hi" } },
+        });
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(0, factory.RagCallCount);
+        Assert.Equal("user", provider.LastRequest!.Messages![0].Role);
+    }
+
+    [Fact]
+    public async Task Chat_RagFailSoft_StillReturns200()
+    {
+        var provider = new FakeChatProvider();
+        var factory = new FakeChatProviderFactory
+        {
+            ProviderInstance = provider,
+            ResolvedOverride = "openai",
+            UseRag = true,
+            RagDocuments = null,
+        };
+        var client = ClientWithFactory(factory);
+
+        var response = await client.PostAsJsonAsync("/api/chat", new
+        {
+            messages = new[] { new { role = "user", content = "Hi" } },
+        });
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(1, factory.RagCallCount);
+        Assert.Equal("user", provider.LastRequest!.Messages![0].Role);
     }
 }

@@ -50,4 +50,30 @@ defmodule ChatAI.Test.MockHttp do
   def last_request do
     Agent.get(__MODULE__, fn state -> {state.last_url, state.last_payload} end)
   end
+
+  def get_json(url, _timeout) do
+    result =
+      Agent.get_and_update(__MODULE__, fn state ->
+        case state.responses do
+          [{:ok, body} | rest] -> {{:ok, body}, %{state | responses: rest}}
+          [{:error, msg} | rest] -> {{:error, msg}, %{state | responses: rest}}
+          [:hang | rest] -> {:hang, %{state | responses: rest}}
+          [] -> {{:ok, Jason.encode!(%{})}, state}
+        end
+      end)
+
+    case result do
+      :hang ->
+        Process.sleep(60_000)
+        {:error, "timed out"}
+
+      {:ok, body} ->
+        Agent.update(__MODULE__, fn state -> %{state | last_url: to_string(url)} end)
+        {:ok, Jason.decode!(body)}
+
+      {:error, msg} ->
+        Agent.update(__MODULE__, fn state -> %{state | last_url: to_string(url)} end)
+        {:error, msg}
+    end
+  end
 end

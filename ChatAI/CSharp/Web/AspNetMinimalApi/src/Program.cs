@@ -16,6 +16,21 @@ app.MapPost("/api/chat", async (ChatRequest request, ChatProviderFactory factory
     if (request.Messages == null || request.Messages.Count == 0)
         return Results.BadRequest(new { error = "Messages must not be empty" });
 
+    if (factory.RagEnabled())
+    {
+        var lastUser = request.Messages.LastOrDefault(m => m.Role == "user");
+        if (lastUser != null)
+        {
+            var documents = await factory.RetrieveContextAsync(lastUser.Content ?? "");
+            if (documents is { Count: > 0 })
+            {
+                var context = "Use the following context to answer the user's question:\n\n" +
+                              string.Join("\n", documents.Select(d => "- " + d));
+                request.Messages.Insert(0, new ChatMessage { Role = "system", Content = context });
+            }
+        }
+    }
+
     var provider = factory.Resolve(request.Provider);
 
     IChatProvider primary;

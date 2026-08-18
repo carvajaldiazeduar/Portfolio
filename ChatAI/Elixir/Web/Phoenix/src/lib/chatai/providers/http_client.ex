@@ -11,6 +11,12 @@ defmodule ChatAI.Providers.HttpClient do
     impl = Application.get_env(:chatai, :http_client, ChatAI.Providers.HttpClient.HTTPC)
     impl.post_json(url, headers, payload, timeout_ms)
   end
+
+  @doc "GETs a URL and returns {:ok, decoded_map} or {:error, msg} bounded by timeout."
+  def get_json(url, timeout_ms) do
+    impl = Application.get_env(:chatai, :http_client, ChatAI.Providers.HttpClient.HTTPC)
+    impl.get_json(url, timeout_ms)
+  end
 end
 
 defmodule ChatAI.Providers.HttpClient.HTTPC do
@@ -32,6 +38,29 @@ defmodule ChatAI.Providers.HttpClient.HTTPC do
     case :httpc.request(:post, request, options, []) do
       {:ok, {{_, status, _}, _resp_headers, resp_body}} when status in 200..299 ->
         {:ok, to_string(resp_body)}
+
+      {:ok, {{_, status, _}, _resp_headers, _resp_body}} ->
+        {:error, "Provider error: HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, "Provider error: #{format_reason(reason)}"}
+    end
+  end
+
+  def get_json(url, timeout_ms) do
+    options = [
+      timeout: timeout_ms,
+      connect_timeout: timeout_ms,
+      autoredirect: false,
+      ssl: [{:verify, :verify_none}]
+    ]
+
+    case :httpc.request(:get, {String.to_charlist(url), []}, options, []) do
+      {:ok, {{_, status, _}, _resp_headers, resp_body}} when status in 200..299 ->
+        case Jason.decode(to_string(resp_body)) do
+          {:ok, decoded} -> {:ok, decoded}
+          {:error, _} -> {:error, "Provider error: invalid JSON"}
+        end
 
       {:ok, {{_, status, _}, _resp_headers, _resp_body}} ->
         {:error, "Provider error: HTTP #{status}"}

@@ -6,3 +6,4 @@ $_SERVER["REQUEST_URI"] = "/health";
 require_once __DIR__ . "/../index.php";
 
 assert(function_exists('completeChat'));
+assert(function_exists('retrieveContext'));

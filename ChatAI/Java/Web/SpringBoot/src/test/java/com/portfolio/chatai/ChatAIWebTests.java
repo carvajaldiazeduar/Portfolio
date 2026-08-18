@@ -4,6 +4,7 @@ import com.portfolio.chatai.model.ChatChoice;
 import com.portfolio.chatai.model.ChatRequest;
 import com.portfolio.chatai.model.ChatResponse;
 import com.portfolio.chatai.model.ChatUsage;
+import com.portfolio.chatai.model.Message;
 import com.portfolio.chatai.provider.ChatProviderFactory;
 import com.portfolio.chatai.provider.IChatProvider;
 import com.portfolio.chatai.provider.ProviderNotConfiguredException;
@@ -21,8 +22,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -253,5 +256,76 @@ class ChatAIWebTests {
         c.setRole("assistant");
         c.setContent("");
         return c;
+    }
+
+    // --- RAG ---
+
+    @Test
+    void chatRagEnabledInsertsSystemMessage() throws Exception {
+        when(factory.ragEnabled()).thenReturn(true);
+        when(factory.retrieveContext("What is X?")).thenReturn(List.of("Doc about X", "Doc about Y"));
+        when(provider.completeChat(any())).thenReturn(simpleResponse());
+
+        String body = "{\"messages\":[{\"role\":\"user\",\"content\":\"What is X?\"}]}";
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
+        verify(provider, times(1)).completeChat(captor.capture());
+        ChatRequest captured = captor.getValue();
+        Message system = captured.getMessages().get(0);
+        assertEquals("system", system.getRole());
+        assertEquals(true, system.getContent().contains("Doc about X"));
+        assertEquals(true, system.getContent().contains("Doc about Y"));
+        assertEquals("user", captured.getMessages().get(1).getRole());
+        assertEquals("What is X?", captured.getMessages().get(1).getContent());
+    }
+
+    @Test
+    void chatRagDisabledDoesNotRetrieve() throws Exception {
+        when(factory.ragEnabled()).thenReturn(false);
+        when(provider.completeChat(any())).thenReturn(simpleResponse());
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isOk());
+
+        verify(factory, never()).retrieveContext(anyString());
+        ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
+        verify(provider, times(1)).completeChat(captor.capture());
+        assertEquals("user", captor.getValue().getMessages().get(0).getRole());
+    }
+
+    @Test
+    void chatRagFailSoftStillReturnsOk() throws Exception {
+        when(factory.ragEnabled()).thenReturn(true);
+        when(factory.retrieveContext(anyString())).thenReturn(List.of());
+        when(provider.completeChat(any())).thenReturn(simpleResponse());
+
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
+        verify(provider, times(1)).completeChat(captor.capture());
+        assertEquals("user", captor.getValue().getMessages().get(0).getRole());
+    }
+
+    private static ChatResponse simpleResponse() {
+        ChatResponse response = new ChatResponse();
+        response.setId("chatcmpl-test");
+        response.setModel("gpt-4o-mini");
+        response.setProvider("openai");
+        ChatChoice choice = new ChatChoice();
+        choice.setRole("assistant");
+        choice.setContent("Hello!");
+        response.setChoices(List.of(choice));
+        response.setUsage(new ChatUsage());
+        return response;
     }
 }

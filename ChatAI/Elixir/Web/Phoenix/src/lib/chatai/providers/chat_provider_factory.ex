@@ -33,6 +33,77 @@ defmodule ChatAI.Providers.ChatProviderFactory do
     end
   end
 
+  @doc "RAG_ENABLED? (accepts 1/true/yes)."
+  def rag_enabled do
+    case System.get_env("RAG_ENABLED", "") do
+      "" -> false
+      v -> v in ["1", "true", "TRUE", "yes"]
+    end
+  end
+
+  @doc "RAG_SEARCH_URL with default."
+  def rag_search_url do
+    System.get_env("RAG_SEARCH_URL", "http://semantic-search:5000/api/search")
+  end
+
+  @doc "RAG_TOP_K as integer, default 3."
+  def rag_top_k do
+    case Integer.parse(System.get_env("RAG_TOP_K", "3")) do
+      {i, _} -> i
+      :error -> 3
+    end
+  end
+
+  @doc "Retrieves documents for a query. Fail-soft: returns [] on any error."
+  def retrieve_context(query) do
+    url =
+      rag_search_url() <>
+        "?q=" <> URI.encode_www_form(query) <> "&k=" <> Integer.to_string(rag_top_k())
+
+    timeout = ChatAI.Providers.Util.timeout_ms()
+
+    case ChatAI.Providers.HttpClient.get_json(url, timeout) do
+      {:ok, %{"results" => results}} when is_list(results) ->
+        Enum.flat_map(results, fn
+          %{"document" => doc} when is_binary(doc) and doc != "" -> [doc]
+          _ -> []
+        end)
+
+      _ ->
+        []
+    end
+  end
+
+  @doc "Prepends RAG context as a system message when enabled and documents are found."
+  def apply_rag(%ChatAI.ChatRequest{} = request) do
+    if rag_enabled() do
+      last_user =
+        request.messages
+        |> Enum.reverse()
+        |> Enum.find(fn m -> m.role == "user" end)
+
+      case last_user do
+        nil ->
+          request
+
+        last ->
+          documents = retrieve_context(last.content || "")
+
+          if documents == [] do
+            request
+          else
+            context =
+              "Use the following context to answer the user's question:\n\n" <>
+                Enum.map_join(documents, "\n", fn doc -> "- " <> doc end)
+
+            %{request | messages: [%ChatAI.Message{role: "system", content: context} | request.messages]}
+          end
+      end
+    else
+      request
+    end
+  end
+
   @doc "Returns the API key env name for a provider, or nil if unsupported."
   def key_env("openai"), do: "OPENAI_API_KEY"
   def key_env("openai-compatible"), do: "OPENAI_API_KEY"

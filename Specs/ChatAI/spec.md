@@ -7,6 +7,9 @@ AI chat API: receives a message history, routes it to a configured LLM provider
 Designed as an **abstraction layer over multiple providers, each with its own
 credentials sourced from environment variables**. No DB or cache.
 
+Optionally (**RAG**), it retrieves relevant documents from an external semantic
+search service (SemanticSearch) and injects them as context into the prompt.
+
 ## Architecture
 
 HTTP API that translates chat requests to an external LLM provider and returns
@@ -31,7 +34,24 @@ POST /api/chat ──► ChatController ──► ChatProviderFactory ──► 
                                           │ azure       ──► AzureChatProvider
                                           │ google      ──► GoogleChatProvider
                                           │ anthropic   ──► AnthropicChatProvider
+                                          │
+                                          │ RAG_ENABLED=true
+                                          ▼
+                                  retrieve_context(lastUserMessage)
+                                          │  GET {RAG_SEARCH_URL}?q=...&k=RAG_TOP_K
+                                          ▼
+                                  prepend system message with documents
+                                          │
+                                          ▼
+                                  ChatProviderFactory ──► IChatProvider (augmented prompt)
 ```
+
+RAG flow: when `RAG_ENABLED=true`, the last user message is used as the query
+against the external semantic search service; the top-k documents are prepended
+to the message history as a `system` message before the provider call. The
+relevance of the retrieval depends on the embeddings of the external service
+(SemanticSearch currently indexes with dummy embeddings,
+`[0.0]*VECTOR_DIMENSION`).
 
 ## Implementations
 
@@ -99,6 +119,15 @@ Resilience and failover:
   configured, the request is retried once against it; if it also fails, `502`
   is returned as-is.
 
+Retrieval (RAG):
+- `RAG_ENABLED` (default `false`) — if `true`, every `POST /api/chat`
+  retrieves context from the external search service.
+- `RAG_SEARCH_URL` (default `http://semantic-search:5000/api/search`) — `GET`
+  endpoint of the semantic search service: `?q=<query>&k=<top_k>` →
+  `{ "results": [{ "document", "metadata", "distance" }] }`.
+- `RAG_TOP_K` (default `3`) — number of documents to inject as context.
+- The retrieval call is bounded by `CHAT_TIMEOUT_MS`.
+
 ## Endpoints
 
 - `GET /` → serves the chat UI (HTML)
@@ -142,6 +171,14 @@ Resilience and failover:
   after a provider failure before returning `502`.
 - Each provider adapter normalizes its native response into the shared
   `choices[].role` / `choices[].content` + `usage` shape.
+- With `RAG_ENABLED=true`, before calling the provider the last user message is
+  used as the query against `RAG_SEARCH_URL`; the top-k documents are prepended
+  as a `system` message (`"Use the following context to answer the user's
+  question:\n\n- <document>"`).
+- RAG is **fail-soft**: if the search fails (service down, timeout, HTTP error),
+  the error is logged and the chat proceeds without context (`200`); RAG never
+  breaks the chat. The provider always receives the (possibly augmented)
+  `messages` array.
 - The web UI calls `POST /api/chat` and displays the assistant response.
 
 ## Tests
@@ -168,6 +205,11 @@ Tests do not require a real API key: the provider is tested against a mock/stub
 5. With `CHAT_FALLBACK_PROVIDER` set+keyed, a primary failure is retried once
    against the fallback (→ `200`); without a fallback key, the `502` is
    returned as-is.
+6. `RAG_ENABLED=true` + search mocked → a `system` message with the retrieved
+   documents is prepended to `messages`.
+7. `RAG_ENABLED=false` → the retrieval is not called.
+8. Search fails (timeout/error) with `RAG_ENABLED=true` → `200` without context
+   (fail-soft).
 
 ## Containers / Ports
 

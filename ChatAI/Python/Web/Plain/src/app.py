@@ -1,5 +1,6 @@
 import json
 import os
+import urllib.parse
 import urllib.request
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
@@ -8,8 +9,20 @@ app = Flask(__name__)
 DEFAULT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")
 DEFAULT_TEMPERATURE = float(os.getenv("CHAT_TEMPERATURE", "0.7"))
 DEFAULT_MAX_TOKENS = int(os.getenv("CHAT_MAX_TOKENS", "1024"))
+CHAT_TIMEOUT_MS = int(os.getenv("CHAT_TIMEOUT_MS", "30000"))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+RAG_ENABLED = os.getenv("RAG_ENABLED", "").lower() in ("1", "true", "yes")
+RAG_SEARCH_URL = os.getenv("RAG_SEARCH_URL", "http://semantic-search:5000/api/search")
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "3"))
+
+
+def retrieve_context(query):
+    url = f"{RAG_SEARCH_URL}?q={urllib.parse.quote(query)}&k={RAG_TOP_K}"
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=CHAT_TIMEOUT_MS / 1000) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return [r.get("document", "") for r in data.get("results", []) if r.get("document")]
 
 
 def complete_chat(messages, model, temperature, max_tokens):
@@ -48,8 +61,22 @@ def chat():
     model = data.get("model") or DEFAULT_MODEL
     temperature = data.get("temperature") if data.get("temperature") is not None else DEFAULT_TEMPERATURE
     max_tokens = data.get("max_tokens") if data.get("max_tokens") is not None else DEFAULT_MAX_TOKENS
+    messages = data["messages"]
+    if RAG_ENABLED:
+        last_user = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), None)
+        if last_user:
+            try:
+                documents = retrieve_context(last_user)
+            except Exception as exc:
+                app.logger.warning("RAG retrieval failed: %s", exc)
+                documents = []
+            if documents:
+                context = "Use the following context to answer the user's question:\n\n" + "\n".join(
+                    f"- {d}" for d in documents
+                )
+                messages = [{"role": "system", "content": context}] + messages
     try:
-        result = complete_chat(data["messages"], model, temperature, max_tokens)
+        result = complete_chat(messages, model, temperature, max_tokens)
     except Exception as exc:
         return jsonify({"error": str(exc)}), 502
     choices = [
