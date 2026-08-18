@@ -16,6 +16,7 @@ jobs:
   csharp:
     name: C# (.NET 9) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -130,6 +131,7 @@ jobs:
   python:
     name: Python (pytest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -251,6 +253,7 @@ jobs:
   node:
     name: Node.js (Jest) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -425,6 +428,7 @@ jobs:
   php:
     name: PHP (lint + assert) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -564,6 +568,7 @@ jobs:
   ruby:
     name: Ruby (minitest)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
@@ -600,6 +605,7 @@ jobs:
   java:
     name: Java (Maven) ${{ matrix.db_driver }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
