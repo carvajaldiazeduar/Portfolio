@@ -1,0 +1,25 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: chatai-web
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+app:
+  chat:
+    provider: ${CHAT_PROVIDER:openai}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  chat-config:
+    model: ${CHAT_MODEL:gpt-4o-mini}
+    temperature: ${CHAT_TEMPERATURE:0.7}
+    max-tokens: ${CHAT_MAX_TOKENS:1024}

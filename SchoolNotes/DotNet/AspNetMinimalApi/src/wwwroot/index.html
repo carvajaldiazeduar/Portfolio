@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SchoolNotes</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div v-if="!authenticated" class="login">
+      <div class="brand">
+        <div class="brand-mark">SN</div>
+        <h1>SchoolNotes</h1>
+      </div>
+      <input v-model="loginUser" placeholder="Username" />
+      <input v-model="loginPass" type="password" placeholder="Password" @keyup.enter="doLogin" />
+      <button class="btn btn-accent" style="width:100%;margin-top:10px" @click="doLogin">Sign in</button>
+    </div>
+    <div v-else class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SN</div>
+          <span class="brand-name">SchoolNotes</span>
+        </div>
+        <nav class="nav">
+          <span class="nav-label">Entities</span>
+          <button v-for="e in entities" :key="e.name" @click="selectEntity(e.name)" :class="{ active: active === e.name }">
+            <span>{{ e.label }}</span>
+          </button>
+        </nav>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <span class="page-title">{{ (entities.find(e => e.name === active) || {}).label }}</span>
+          <div class="user-chip">
+            <div class="avatar">SN</div>
+            <button class="btn btn-ghost btn-sm" @click="logout">Sign out</button>
+          </div>
+        </header>
+        <main>
+          <div class="toolbar">
+            <button class="btn btn-primary" @click="openCreate">New</button>
+            <span class="hint" v-if="!loading && items.length">{{ items.length }} record(s) on this page</span>
+          </div>
+          <div class="card" v-if="!loading">
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th v-for="f in fields" :key="f.key">{{ f.label }}</th>
+                    <th class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in items" :key="item.id">
+                    <td v-for="f in fields" :key="f.key">
+                      <span v-if="f.key === 'code'" class="cell-code">{{ item[f.key] }}</span>
+                      <span v-else-if="f.type === 'fk'">{{ displayFk(f, item[f.key]) }}</span>
+                      <span v-else>{{ item[f.key] }}</span>
+                    </td>
+                    <td class="actions-col">
+                      <span class="row-actions">
+                        <button class="btn btn-ghost btn-sm" @click="openEdit(item)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @click="askDelete(item)">Delete</button>
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="empty" v-if="items.length === 0">No records yet.</div>
+          </div>
+          <div class="card loading-box" v-else>
+            <div class="spinner"></div>
+            <p>Loading...</p>
+          </div>
+          <div class="pager">
+            <button class="btn btn-ghost btn-sm" :disabled="page <= 1" @click="page--; load()">Previous</button>
+            <span class="page-indicator">Page {{ page }}</span>
+            <button class="btn btn-ghost btn-sm" :disabled="items.length < pageSize" @click="page++; load()">Next</button>
+          </div>
+        </main>
+
+        <div v-if="showForm" class="modal" @click.self="showForm = false">
+          <div class="box">
+            <h3>{{ editing ? 'Edit' : 'New' }}</h3>
+            <div class="field" v-for="f in fields" :key="f.key">
+              <label>{{ f.label }}<span class="req" v-if="f.required">*</span></label>
+              <select v-if="f.type === 'fk'" v-model="form[f.key]" :class="{ invalid: errors[f.key] }">
+                <option value="" disabled>{{ fkPlaceholder(f) }}</option>
+                <option v-for="opt in (options[f.ref] || [])" :key="opt.id" :value="opt.id">{{ fkLabel(f, opt) }}</option>
+              </select>
+              <input v-else v-model="form[f.key]" :type="f.number ? 'number' : 'text'" :placeholder="f.label" :class="{ invalid: errors[f.key] }" />
+              <span class="err" v-if="errors[f.key]" role="alert">{{ errors[f.key] }}</span>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" @click="showForm = false">Cancel</button>
+              <button class="btn btn-primary" @click="save">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="confirmDelete.open" class="modal" @click.self="confirmDelete.open = false">
+          <div class="box">
+            <p class="confirm-text">Delete this record?</p>
+            <div class="form-actions">
+              <button class="btn btn-ghost" @click="confirmDelete.open = false">Cancel</button>
+              <button class="btn btn-danger" @click="doDelete">Yes, delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toasts" role="status" aria-live="polite" aria-atomic="false">
+          <div v-for="t in toasts" :key="t.id" :class="'toast ' + t.type" :role="t.type === 'error' ? 'alert' : 'status'">{{ t.message }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

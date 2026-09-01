@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>SchoolNotes.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <!-- Opt-in to the new dotnet test experience on .NET 10+ -->
+    <UseDotNetTest>true</UseDotNetTest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.0" />
+  </ItemGroup>
+  <!-- Workaround: prevent importing Microsoft.Testing.Platform MSBuild targets on .NET 10 SDK
+       by excluding build assets for the transitive package. This avoids the MTP VSTest target
+       that is incompatible with the new dotnet test experience. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.3.3">
+      <ExcludeAssets>build;buildtransitive</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SchoolNotes.csproj" />
+  </ItemGroup>
+</Project>
+
+

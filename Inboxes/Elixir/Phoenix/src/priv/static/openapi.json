@@ -1,0 +1,87 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Inboxes API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/messages": {
+      "get": {
+        "summary": "List all messages",
+        "responses": {
+          "200": {
+            "description": "List of messages"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subject"],
+                "properties": {
+                  "sender": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created message"
+          }
+        }
+      }
+    },
+    "/api/messages/{id}": {
+      "get": {
+        "summary": "Get a message by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message details"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a message",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message deleted"
+          }
+        }
+      }
+    }
+  }
+}

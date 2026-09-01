@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build: .
+    ports:
+      - "5006:5000"
+    environment:
+      CACHE_TYPE: redis
+      REDIS_HOST: redis:6379
+      JWT_SECRET: apigateway-production-jwt-secret-key-0123456789abcdef
+      RATE_LIMIT_DEFAULT: "100"
+      RATE_LIMIT_WINDOW: "60"
+      USERS_LIMIT: "50"
+      ORDERS_LIMIT: "30"
+      PRODUCTS_LIMIT: "100"
+      USERS_SERVICE_URL: http://users-svc:3001
+      ORDERS_SERVICE_URL: http://orders-svc:3002
+      PRODUCTS_SERVICE_URL: http://products-svc:3003
+    depends_on:
+      redis:
+        condition: service_healthy

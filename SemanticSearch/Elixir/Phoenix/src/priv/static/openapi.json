@@ -1,0 +1,86 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Semantic Search API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/upload": {
+      "post": {
+        "summary": "Upload a document to index",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "summary": "Search indexed documents",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/api/collections": {
+      "get": {
+        "summary": "List collections",
+        "responses": {
+          "200": {
+            "description": "Collections list"
+          }
+        }
+      }
+    },
+    "/api/collections/{name}": {
+      "delete": {
+        "summary": "Delete a collection",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection deleted"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: semanticsearch-web
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+app:
+  vector:
+    driver: ${VECTOR_DRIVER:chromadb}
+    dimension: ${VECTOR_DIMENSION:1536}
+    collection: ${VECTOR_COLLECTION:documents}
+    chroma-url: ${CHROMA_URL:http://localhost:8000}
+    pinecone-api-key: ${PINECONE_API_KEY:}
+    pinecone-env: ${PINECONE_ENV:us-west1-gcp}
+    pgvector-connection: ${PGVECTOR_CONNECTION:}
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    ttl: ${CACHE_TTL:300}

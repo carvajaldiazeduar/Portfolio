@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox</title>
+  <link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+  <div class="container">
+    <h1>Inbox</h1>
+    <div id="msg" class="msg"></div>
+    <div class="form-row">
+      <div class="field">
+        <input type="text" id="from" placeholder="From" required>
+        <small class="field-msg" id="from-msg"></small>
+      </div>
+      <div class="field">
+        <input type="text" id="subject" placeholder="Subject" required>
+        <small class="field-msg" id="subject-msg"></small>
+      </div>
+      <div class="field">
+        <input type="text" id="body" placeholder="Body">
+        <small class="field-msg" id="body-msg"></small>
+      </div>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    <table>
+      <thead><tr><th>From</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="messages-body"></tbody>
+    </table>
+  </div>
+  <script src='app.js'></script>
+</body>
+</html>

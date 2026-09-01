@@ -1,0 +1,5 @@
+# Normalize text files to LF so shell scripts run correctly in Linux/WSL containers
+* text=auto eol=lf
+
+# Keep PowerShell scripts on CRLF for Windows native execution
+*.ps1 text eol=crlf

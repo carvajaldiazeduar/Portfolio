@@ -1,0 +1,2 @@
+class PasswordEntry < ApplicationRecord
+end

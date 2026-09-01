@@ -1,0 +1,89 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Inboxes API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/messages": {
+            "get": {
+                "summary": "List messages",
+                "responses": {
+                    "200": {
+                        "description": "List of messages"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Send a message",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "sender": {
+                                        "type": "string"
+                                    },
+                                    "subject": {
+                                        "type": "string"
+                                    },
+                                    "body": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "sender"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Message sent"
+                    }
+                }
+            }
+        },
+        "/api/messages/{message_id}": {
+            "get": {
+                "summary": "Read a message",
+                "parameters": [
+                    {
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message details"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a message",
+                "parameters": [
+                    {
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message deleted"
+                    }
+                }
+            }
+        }
+    }
+}

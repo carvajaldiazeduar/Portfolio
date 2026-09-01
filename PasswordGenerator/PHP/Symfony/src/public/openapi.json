@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PasswordGenerator API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/generate": {
+      "post": {
+        "summary": "Generate a password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["length"],
+                "properties": {
+                  "length": {
+                    "type": "integer"
+                  },
+                  "use_upper": {
+                    "type": "boolean"
+                  },
+                  "use_lower": {
+                    "type": "boolean"
+                  },
+                  "use_digits": {
+                    "type": "boolean"
+                  },
+                  "use_symbols": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated password"
+          }
+        }
+      }
+    },
+    "/api/passwords": {
+      "get": {
+        "summary": "List recent generated passwords",
+        "responses": {
+          "200": {
+            "description": "Recent generated passwords"
+          }
+        }
+      }
+    }
+  }
+}

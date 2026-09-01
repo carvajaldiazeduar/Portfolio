@@ -1,0 +1,24 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: datapipeline-web
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+app:
+  warehouse:
+    driver: ${WAREHOUSE_DRIVER:duckdb}
+    path: ${WAREHOUSE_PATH:}
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    ttl: ${CACHE_TTL:300}

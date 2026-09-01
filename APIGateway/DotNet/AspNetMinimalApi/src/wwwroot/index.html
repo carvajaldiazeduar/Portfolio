@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Gateway</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>API Gateway</h1>
+    <p>JWT Authentication & Rate Limiting Proxy</p>
+    
+    <div class="section">
+      <h2>Authentication</h2>
+      <div class="form-group">
+        <input type="text" id="username" placeholder="Username (admin/user)" value="admin">
+        <input type="password" id="password" placeholder="Password (admin/user)" value="admin">
+        <button onclick="login()">Login</button>
+      </div>
+      <div id="token-display" class="hidden">
+        <h3>JWT Token</h3>
+        <textarea id="token" readonly></textarea>
+        <button onclick="copyToken()">Copy Token</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Test Endpoints</h2>
+      <div class="endpoint-buttons">
+        <button onclick="testEndpoint('/health', false)">GET /health (Public)</button>
+        <button onclick="testEndpoint('/api/users')">GET /api/users</button>
+        <button onclick="testEndpoint('/api/orders')">GET /api/orders</button>
+        <button onclick="testEndpoint('/api/products')">GET /api/products</button>
+      </div>
+      <div id="response" class="response-box hidden"></div>
+    </div>
+
+    <div class="section">
+      <h2>Rate Limit Info</h2>
+      <p>Default: 100 req/min | /api/users: 50 req/min | /api/orders: 30 req/min | /api/products: 100 req/min</p>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

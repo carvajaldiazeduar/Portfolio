@@ -1,0 +1,92 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Inboxes API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/messages/search": {
+      "get": {
+        "summary": "Search messages by sender",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching messages"
+          }
+        }
+      }
+    },
+    "/messages/{id}": {
+      "get": {
+        "summary": "Show a message",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message details"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a message",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message deleted"
+          }
+        }
+      }
+    },
+    "/messages": {
+      "post": {
+        "summary": "Create a message",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "object",
+                    "required": ["sender", "subject"],
+                    "properties": {
+                      "sender": { "type": "string" },
+                      "subject": { "type": "string" },
+                      "body": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message created"
+          }
+        }
+      }
+    }
+  }
+}

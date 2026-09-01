@@ -1,0 +1,96 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Event Processor API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service status"
+          }
+        }
+      }
+    },
+    "/api/queues": {
+      "get": {
+        "summary": "List available queues",
+        "responses": {
+          "200": {
+            "description": "List of queue types"
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "post": {
+        "summary": "Queue a job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "data"],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job queued"
+          }
+        }
+      }
+    },
+    "/api/jobs/batch": {
+      "post": {
+        "summary": "Queue multiple jobs",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["jobs"],
+                "properties": {
+                  "jobs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["type", "data"],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Jobs queued"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: apigateway-web
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+app:
+  jwt-secret: ${JWT_SECRET:dev-secret-change-in-production}
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    ttl: ${CACHE_TTL:300}
+  rate-limit:
+    default: ${RATE_LIMIT_DEFAULT:100}
+    window: ${RATE_LIMIT_WINDOW:60}
+  routes:
+    users:
+      limit: 50
+      window: 60
+    orders:
+      limit: 30
+      window: 60
+    products:
+      limit: 100
+      window: 60
+  services:
+    users-url: ${USERS_SERVICE_URL:http://localhost:3001}
+    orders-url: ${ORDERS_SERVICE_URL:http://localhost:3002}
+    products-url: ${PRODUCTS_SERVICE_URL:http://localhost:3003}

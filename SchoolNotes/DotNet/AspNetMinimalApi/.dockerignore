@@ -1,0 +1,10 @@
+.git
+.vs
+**/.vs
+bin
+obj
+**/bin
+**/obj
+src/bin
+src/obj
+src/tests

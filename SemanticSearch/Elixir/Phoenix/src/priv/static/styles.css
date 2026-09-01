@@ -1,0 +1,5 @@
+body { font-family: sans-serif; margin: 2rem; }
+h1 { color: #333; }
+form { margin: 1rem 0; }
+input[type="file"], input[type="text"] { padding: 0.5rem; margin-right: 0.5rem; }
+button { padding: 0.5rem 1rem; cursor: pointer; }
