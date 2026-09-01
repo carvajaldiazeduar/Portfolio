@@ -39,20 +39,21 @@ defmodule Inboxes.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8.9"},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
+      {:phoenix, "~> 1.8.13"},
+      {:phoenix_ecto, "~> 4.7"},
+      {:ecto_sql, "~> 3.14"},
+      {:decimal, "~> 3.1"},
       {:postgrex, ">= 0.0.0"},
-      {:myxql, "~> 0.7.0"},
-      {:ecto_sqlite3, "~> 0.18.0"},
+      {:myxql, "~> 0.9"},
+      {:ecto_sqlite3, "~> 0.24"},
       {:tds, "~> 2.3.0"},
-      {:mongodb_ecto, "~> 1.1.0"},
-      {:redix, "~> 1.5.0"},
-      {:telemetry_metrics, "~> 1.0"},
+      {:mongodb_ecto, "~> 2.1"},
+      {:redix, "~> 1.8"},
+      {:telemetry_metrics, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:dns_cluster, "~> 0.3"},
+      {:bandit, "~> 1.12"}
     ]
   end
 
