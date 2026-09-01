@@ -212,7 +212,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary pymysql pymongo pymssql chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart
+          pip install --quiet pytest flask flask-sqlalchemy redis psycopg2-binary pymysql pymongo pymssql chromadb pinecone-client duckdb fastapi uvicorn httpx python-multipart "moto[server]>=5.0,<6"
           if [ "$DB_DRIVER" = "sqlserver" ]; then
             printf '[global]\n  tds version = 7.4\n  trust = yes\n' > ~/.freetds.conf
           fi
