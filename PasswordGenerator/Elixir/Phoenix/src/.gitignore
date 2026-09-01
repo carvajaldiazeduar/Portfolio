@@ -34,4 +34,5 @@ dev.db
 *-shm
 *-wal
 password_generator
-
+!lib/password_generator/
+!lib/password_generator/**
