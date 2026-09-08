@@ -23,7 +23,7 @@ SAMPLE_VIDEO_KEY = "raw/launch-demo.mp4"
 
 def _init_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="streamvideo")
-    parser.add_argument("command", choices=["init", "demo", "worker", "ingest"])
+    parser.add_argument("command", choices=["init", "demo", "worker", "ingest", "watch"])
     parser.add_argument("file", nargs="?", default=None, help="file for ingest")
     return parser
 
@@ -80,6 +80,29 @@ def cmd_worker() -> None:
         pipeline.notifier.stop()
 
 
+def cmd_watch() -> None:
+    from .repository import STATUS_COMPLETED, STATUS_FAILED
+
+    pipeline = build()
+    pipeline.init_resources()
+    deliver = publish_sns(client_sns(), pipeline.notifier.topic_arn)
+    print("Watching s3://%s/raw/ for new videos (Ctrl+C to stop)" % config.input_bucket())
+    try:
+        while True:
+            processed_any = False
+            for key in pipeline.storage.list("raw/"):
+                job = pipeline.repository.get_job(key)
+                if job is None or job.get("status") not in (STATUS_COMPLETED, STATUS_FAILED):
+                    result = pipeline.process(key)
+                    print("Processed", key, "->", result)
+                    processed_any = True
+            handled = pipeline.notifier.consume_once(deliver)
+            if not processed_any and handled == 0:
+                time.sleep(2)
+    except KeyboardInterrupt:
+        pass
+
+
 def cmd_ingest(file_path: str) -> None:
     pipeline = build()
     pipeline.init_resources()
@@ -105,6 +128,8 @@ def main(argv=None) -> int:
         cmd_demo()
     elif args.command == "worker":
         cmd_worker()
+    elif args.command == "watch":
+        cmd_watch()
     elif args.command == "ingest":
         if not args.file:
             print("ingest requires <file>", file=sys.stderr)

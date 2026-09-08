@@ -2,3 +2,6 @@ bin/
 obj/
 tests/
 *.user
+.vs/
+.idea/
+.vscode/

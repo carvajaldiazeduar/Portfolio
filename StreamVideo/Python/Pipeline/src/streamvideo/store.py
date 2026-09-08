@@ -31,9 +31,13 @@ class VideoStorage(Protocol):
 
     def size_of(self, key: str) -> int: ...
 
+    def metadata_of(self, key: str) -> dict: ...
+
     def copy(self, src_key: str, dst_key: str) -> None: ...
 
     def public_url(self, key: str) -> str: ...
+
+    def list(self, prefix: str) -> list[str]: ...
 
 
 class S3VideoStorage:
@@ -67,7 +71,7 @@ class S3VideoStorage:
                     "CORSRules": [
                         {
                             "AllowedOrigins": ["*"],
-                            "AllowedMethods": ["GET", "PUT", "POST"],
+                            "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
                             "AllowedHeaders": ["*"],
                             "ExposeHeaders": ["ETag"],
                             "MaxAgeSeconds": 3600,
@@ -96,6 +100,11 @@ class S3VideoStorage:
         response = self.client.head_object(Bucket=self.input_bucket, Key=key)
         return response["ContentLength"]
 
+    def metadata_of(self, key: str) -> dict:
+        """User metadata (x-amz-meta-*) set on the object, if any."""
+        response = self.client.head_object(Bucket=self.input_bucket, Key=key)
+        return response.get("Metadata", {})
+
     def copy(self, src_key: str, dst_key: str) -> None:
         self.client.copy_object(
             Bucket=self.output_bucket,
@@ -105,3 +114,17 @@ class S3VideoStorage:
 
     def public_url(self, key: str) -> str:
         return f"s3://{self.output_bucket}/{key}"
+
+    def list(self, prefix: str) -> list[str]:
+        keys: list[str] = []
+        token = None
+        while True:
+            params: dict = {"Bucket": self.input_bucket, "Prefix": prefix}
+            if token:
+                params["ContinuationToken"] = token
+            response = self.client.list_objects_v2(**params)
+            keys.extend(item["Key"] for item in response.get("Contents", []))
+            if not response.get("IsTruncated"):
+                break
+            token = response.get("NextContinuationToken")
+        return keys

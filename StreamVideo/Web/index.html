@@ -122,6 +122,10 @@
           <label for="region">Region</label>
           <input id="region" type="text" v-model="region" />
         </div>
+        <div>
+          <label for="table">Jobs table</label>
+          <input id="table" type="text" v-model="jobsTable" @change="persist" placeholder="streamvideo-jobs" />
+        </div>
       </div>
       <div class="grid" style="margin-top:10px">
         <div>
@@ -183,15 +187,19 @@
     </section>
 
     <section class="card">
-      <h2>Objects in bucket</h2>
+      <h2>Objects &amp; extracted data</h2>
       <table v-if="objects.length">
         <thead>
-          <tr><th>Key</th><th>Size</th></tr>
+          <tr><th>Key</th><th>Size</th><th>Status</th><th>Duration</th><th>Resolutions</th><th>Labels</th></tr>
         </thead>
         <tbody>
           <tr v-for="obj in objects" :key="obj.Key">
             <td>{{ obj.Key }}</td>
             <td class="muted">{{ formatSize(obj.Size) }}</td>
+            <td><span class="status" :class="jobStatusClass(obj.job)">{{ jobStatusLabel(obj.job) }}</span></td>
+            <td class="muted">{{ durationFor(obj.job) }}</td>
+            <td class="muted">{{ resolutionsFor(obj.job) }}</td>
+            <td class="muted">{{ labelsFor(obj.job) }}</td>
           </tr>
         </tbody>
       </table>
@@ -207,6 +215,7 @@
       PutObjectCommand,
       ListObjectsV2Command,
     } from "https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3@3.600.0/+esm";
+    import { DynamoDBClient, ScanCommand } from "https://cdn.jsdelivr.net/npm/@aws-sdk/client-dynamodb@3.600.0/+esm";
 
     const { createApp } = Vue;
 
@@ -216,12 +225,15 @@
           endpoint: localStorage.getItem("sv.endpoint") || "http://localhost:4566",
           bucket: localStorage.getItem("sv.bucket") || "streamvideo-input",
           prefix: localStorage.getItem("sv.prefix") || "raw/",
+          jobsTable: localStorage.getItem("sv.table") || "streamvideo-jobs",
           region: "us-east-1",
           accessKey: "mock_key",
           secretKey: "mock_secret",
           files: [],
           results: [],
           objects: [],
+          jobs: {},
+          durations: {},
           uploading: false,
           checking: false,
           dragging: false,
@@ -245,6 +257,7 @@
           localStorage.setItem("sv.endpoint", this.endpoint);
           localStorage.setItem("sv.bucket", this.bucket);
           localStorage.setItem("sv.prefix", this.prefix);
+          localStorage.setItem("sv.table", this.jobsTable);
         },
         formatSize(bytes) {
           if (bytes == null) return "";
@@ -263,10 +276,108 @@
         },
         onFiles(event) {
           this.files = Array.from(event.target.files);
+          this.probeDurations(this.files);
         },
         drop(event) {
           this.dragging = false;
           this.files = Array.from(event.dataTransfer.files);
+          this.probeDurations(this.files);
+        },
+        probeDurations(files) {
+          const durations = {};
+          Promise.all(
+            files.map((file) => this.readDuration(file).then((d) => (durations[file.name] = d)))
+          ).then(() => { this.durations = durations; });
+        },
+        readDuration(file) {
+          return new Promise((resolve) => {
+            if (!file.type.startsWith("video/") && !/\.(mp4|mov|webm|mkv|avi)$/i.test(file.name)) {
+              resolve(null);
+              return;
+            }
+            const url = URL.createObjectURL(file);
+            const video = document.createElement("video");
+            video.preload = "metadata";
+            let done = false;
+            const finish = (value) => {
+              if (done) return;
+              done = true;
+              clearTimeout(timer);
+              URL.revokeObjectURL(url);
+              video.removeAttribute("src");
+              resolve(value);
+            };
+            const timer = setTimeout(() => finish(null), 5000);
+            video.addEventListener("loadedmetadata", () => {
+              const d = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+              finish(d);
+            });
+            video.addEventListener("error", () => finish(null));
+            video.src = url;
+          });
+        },
+        fromAttr(v) {
+          if (v == null) return v;
+          if (typeof v.S === "string") {
+            if (v.S[0] === "[" || v.S[0] === "{") {
+              try { return JSON.parse(v.S); } catch (_) { return v.S; }
+            }
+            return v.S;
+          }
+          if (typeof v.N === "string") return Number(v.N);
+          if (typeof v.BOOL === "boolean") return v.BOOL;
+          if (Array.isArray(v.SS)) return v.SS;
+          if (Array.isArray(v.NS)) return v.NS.map(Number);
+          return v;
+        },
+        async loadJobs() {
+          if (!this.jobsTable) return;
+          try {
+            const client = new DynamoDBClient({
+              region: this.region,
+              endpoint: this.endpoint,
+              credentials: {
+                accessKeyId: this.accessKey,
+                secretAccessKey: this.secretKey,
+              },
+            });
+            const data = await client.send(new ScanCommand({ TableName: this.jobsTable }));
+            const jobs = {};
+            for (const item of data.Items || []) {
+              const job = {};
+              for (const [k, v] of Object.entries(item)) job[k] = this.fromAttr(v);
+              if (typeof job.video_key === "string") jobs[job.video_key] = job;
+            }
+            this.jobs = jobs;
+          } catch (err) {
+            this.jobs = {};
+            this.error = "Could not load jobs: " + (err.name || err.message || err);
+          }
+        },
+        jobStatusClass(job) {
+          if (!job) return "";
+          return { COMPLETED: "ok", FAILED: "err", PROCESSING: "busy" }[job.status] || "";
+        },
+        jobStatusLabel(job) {
+          if (!job) return "no job";
+          return job.status;
+        },
+        durationFor(job) {
+          if (!job || !job.metadata || job.metadata.duration_sec == null) return "—";
+          const seconds = Number(job.metadata.duration_sec);
+          if (!Number.isFinite(seconds)) return "—";
+          if (seconds < 60) return Math.round(seconds) + "s";
+          return Math.floor(seconds / 60) + "m " + Math.round(seconds % 60) + "s";
+        },
+        resolutionsFor(job) {
+          if (!job || !job.outputs) return "—";
+          const resolutions = Object.keys(job.outputs);
+          return resolutions.length ? resolutions.join(", ") : "—";
+        },
+        labelsFor(job) {
+          if (!job || !job.labels) return "—";
+          const labels = Array.isArray(job.labels) ? job.labels : [];
+          return labels.length ? labels.join(", ") : "—";
         },
         async checkConnection() {
           this.checking = true;
@@ -296,14 +407,17 @@
               const item = { name: file.name, key: key, status: "uploading" };
               this.results.push(item);
               try {
-                await client.send(
-                  new PutObjectCommand({
-                    Bucket: this.bucket,
-                    Key: key,
-                    Body: file,
-                    ContentType: file.type || "video/mp4",
-                  })
-                );
+                const command = {
+                  Bucket: this.bucket,
+                  Key: key,
+                  Body: file,
+                  ContentType: file.type || "video/mp4",
+                };
+                const duration = this.durations[file.name];
+                if (duration != null && duration > 0) {
+                  command.Metadata = { duration: String(duration.toFixed(1)) };
+                }
+                await client.send(new PutObjectCommand(command));
                 item.status = "done";
               } catch (err) {
                 item.status = "error";
@@ -321,7 +435,11 @@
             const data = await client.send(
               new ListObjectsV2Command({ Bucket: this.bucket })
             );
-            this.objects = data.Contents || [];
+            await this.loadJobs();
+            this.objects = (data.Contents || []).map((obj) => ({
+              ...obj,
+              job: this.jobs[obj.Key] || null,
+            }));
           } catch (err) {
             this.error = "Could not list bucket: " + (err.name || err.message || err);
           }

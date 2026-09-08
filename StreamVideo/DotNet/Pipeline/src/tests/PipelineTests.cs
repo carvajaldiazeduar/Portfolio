@@ -88,6 +88,30 @@ public class PipelineTests
     }
 
     [Fact]
+    public async Task Duration_Comes_From_Object_Metadata()
+    {
+        const string key = "raw/known.mp4";
+        InMemoryVideoStorage storage = new();
+        InMemoryJobRepository repository = new();
+        InMemoryNotifier notifier = new();
+        VideoPipeline pipeline = new VideoPipeline(
+            storage,
+            repository,
+            new StubTranscoder(storage),
+            new LocalAnalyzer(),
+            notifier
+        );
+        await pipeline.InitResourcesAsync();
+        await storage.PutAsync(key, SampleVideo());
+        storage.SetUserMetadata(key, new Dictionary<string, string> { ["duration"] = "12.5" });
+
+        Dictionary<string, object?>? job = await pipeline.ProcessAsync(key);
+
+        Dictionary<string, object?> metadata = Assert.IsType<Dictionary<string, object?>>(job!["metadata"]);
+        Assert.Equal(12.5, metadata["duration_sec"]);
+    }
+
+    [Fact]
     public async Task Completion_Event_Is_Buffered_And_Delivered()
     {
         const string key = "raw/event.mp4";

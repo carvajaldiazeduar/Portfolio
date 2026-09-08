@@ -52,6 +52,12 @@ class VideoPipeline:
 
             urls = {resolution: self.storage.public_url(key) for resolution, key in outputs.items()}
             metadata = estimate_metadata(video_key, size)
+            try:
+                duration = float(self.storage.metadata_of(video_key).get("duration", ""))
+                if duration > 0:
+                    metadata["duration_sec"] = duration
+            except (TypeError, ValueError):
+                pass
 
             self.repository.update_job(
                 video_key,

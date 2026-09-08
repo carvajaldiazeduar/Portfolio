@@ -40,6 +40,19 @@ class TestPipeline:
         except FileNotFoundError:
             pass
 
+    def test_duration_comes_from_object_metadata(self, pipeline, sample_video):
+        key = "raw/known.mp4"
+        pipeline.storage.client.put_object(
+            Bucket=pipeline.storage.input_bucket,
+            Key=key,
+            Body=sample_video,
+            Metadata={"duration": "12.5"},
+        )
+
+        job = pipeline.process(key)
+
+        assert job["metadata"]["duration_sec"] == 12.5
+
 
 class TestNotifications:
     def test_completion_event_is_buffered_in_sqs(self, pipeline, sample_video):

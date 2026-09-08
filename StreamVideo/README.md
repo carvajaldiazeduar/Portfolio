@@ -55,10 +55,10 @@ StreamVideo/
 │       │   ├── notify.py            # SQS → SNS notifier + consumer
 │       │   ├── pipeline.py          # VideoPipeline orchestration
 │       │   ├── factory.py           # driver wiring from env
-│       │   └── runner.py            # CLI: init | demo | worker | ingest
+│       │   └── runner.py            # CLI: init | demo | worker | watch | ingest
 │       ├── tests/                   # pytest + moto
 │       ├── Dockerfile
-│       ├── docker-compose.yml       # LocalStack 3.1.0 + pipeline demo
+│       ├── docker-compose.yml       # LocalStack 3.1.0 + pipeline watcher + web server (:5006)
 │       └── requirements[.dev].txt
 ├── DotNet/
 │   └── Pipeline/                    # .NET 10 port of the local pipeline (AWSSDK + LocalStack)
@@ -73,13 +73,13 @@ StreamVideo/
 │       │   ├── Notifications.cs     # INotifier + SqsSnsNotifier + SnsPublisher
 │       │   ├── VideoPipeline.cs     # VideoPipeline orchestration
 │       │   ├── Factory.cs           # driver wiring from env
-│       │   ├── Program.cs           # CLI: init | demo | worker | ingest
+│       │   ├── Program.cs           # CLI: init | demo | worker | watch | ingest
 │       │   └── Testing/             # in-memory doubles (tests, no AWS needed)
 │       │   └── tests/               # xunit (mirrors pytest suite)
 │       ├── Dockerfile
-│       └── docker-compose.yml       # LocalStack 3.1.0 + pipeline demo
+│       └── docker-compose.yml       # LocalStack 3.1.0 + pipeline watcher + web server (:5006)
 ├── Web/
-│   └── index.html                   # Vue 3 + AWS SDK v3 from CDN (no build): manual upload to input bucket
+│   └── index.html                   # Vue 3 + AWS SDK v3 from CDN (no build): drag&drop uploads; lists extracted data (status, duration, resolutions, labels)
 └── Cdk/                             # AWS CDK (Python) — real deployment
     ├── app.py / cdk.json
     ├── streamvideo_stack.py         # the whole AWS infrastructure
@@ -93,21 +93,22 @@ StreamVideo/
 
 > Required: [Podman](https://podman.io) (or Docker). Everything runs in containers — no Python/.NET install needed.
 
-### 1. See the whole pipeline work (one command)
+### 1. Start LocalStack + the pipeline watcher
 
 ```bash
 cd StreamVideo/Python/Pipeline
 podman compose up --build pipeline
 ```
 
-This starts LocalStack on `http://localhost:4566`, creates the buckets/table/queue/topic, uploads a sample video and processes it end-to-end. The run ends with:
+This starts LocalStack on `http://localhost:4566`, creates the buckets/table/queue/topic and runs a **watcher**: every video that lands under `raw/` (dragged into the web page or uploaded any other way) is processed automatically — no manual step. The watcher stays in the foreground (Ctrl+C to stop; or use `up -d` to run it in the background — LocalStack and the web server keep running).
 
-```
-Job finished: {... 'labels': ['person', 'vehicle', 'outdoor'], 'status': 'COMPLETED' ...}
-Notifications delivered via SNS: 1
+To also see the built-in sample video demo, run in a second terminal (optional):
+
+```bash
+podman compose run --rm pipeline demo
 ```
 
-The completed job shows 3 resolutions (`1080p/720p/480p`) under the output bucket. **LocalStack stays up afterwards** — leave it running for the next steps.
+That prints `Job finished: {... 'labels': ['person', 'vehicle', 'outdoor'], 'status': 'COMPLETED' ...}` and `Notifications delivered via SNS: 1`.
 
 ### 2. Process your own video
 
@@ -122,7 +123,7 @@ You should see the job print again with `'status': 'COMPLETED'`.
 
 ### 3. Upload videos from the browser (optional)
 
-Open `StreamVideo/Web/index.html` in a browser and **drag & drop one or more videos**. They upload straight into `s3://streamvideo-input/raw/…` on LocalStack — no build step (Vue 3 and the AWS SDK are loaded from a CDN). The page also lists what's already in the bucket.
+The `web` service (a tiny static server on port 5006 that serves `StreamVideo/Web`) is part of the same compose and **starts automatically along with the pipeline** — no extra command needed. Just open **http://localhost:5006** in a browser and **drag & drop one or more videos**. They upload straight into `s3://streamvideo-input/raw/…` on LocalStack — no build step (Vue 3 and the AWS SDK are loaded from a CDN). The pipeline **watches `raw/` and processes each new video automatically**; the page shows the extracted data per video (status, real duration, resolutions, labels), reading it from the `streamvideo-jobs` table.
 
 To stop everything (LocalStack included) and remove its data:
 
@@ -138,6 +139,14 @@ Same flow, same LocalStack, C# implementation:
 cd StreamVideo/DotNet/Pipeline
 podman compose up --build pipeline
 ```
+
+> On Windows, the `docker-compose.exe` that `podman compose` shells out to can hang while *building* (a Podman/Windows quirk). If that happens, build the image and start the stack in two steps:
+>
+> ```bash
+> cd StreamVideo/DotNet/Pipeline
+> podman build -t streamvideo-dotnet .
+> podman compose up pipeline
+> ```
 
 ---
 
@@ -235,6 +244,7 @@ Python uses **moto** (no LocalStack needed); the .NET suite uses in-memory doubl
 | Python / .NET | `test_missing_video_raises` / `Missing_Video_Raises` | Non-existent object → file not found. |
 | Python / .NET | `test_completion_event_is_buffered` / `Completion_Event_Is_Buffered_And_Delivered` | Completion event lands in SQS and is drained into SNS. |
 | Python / .NET | `test_event_has_completion_payload` / `Event_Has_Completion_Payload` | Event carries `status`/`video_key`. |
+| Python / .NET | `test_duration_comes_from_object_metadata` / `Duration_Comes_From_Object_Metadata` | Object metadata `duration` overrides the size-based fallback. |
 
 ## 📄 License
 

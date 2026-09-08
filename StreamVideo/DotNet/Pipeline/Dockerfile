@@ -3,7 +3,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY src/StreamVideo.csproj .
 RUN dotnet restore
-COPY src/ .
+COPY src/Config.cs src/Models.cs src/AwsClientFactory.cs src/Storage.cs src/Repository.cs src/Transcoding.cs src/Analysis.cs src/Notifications.cs src/VideoPipeline.cs src/Factory.cs src/Program.cs .
+COPY src/Testing/ ./Testing/
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage

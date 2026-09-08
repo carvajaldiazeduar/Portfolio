@@ -71,6 +71,20 @@ public sealed class VideoPipeline
             Dictionary<string, string> urls = outputs.ToDictionary(pair => pair.Key, pair => _storage.PublicUrl(pair.Value));
             Dictionary<string, object?> metadata = EstimateMetadata(videoKey, size);
 
+            IReadOnlyDictionary<string, string> userMetadata = await _storage.MetadataAsync(videoKey, ct);
+            foreach (KeyValuePair<string, string> entry in userMetadata)
+            {
+                if (
+                    entry.Key.EndsWith("duration", StringComparison.OrdinalIgnoreCase) &&
+                    double.TryParse(entry.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double duration) &&
+                    duration > 0
+                )
+                {
+                    metadata["duration_sec"] = duration;
+                    break;
+                }
+            }
+
             await _repository.UpdateJobAsync(
                 videoKey,
                 new Dictionary<string, object?>

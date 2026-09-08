@@ -11,6 +11,8 @@ public interface IVideoStorage
     Task PutAsync(string key, byte[] data, CancellationToken ct = default);
     Task<byte[]> GetAsync(string key, CancellationToken ct = default);
     Task<long> SizeOfAsync(string key, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, string>> MetadataAsync(string key, CancellationToken ct = default);
+    Task<IReadOnlyList<string>> ListAsync(string prefix, CancellationToken ct = default);
     Task CopyAsync(string srcKey, string dstKey, CancellationToken ct = default);
     string PublicUrl(string key);
 }
@@ -59,7 +61,7 @@ public sealed class S3VideoStorage : IVideoStorage
                         new CORSRule
                         {
                             AllowedOrigins = { "*" },
-                            AllowedMethods = { "GET", "PUT", "POST" },
+                            AllowedMethods = { "GET", "PUT", "POST", "HEAD" },
                             AllowedHeaders = { "*" },
                             ExposeHeaders = { "ETag" },
                             MaxAgeSeconds = 3600,
@@ -116,8 +118,42 @@ public sealed class S3VideoStorage : IVideoStorage
         return response.ContentLength;
     }
 
+    public async Task<IReadOnlyDictionary<string, string>> MetadataAsync(string key, CancellationToken ct = default)
+    {
+        GetObjectMetadataResponse response = await _client.GetObjectMetadataAsync(_inputBucket, key, ct);
+        Dictionary<string, string> metadata = new();
+        foreach (string name in response.Metadata.Keys)
+        {
+            metadata[name] = response.Metadata[name];
+        }
+        return metadata;
+    }
+
     public Task CopyAsync(string srcKey, string dstKey, CancellationToken ct = default) =>
         _client.CopyObjectAsync(_inputBucket, srcKey, _outputBucket, dstKey, ct);
+
+    public async Task<IReadOnlyList<string>> ListAsync(string prefix, CancellationToken ct = default)
+    {
+        List<string> keys = new();
+        string? continuationToken = null;
+        do
+        {
+            ListObjectsV2Request request = new()
+            {
+                BucketName = _inputBucket,
+                Prefix = prefix,
+                ContinuationToken = continuationToken,
+            };
+            ListObjectsV2Response response = await _client.ListObjectsV2Async(request, ct);
+            if (response.S3Objects != null)
+            {
+                keys.AddRange(response.S3Objects.Select(x => x.Key));
+            }
+            continuationToken = response.IsTruncated ? response.NextContinuationToken : null;
+        }
+        while (continuationToken != null);
+        return keys;
+    }
 
     public string PublicUrl(string key) => $"s3://{_outputBucket}/{key}";
 }

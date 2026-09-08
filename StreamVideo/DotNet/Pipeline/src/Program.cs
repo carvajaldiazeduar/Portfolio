@@ -21,6 +21,7 @@ public static class Runner
             "init" => await CmdInitAsync(),
             "demo" => await CmdDemoAsync(),
             "worker" => await CmdWorkerAsync(),
+            "watch" => await CmdWatchAsync(),
             "ingest" when args.Length < 2 => PrintUsage("ingest requires <file>", 2),
             "ingest" => await CmdIngestAsync(args[1]),
             _ => PrintUsage($"Unknown command: {args[0]}", 2),
@@ -90,6 +91,53 @@ public static class Runner
         return 0;
     }
 
+private static async Task<int> CmdWatchAsync()
+    {
+        VideoPipeline pipeline = Factory.Build();
+        await pipeline.InitResourcesAsync();
+        SqsSnsNotifier notifier = AsSqsSnsNotifier(pipeline);
+        Func<Dictionary<string, object?>, Task> deliver = SnsPublisher.For(notifier.Sns, notifier.TopicArn);
+        Console.WriteLine($"Watching s3://{Config.InputBucket()}/raw/ for new videos (Ctrl+C to stop)");
+
+        using CancellationTokenSource cts = new();
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            cts.Cancel();
+        };
+
+        try
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                bool processedAny = false;
+                IReadOnlyList<string> keys = await pipeline.Storage.ListAsync("raw/", cts.Token);
+                foreach (string key in keys)
+                {
+                    string? status = (await pipeline.Repository.GetJobAsync(key, cts.Token))
+                        ?.GetValueOrDefault("status") as string;
+                    if (status == JobStatus.Completed || status == JobStatus.Failed)
+                    {
+                        continue;
+                    }
+                    Dictionary<string, object?>? result = await pipeline.ProcessAsync(key, cts.Token);
+                    Console.WriteLine("Processed " + key + " -> " + ToJson(result));
+                    processedAny = true;
+                }
+                int handled = await notifier.ConsumeOnceAsync(deliver, cts.Token);
+                if (!processedAny && handled == 0)
+                {
+                    await Task.Delay(2000, cts.Token);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ctrl+C
+        }
+        return 0;
+    }
+
     private static async Task<int> CmdIngestAsync(string filePath)
     {
         VideoPipeline pipeline = Factory.Build();
@@ -139,7 +187,7 @@ public static class Runner
         {
             Console.Error.WriteLine(message);
         }
-        Console.WriteLine("Usage: dotnet StreamVideo.dll <init|demo|worker|ingest [file]>");
+        Console.WriteLine("Usage: dotnet StreamVideo.dll <init|demo|watch|worker|ingest [file]>");
         return exitCode;
     }
 }
