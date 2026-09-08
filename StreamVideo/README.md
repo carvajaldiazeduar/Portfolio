@@ -1,6 +1,6 @@
 # 🎥 StreamVideo — Serverless video processing & analytics
 
-Real-time video ingestion, transcoding and content-moderation pipeline built on **AWS serverless** services (S3, EventBridge, Step Functions, Lambda, Batch/ECS Fargate, Rekognition, DynamoDB, SQS, SNS, Secrets Manager, IAM), implemented with **Python** and shipped as **AWS CDK** infrastructure-as-code. The full async flow is emulated locally against **LocalStack** with the same driver pattern used across the portfolio.
+Real-time video ingestion, transcoding and content-moderation pipeline built on **AWS serverless** services (S3, EventBridge, Step Functions, Lambda, Batch/ECS Fargate, Rekognition, DynamoDB, SQS, SNS, Secrets Manager, IAM), implemented in **Python** and **.NET 10 (C#)**, and shipped as **AWS CDK** infrastructure-as-code. The full async flow is emulated locally against **LocalStack** using the same adapter/factory pattern used across the portfolio.
 
 | Component | In the cloud (CDK) | Locally (LocalStack) |
 |---|---|---|
@@ -35,13 +35,7 @@ Real-time video ingestion, transcoding and content-moderation pipeline built on 
                         +----------------------------------------------------+
 ```
 
-The **local pipeline** (`Python/Pipeline`) mirrors exactly these steps against LocalStack so the whole flow is verifiable end-to-end without an AWS account:
-
-```
-S3 (upload) → VideoPipeline.process() →
-    DynamoDB (PROCESSING) → transcode (stub) / analyze (local) →
-    DynamoDB (COMPLETED) → SQS → consumer → SNS
-```
+This flow is mirrored 1:1 by the local emulation (`Python/Pipeline` against LocalStack), so the whole pipeline is verifiable end-to-end without an AWS account.
 
 ---
 
@@ -66,6 +60,26 @@ StreamVideo/
 │       ├── Dockerfile
 │       ├── docker-compose.yml       # LocalStack 3.1.0 + pipeline demo
 │       └── requirements[.dev].txt
+├── DotNet/
+│   └── Pipeline/                    # .NET 10 port of the local pipeline (AWSSDK + LocalStack)
+│       ├── src/
+│       │   ├── StreamVideo.csproj   # net10.0 console app (AWSSDK S3/DynamoDB/SQS/SNS/Rekognition)
+│       │   ├── Config.cs            # env-driven configuration
+│       │   ├── AwsClientFactory.cs  # AWSSDK client factory (AWS_ENDPOINT_URL-aware, path-style)
+│       │   ├── Storage.cs           # IVideoStorage + S3VideoStorage
+│       │   ├── Repository.cs        # IJobRepository + DynamoDbJobRepository
+│       │   ├── Transcoding.cs       # ITranscoder + StubTranscoder
+│       │   ├── Analysis.cs          # IAnalyzer + LocalAnalyzer + RekognitionAnalyzer
+│       │   ├── Notifications.cs     # INotifier + SqsSnsNotifier + SnsPublisher
+│       │   ├── VideoPipeline.cs     # VideoPipeline orchestration
+│       │   ├── Factory.cs           # driver wiring from env
+│       │   ├── Program.cs           # CLI: init | demo | worker | ingest
+│       │   └── Testing/             # in-memory doubles (tests, no AWS needed)
+│       │   └── tests/               # xunit (mirrors pytest suite)
+│       ├── Dockerfile
+│       └── docker-compose.yml       # LocalStack 3.1.0 + pipeline demo
+├── Web/
+│   └── index.html                   # Vue 3 + AWS SDK v3 from CDN (no build): manual upload to input bucket
 └── Cdk/                             # AWS CDK (Python) — real deployment
     ├── app.py / cdk.json
     ├── streamvideo_stack.py         # the whole AWS infrastructure
@@ -75,36 +89,54 @@ StreamVideo/
 
 ---
 
-## 🚀 Quick Start (local, no AWS account)
+## 🚀 How to use it (local — no AWS account)
+
+> Required: [Podman](https://podman.io) (or Docker). Everything runs in containers — no Python/.NET install needed.
+
+### 1. See the whole pipeline work (one command)
 
 ```bash
 cd StreamVideo/Python/Pipeline
 podman compose up --build pipeline
 ```
 
-This starts LocalStack (`4566`) and runs the `demo` command, which:
+This starts LocalStack on `http://localhost:4566`, creates the buckets/table/queue/topic, uploads a sample video and processes it end-to-end. The run ends with:
 
-1. Creates buckets, the DynamoDB table, the SQS queue and the SNS topic.
-2. Uploads a sample video to `s3://streamvideo-input/raw/launch-demo.mp4`.
-3. Runs the full pipeline (status `PROCESSING → COMPLETED`).
-4. Drains SQS into SNS and prints the notification.
-
-Expected output ends with `Notifications delivered via SNS: 1`.
-
-### Manual CLI
-
-```bash
-# create backend resources
-docker run --rm -v "$PWD":/app -w /app -e AWS_ENDPOINT_URL=http://localhost:4566 \
-  -e AWS_ACCESS_KEY_ID=mock_key -e AWS_SECRET_ACCESS_KEY=mock_secret \
-  python:3.12-slim python -m streamvideo.runner init
+```
+Job finished: {... 'labels': ['person', 'vehicle', 'outdoor'], 'status': 'COMPLETED' ...}
+Notifications delivered via SNS: 1
 ```
 
-Or run the tests:
+The completed job shows 3 resolutions (`1080p/720p/480p`) under the output bucket. **LocalStack stays up afterwards** — leave it running for the next steps.
+
+### 2. Process your own video
+
+With LocalStack still running, point the CLI at your local file. It uploads it to `ingested/` and processes it right away:
 
 ```bash
 cd StreamVideo/Python/Pipeline
-python -m pytest            # 5 tests, uses moto (no LocalStack needed)
+podman compose run --rm -v "$PWD:/uploads" pipeline ingest /uploads/my-video.mp4
+```
+
+You should see the job print again with `'status': 'COMPLETED'`.
+
+### 3. Upload videos from the browser (optional)
+
+Open `StreamVideo/Web/index.html` in a browser and **drag & drop one or more videos**. They upload straight into `s3://streamvideo-input/raw/…` on LocalStack — no build step (Vue 3 and the AWS SDK are loaded from a CDN). The page also lists what's already in the bucket.
+
+To stop everything (LocalStack included) and remove its data:
+
+```bash
+podman compose down -v
+```
+
+### Run the .NET port instead
+
+Same flow, same LocalStack, C# implementation:
+
+```bash
+cd StreamVideo/DotNet/Pipeline
+podman compose up --build pipeline
 ```
 
 ---
@@ -119,7 +151,7 @@ cdk bootstrap
 cdk deploy --context account=123456789012 --context region=us-east-1
 ```
 
-The stack creates: S3 buckets, DynamoDB, SQS, SNS, 4 Lambdas, AWS Batch compute environment + job queue + ffmpeg job definition, the Step Functions state machine, an IAM role for EventBridge → Step Functions, and an EventBridge rule that triggers on `raw/*` object creation. It also provisions two **AWS Secrets Manager** secrets and grants the corresponding Lambdas least-privilege read access.
+The stack creates: S3 buckets, DynamoDB, SQS, SNS, 4 Lambdas, AWS Batch compute environment + job queue + ffmpeg job definition, the Step Functions state machine, an IAM role for EventBridge → Step Functions, and an EventBridge rule that triggers on `raw/*` object creation — plus two AWS Secrets Manager secrets (see below).
 
 ## 🔐 Secrets Manager
 
@@ -139,13 +171,21 @@ aws secretsmanager get-secret-value --secret-id StreamVideo/Notifications --quer
 
 To set a known value (rotation / explicit key), use `aws secretsmanager put-secret-value`:
 
-Upload a video to start the flow:
+```bash
+aws secretsmanager put-secret-value \
+  --secret-id StreamVideo/Notifications \
+  --secret-string '{"hmac_signing_key":"your-own-key"}'
+```
+
+### ▶️ Try it live on real AWS
+
+After `cdk deploy`, upload a video — EventBridge detects the new `raw/*` object and starts the Step Functions pipeline:
 
 ```bash
 aws s3 cp demo.mp4 s3://streamvideo-input/raw/demo.mp4
 ```
 
-Watch it complete:
+Watch the job complete (created on the `PROCESSING` step, updated to `COMPLETED` on finalize):
 
 ```bash
 aws dynamodb get-item --table-name streamvideo-jobs \
@@ -176,13 +216,25 @@ All adapters are selected by env (same factory pattern as the rest of the portfo
 
 ## 🧪 Tests (local)
 
-| Test | Coverage |
-|---|---|
-| `test_demo_job_reaches_completed` | Full pipeline on moto: object uploaded → status `COMPLETED`, labels + 3 resolutions, metadata. |
-| `test_failed_job_is_recorded` | Transcoder failure → job status `FAILED`. |
-| `test_missing_video_raises` | Non-existent object → `FileNotFoundError`. |
-| `test_completion_event_is_buffered_in_sqs` | Completion event lands in SQS and is drained into SNS. |
-| `test_event_has_completion_payload` | Event carries `status`/`video_key`. |
+```bash
+# host toolchain
+cd StreamVideo/Python/Pipeline && python -m pytest
+cd StreamVideo/DotNet/Pipeline/src && dotnet test tests/StreamVideo.Tests.csproj -c Release
+
+# or Podman-only, from the repo root
+scripts/run-tests.sh  -Tech python -Project StreamVideo
+scripts/run-tests.ps1 -Tech csharp -Project StreamVideo
+```
+
+Python uses **moto** (no LocalStack needed); the .NET suite uses in-memory doubles (no AWS needed).
+
+| Language | Test | Coverage |
+|---|---|---|
+| Python / .NET | `test_demo_job_reaches_completed` / `Demo_Job_Reaches_Completed` | Full pipeline: object uploaded → status `COMPLETED`, labels + 3 resolutions, metadata. |
+| Python / .NET | `test_failed_job_is_recorded` / `Failed_Job_Is_Recorded` | Transcoder failure → job status `FAILED`. |
+| Python / .NET | `test_missing_video_raises` / `Missing_Video_Raises` | Non-existent object → file not found. |
+| Python / .NET | `test_completion_event_is_buffered` / `Completion_Event_Is_Buffered_And_Delivered` | Completion event lands in SQS and is drained into SNS. |
+| Python / .NET | `test_event_has_completion_payload` / `Event_Has_Completion_Payload` | Event carries `status`/`video_key`. |
 
 ## 📄 License
 

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>StreamVideo.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Opt-in to the new dotnet test experience on .NET 10+ -->
+    <UseDotNetTest>true</UseDotNetTest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.0" />
+  </ItemGroup>
+  <!-- Workaround: prevent importing Microsoft.Testing.Platform MSBuild targets on .NET 10 SDK
+       by excluding build assets for the transitive package. This avoids the MTP VSTest target
+       that is incompatible with the new dotnet test experience. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.3.3">
+      <ExcludeAssets>build;buildtransitive</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\StreamVideo.csproj" />
+  </ItemGroup>
+</Project>

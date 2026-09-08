@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html>
-<head><title>Data Pipeline</title></head>
+<head>
+<meta charset="utf-8">
+<title>Data Pipeline</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
 <body>
 <h1>ETL Data Pipeline</h1>
+<h2>Recent runs</h2>
+<canvas id="runsChart" height="80"></canvas>
+<div id="runsList"></div>
 <h2>Pipelines</h2>
 <div id="pipelines"></div>
 <h2>Run Pipeline</h2>
@@ -12,7 +20,29 @@
 <button type="submit">Run</button>
 </form>
 <div id="result"></div>
+<script src="app.js"></script>
 <script>
+let chart;
+async function loadRuns() {
+  const res = await fetch('/api/runs');
+  const runs = (await res.json()).runs || [];
+  document.getElementById('runsList').innerHTML = runs.length
+    ? runs.slice().reverse().map(r =>
+        `<div>${r.pipeline} — ${r.rows} rows, ${r.duration_ms} ms, ${new Date(r.timestamp).toLocaleTimeString()}</div>`).join('')
+    : '<div>No runs yet.</div>';
+  if (!window.Chart) return;
+  const labels = runs.length ? runs.map((r, i) => `${r.pipeline} #${i + 1}`) : ['no runs'];
+  const data = runs.length ? runs.map(r => r.rows) : [0];
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('runsChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'rows processed', data, backgroundColor: '#4e79a7' }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+}
 document.getElementById('runForm').onsubmit = async (e) => {
   e.preventDefault();
   const form = e.target;
@@ -23,7 +53,9 @@ document.getElementById('runForm').onsubmit = async (e) => {
   });
   const data = await res.json();
   document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+  await loadRuns();
 };
+loadRuns();
 </script>
 </body>
 </html>

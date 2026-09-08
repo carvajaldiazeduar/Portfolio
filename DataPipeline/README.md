@@ -36,10 +36,11 @@ The **transform** step is deterministic and pipeline-specific; the **load** step
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/` | UI |
+| `GET` | `/` | UI (with a live chart of recent runs — Chart.js via CDN) |
 | `GET` | `/api/health` | Service status |
 | `GET` | `/api/pipelines` | Lists defined pipelines |
 | `POST` | `/api/pipelines/<name>/run` | Runs a pipeline → `{ "status": "success", "rows_processed": n }` |
+| `GET` | `/api/runs` | Recent run history (in-memory, last 50) → powers the UI chart |
 | `GET` | `/api/sources` | Lists available data sources |
 | `GET` | `/openapi.json` | OpenAPI 3.0 spec |
 | `GET` | `/swagger` | Swagger UI |

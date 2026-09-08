@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Protocol
+
+log = logging.getLogger("streamvideo.store")
 
 
 @dataclass(frozen=True)
@@ -52,6 +55,28 @@ class S3VideoStorage:
         for bucket in (self.input_bucket, self.output_bucket):
             if not self._bucket_exists(self.client, bucket):
                 self.client.create_bucket(Bucket=bucket)
+        self._enable_cors()
+
+    def _enable_cors(self) -> None:
+        # Browser (Vue web client) uploads to the input bucket; CORS is a demo
+        # convenience and should not block real pipelines if it cannot be set.
+        try:
+            self.client.put_bucket_cors(
+                Bucket=self.input_bucket,
+                CORSConfiguration={
+                    "CORSRules": [
+                        {
+                            "AllowedOrigins": ["*"],
+                            "AllowedMethods": ["GET", "PUT", "POST"],
+                            "AllowedHeaders": ["*"],
+                            "ExposeHeaders": ["ETag"],
+                            "MaxAgeSeconds": 3600,
+                        }
+                    ]
+                },
+            )
+        except Exception as exc:  # pragma: no cover - environment dependent
+            log.warning("Could not configure CORS on %s: %s", self.input_bucket, exc)
 
     def exists(self, key: str) -> bool:
         try:

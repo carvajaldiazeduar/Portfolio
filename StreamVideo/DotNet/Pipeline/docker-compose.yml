@@ -1,0 +1,41 @@
+services:
+  localstack:
+    image: localstack/localstack:3.1.0
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3,dynamodb,sqs,sns
+      S3_ENDPOINT_STRATEGY: path
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: mock_key
+      AWS_SECRET_ACCESS_KEY: mock_secret
+      DEBUG: "0"
+    volumes:
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pipeline:
+    build: .
+    environment:
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: mock_key
+      AWS_SECRET_ACCESS_KEY: mock_secret
+      INPUT_BUCKET: streamvideo-input
+      OUTPUT_BUCKET: streamvideo-output
+      JOBS_TABLE: streamvideo-jobs
+      NOTIFY_QUEUE: streamvideo-notifications
+      NOTIFY_TOPIC: streamvideo-notifications
+      ANALYZER: local
+      TRANSCODER: stub
+    command: ["demo"]
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+volumes:
+  localstack-data:

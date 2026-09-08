@@ -13,6 +13,7 @@ public class PipelineController {
 
     private final DataWarehouseAdapter warehouse;
     private final CacheAdapter cache;
+    private final RunHistory runHistory = new RunHistory();
 
     public PipelineController(DataWarehouseAdapter warehouse, CacheAdapter cache) {
         this.warehouse = warehouse;
@@ -48,10 +49,12 @@ public class PipelineController {
         String target = data != null ? (String) data.getOrDefault("target", "processed_" + name) : "processed_" + name;
         Map<String, String> schema = data != null && data.containsKey("schema") ? (Map<String, String>) data.get("schema") : new java.util.LinkedHashMap<>();
         try {
+            long started = System.currentTimeMillis();
             List<Map<String, Object>> results = warehouse.execute(query, null);
             warehouse.createTable(target, schema);
             warehouse.bulkInsert(target, results);
             cache.delete("pipelines:all");
+            runHistory.record(name, results.size(), System.currentTimeMillis() - started);
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("message", "Pipeline executed");
             body.put("rows", results.size());
@@ -60,6 +63,13 @@ public class PipelineController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/api/runs")
+    public Map<String, Object> recentRuns() {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("runs", runHistory.recent());
+        return body;
     }
 
     @GetMapping("/api/sources")

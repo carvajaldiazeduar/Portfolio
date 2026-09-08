@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StreamVideo Uploader</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #273549;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #34d399;
+      --err: #f87171;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+    header { margin-bottom: 24px; }
+    header h1 { margin: 0 0 6px; font-size: 24px; }
+    header p { margin: 0; color: var(--muted); font-size: 14px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #062033;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+    .file-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .file-row:last-child { border-bottom: none; }
+    .muted { color: var(--muted); }
+    .dropzone {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .dropzone.drag { border-color: var(--accent); color: var(--text); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; }
+    .status { font-weight: 600; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--err); }
+    .status.busy { color: var(--accent); }
+    .error { color: var(--err); font-size: 13px; margin-top: 10px; }
+    .message { color: var(--ok); font-size: 13px; margin-top: 10px; }
+    .empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+  </style>
+</head>
+<body>
+  <div id="app" class="wrap">
+    <header>
+      <h1>StreamVideo — manual upload</h1>
+      <p>Vue 3 + AWS SDK v3 served from CDN (no build step). Uploads go straight into the input bucket on LocalStack.</p>
+    </header>
+
+    <section class="card">
+      <h2>Connection</h2>
+      <div class="grid">
+        <div>
+          <label for="endpoint">Endpoint</label>
+          <input id="endpoint" type="text" v-model="endpoint" @change="persist" placeholder="http://localhost:4566" />
+        </div>
+        <div>
+          <label for="bucket">Bucket</label>
+          <input id="bucket" type="text" v-model="bucket" @change="persist" placeholder="streamvideo-input" />
+        </div>
+        <div>
+          <label for="prefix">Key prefix</label>
+          <input id="prefix" type="text" v-model="prefix" @change="persist" placeholder="raw/" />
+        </div>
+        <div>
+          <label for="region">Region</label>
+          <input id="region" type="text" v-model="region" />
+        </div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label for="accessKey">Access key</label>
+          <input id="accessKey" type="text" v-model="accessKey" />
+        </div>
+        <div>
+          <label for="secretKey">Secret key</label>
+          <input id="secretKey" type="text" v-model="secretKey" />
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn secondary" @click="checkConnection" :disabled="checking">
+          {{ checking ? 'Checking…' : 'Check LocalStack' }}
+        </button>
+        <button class="btn secondary" @click="listObjects" style="margin-left:8px">Refresh objects</button>
+        <p v-if="message" class="message">{{ message }}</p>
+        <p v-if="error" class="error">{{ error }}</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Upload</h2>
+      <div class="dropzone" :class="{ drag: dragging }"
+           @click="$refs.file.click()"
+           @dragover.prevent="dragging = true"
+           @dragleave="dragging = false"
+           @drop.prevent="drop">
+        Drop videos here, or click to select (multiple).
+      </div>
+      <input ref="file" type="file" multiple accept="video/*" style="display:none" @change="onFiles" />
+      <div v-if="files.length">
+        <div v-for="file in files" :key="file.name" class="file-row">
+          <span>{{ file.name }}</span>
+          <span class="muted">{{ formatSize(file.size) }}</span>
+        </div>
+        <button class="btn" style="margin-top:12px" @click="uploadAll" :disabled="uploading">
+          {{ uploading ? 'Uploading…' : 'Upload' }}
+        </button>
+      </div>
+      <p v-else class="empty">No files selected yet.</p>
+    </section>
+
+    <section class="card">
+      <h2>Upload results</h2>
+      <table v-if="results.length">
+        <thead>
+          <tr><th>File</th><th>S3 key</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in results" :key="item.key">
+            <td>{{ item.name }}</td>
+            <td class="muted">{{ item.key }}</td>
+            <td><span class="status" :class="statusClass(item.status)">{{ item.status }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty">Nothing uploaded yet.</p>
+    </section>
+
+    <section class="card">
+      <h2>Objects in bucket</h2>
+      <table v-if="objects.length">
+        <thead>
+          <tr><th>Key</th><th>Size</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="obj in objects" :key="obj.Key">
+            <td>{{ obj.Key }}</td>
+            <td class="muted">{{ formatSize(obj.Size) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty">Bucket is empty (or not reachable).</p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js"></script>
+  <script type="module">
+    import {
+      S3Client,
+      HeadBucketCommand,
+      PutObjectCommand,
+      ListObjectsV2Command,
+    } from "https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3@3.600.0/+esm";
+
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          endpoint: localStorage.getItem("sv.endpoint") || "http://localhost:4566",
+          bucket: localStorage.getItem("sv.bucket") || "streamvideo-input",
+          prefix: localStorage.getItem("sv.prefix") || "raw/",
+          region: "us-east-1",
+          accessKey: "mock_key",
+          secretKey: "mock_secret",
+          files: [],
+          results: [],
+          objects: [],
+          uploading: false,
+          checking: false,
+          dragging: false,
+          error: "",
+          message: "",
+        };
+      },
+      methods: {
+        client() {
+          return new S3Client({
+            region: this.region,
+            endpoint: this.endpoint,
+            forcePathStyle: true,
+            credentials: {
+              accessKeyId: this.accessKey,
+              secretAccessKey: this.secretKey,
+            },
+          });
+        },
+        persist() {
+          localStorage.setItem("sv.endpoint", this.endpoint);
+          localStorage.setItem("sv.bucket", this.bucket);
+          localStorage.setItem("sv.prefix", this.prefix);
+        },
+        formatSize(bytes) {
+          if (bytes == null) return "";
+          const units = ["B", "KB", "MB", "GB", "TB"];
+          let value = bytes, idx = 0;
+          while (value >= 1024 && idx < units.length - 1) {
+            value /= 1024;
+            idx += 1;
+          }
+          return value.toFixed(1) + " " + units[idx];
+        },
+        statusClass(status) {
+          if (status === "done") return "ok";
+          if (status === "error") return "err";
+          return "busy";
+        },
+        onFiles(event) {
+          this.files = Array.from(event.target.files);
+        },
+        drop(event) {
+          this.dragging = false;
+          this.files = Array.from(event.dataTransfer.files);
+        },
+        async checkConnection() {
+          this.checking = true;
+          this.error = "";
+          this.message = "";
+          try {
+            const client = this.client();
+            await client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+            this.message = "LocalStack is reachable and bucket exists.";
+            await this.listObjects();
+          } catch (err) {
+            this.message = "";
+            this.error = "Connection failed: " + (err.name || err.message || err);
+          } finally {
+            this.checking = false;
+          }
+        },
+        async uploadAll() {
+          if (!this.files.length) return;
+          this.uploading = true;
+          this.error = "";
+          this.results = [];
+          try {
+            const client = this.client();
+            for (const file of this.files) {
+              const key = this.prefix + file.name;
+              const item = { name: file.name, key: key, status: "uploading" };
+              this.results.push(item);
+              try {
+                await client.send(
+                  new PutObjectCommand({
+                    Bucket: this.bucket,
+                    Key: key,
+                    Body: file,
+                    ContentType: file.type || "video/mp4",
+                  })
+                );
+                item.status = "done";
+              } catch (err) {
+                item.status = "error";
+                item.error = err.name || err.message || String(err);
+              }
+            }
+            await this.listObjects();
+          } finally {
+            this.uploading = false;
+          }
+        },
+        async listObjects() {
+          try {
+            const client = this.client();
+            const data = await client.send(
+              new ListObjectsV2Command({ Bucket: this.bucket })
+            );
+            this.objects = data.Contents || [];
+          } catch (err) {
+            this.error = "Could not list bucket: " + (err.name || err.message || err);
+          }
+        },
+      },
+    }).mount("#app");
+  </script>
+</body>
+</html>

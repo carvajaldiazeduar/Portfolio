@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -112,5 +113,29 @@ class DataPipelineWebTests {
                 .andExpect(jsonPath("$.message").value("Pipeline executed"))
                 .andExpect(jsonPath("$.rows").value(1))
                 .andExpect(jsonPath("$.target").value("processed_etl_users"));
+    }
+
+    @Test
+    void runHistoryTracksSuccessfulRuns() throws Exception {
+        warehouse.connect();
+        warehouse.execute("CREATE TABLE etl_chart (id INTEGER, name VARCHAR)", null);
+        List<Map<String, Object>> rows = new java.util.ArrayList<>();
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", 2);
+        row.put("name", "Bob");
+        rows.add(row);
+        warehouse.bulkInsert("etl_chart", rows);
+
+        mockMvc.perform(post("/api/pipelines/etl_chart/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schema\":{\"id\":\"INTEGER\",\"name\":\"VARCHAR\"}}"))
+                .andExpect(status().isOk());
+
+        String content = mockMvc.perform(get("/api/runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.runs").isArray())
+                .andReturn().getResponse().getContentAsString();
+        assertTrue(content.contains("etl_chart"));
+        assertTrue(content.contains("\"rows\""));
     }
 }
