@@ -7,7 +7,7 @@ defmodule PasswordGenerator.PasswordsService do
         entries = Repo.all(PasswordEntry)
         Cache.put("passwords:all", Enum.map(entries, &PasswordEntry.to_dto/1))
 
-      entries ->
+      {:ok, entries} ->
         entries
     end
   end
@@ -19,7 +19,7 @@ defmodule PasswordGenerator.PasswordsService do
         {:ok, PasswordEntry.to_dto(entry)}
 
       {:error, changeset} ->
-        {:error, validation_errors(changeset)}
+        {:error, PasswordEntry.error_map(changeset)}
     end
   end
 
@@ -38,10 +38,5 @@ defmodule PasswordGenerator.PasswordsService do
             error
         end
     end
-  end
-
-  defp validation_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
-    |> Map.new(fn {field, [message | _]} -> {Atom.to_string(field), message} end)
   end
 end

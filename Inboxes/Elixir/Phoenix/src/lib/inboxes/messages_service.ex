@@ -9,7 +9,7 @@ defmodule Inboxes.MessagesService do
         messages = Repo.all(from message in Message, order_by: [desc: message.inserted_at])
         Cache.put("messages:all", messages)
 
-      messages ->
+      {:ok, messages} ->
         messages
     end
   end
@@ -23,7 +23,7 @@ defmodule Inboxes.MessagesService do
         {:ok, message}
 
       {:error, changeset} ->
-        {:error, validation_errors(changeset)}
+        {:error, Message.error_map(changeset)}
     end
   end
 
@@ -35,9 +35,11 @@ defmodule Inboxes.MessagesService do
       %Message{read: false} = message ->
         {:ok, message} = message |> Message.changeset(%{read: true}) |> Repo.update()
         Cache.delete("messages:all")
+        Cache.put("message:#{id}", Message.to_dto(message))
         {:ok, message}
 
       message ->
+        Cache.put("message:#{id}", Message.to_dto(message))
         {:ok, message}
     end
   end
@@ -57,10 +59,5 @@ defmodule Inboxes.MessagesService do
             error
         end
     end
-  end
-
-  defp validation_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
-    |> Map.new(fn {field, [message | _]} -> {Atom.to_string(field), message} end)
   end
 end

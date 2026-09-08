@@ -6,7 +6,10 @@ defmodule Inboxes.Cache do
   end
 
   def get(key) do
-    Agent.get(__MODULE__, &Map.get(&1, key))
+    case Agent.get(__MODULE__, &Map.get(&1, key)) do
+      nil -> nil
+      value -> {:ok, value}
+    end
   end
 
   def put(key, value) do

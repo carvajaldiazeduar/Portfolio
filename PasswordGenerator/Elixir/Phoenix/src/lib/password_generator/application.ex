@@ -7,6 +7,7 @@ defmodule PasswordGenerator.Application do
       PasswordGenerator.Repo,
       {Phoenix.PubSub, name: PasswordGenerator.PubSub},
       PasswordGenerator.Cache,
+      PasswordGenerator.Cache.LocalCache,
       PasswordGeneratorWeb.Endpoint
     ]
 

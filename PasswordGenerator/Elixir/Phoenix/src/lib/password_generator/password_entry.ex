@@ -12,10 +12,23 @@ defmodule PasswordGenerator.PasswordEntry do
   def changeset(entry, attrs) do
     entry
     |> cast(attrs, [:password, :length])
+    |> trim_field()
     |> validate_required(:password, message: "Password is required")
+  end
+
+  def error_map(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
+    |> Map.new(fn {field, [message | _]} -> {field, message} end)
   end
 
   def to_dto(%__MODULE__{} = entry) do
     %{id: entry.id, password: entry.password, length: entry.length}
+  end
+
+  defp trim_field(changeset) do
+    case get_change(changeset, :password) do
+      value when is_binary(value) -> put_change(changeset, :password, String.trim(value))
+      _ -> changeset
+    end
   end
 end

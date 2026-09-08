@@ -7,6 +7,7 @@ defmodule Inboxes.Application do
       Inboxes.Repo,
       {Phoenix.PubSub, name: Inboxes.PubSub},
       Inboxes.Cache,
+      Inboxes.Cache.LocalCache,
       InboxesWeb.Endpoint
     ]
 
