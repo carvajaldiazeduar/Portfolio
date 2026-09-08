@@ -38,7 +38,7 @@ public static class AwsClientFactory
 
     public static AmazonS3Client S3()
     {
-        var config = WithEndpoint(new AmazonS3Config());
+        AmazonS3Config config = WithEndpoint(new AmazonS3Config());
         if (Config.EndpointUrl().Length > 0)
         {
             config.ForcePathStyle = true;

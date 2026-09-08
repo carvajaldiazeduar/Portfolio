@@ -94,7 +94,7 @@ public sealed class DynamoDbJobRepository : IJobRepository
         {
             try
             {
-                var response = await _client.DescribeTableAsync(TableName, ct);
+                DescribeTableResponse response = await _client.DescribeTableAsync(TableName, ct);
                 if (response.Table.TableStatus == TableStatus.ACTIVE)
                 {
                     return;
@@ -132,14 +132,14 @@ public sealed class DynamoDbJobRepository : IJobRepository
         CancellationToken ct = default
     )
     {
-        var all = new Dictionary<string, object?>(fields)
+        Dictionary<string, object?> all = new(fields)
         {
             ["updated_at"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         };
 
-        var names = new Dictionary<string, string>();
-        var values = new Dictionary<string, AttributeValue>();
-        var assignments = new List<string>();
+        Dictionary<string, string> names = new();
+        Dictionary<string, AttributeValue> values = new();
+        List<string> assignments = new();
         foreach ((string key, object? value) in all)
         {
             string name = $"#{key}";
@@ -167,7 +167,7 @@ public sealed class DynamoDbJobRepository : IJobRepository
 
     public async Task<Dictionary<string, object?>?> GetJobAsync(string videoKey, CancellationToken ct = default)
     {
-        var response = await _client.GetItemAsync(
+        GetItemResponse response = await _client.GetItemAsync(
             new GetItemRequest
             {
                 TableName = TableName,

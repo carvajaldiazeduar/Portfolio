@@ -29,24 +29,24 @@ public static class Runner
 
     private static Task<int> CmdInitAsync()
     {
-        var pipeline = Factory.Build();
+        VideoPipeline pipeline = Factory.Build();
         return InitAndReportAsync(pipeline);
     }
 
     private static async Task<int> CmdDemoAsync()
     {
-        var pipeline = Factory.Build();
+        VideoPipeline pipeline = Factory.Build();
         await pipeline.InitResourcesAsync();
         byte[] video = SampleVideo();
         await pipeline.Storage.PutAsync(SampleVideoKey, video);
         Console.WriteLine($"Uploaded sample video -> s3://{Config.InputBucket()}/{SampleVideoKey} ({video.Length} bytes)");
 
-        var job = await pipeline.ProcessAsync(SampleVideoKey);
+        Dictionary<string, object?>? job = await pipeline.ProcessAsync(SampleVideoKey);
         Console.WriteLine("Job finished:");
         Console.WriteLine(ToJson(job));
 
-        var notifier = AsSqsSnsNotifier(pipeline);
-        var deliver = SnsPublisher.For(notifier.Sns, notifier.TopicArn);
+        SqsSnsNotifier notifier = AsSqsSnsNotifier(pipeline);
+        Func<Dictionary<string, object?>, Task> deliver = SnsPublisher.For(notifier.Sns, notifier.TopicArn);
         for (int attempt = 0; attempt < 5; attempt++)
         {
             int handled = await notifier.ConsumeOnceAsync(deliver);
@@ -62,13 +62,13 @@ public static class Runner
 
     private static async Task<int> CmdWorkerAsync()
     {
-        var pipeline = Factory.Build();
+        VideoPipeline pipeline = Factory.Build();
         await pipeline.InitResourcesAsync();
-        var notifier = AsSqsSnsNotifier(pipeline);
-        var deliver = SnsPublisher.For(notifier.Sns, notifier.TopicArn);
+        SqsSnsNotifier notifier = AsSqsSnsNotifier(pipeline);
+        Func<Dictionary<string, object?>, Task> deliver = SnsPublisher.For(notifier.Sns, notifier.TopicArn);
         Console.WriteLine($"Worker consuming {notifier.QueueName} -> topic {notifier.TopicName} (Ctrl+C to stop)");
 
-        using var cts = new CancellationTokenSource();
+        using CancellationTokenSource cts = new();
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
@@ -92,7 +92,7 @@ public static class Runner
 
     private static async Task<int> CmdIngestAsync(string filePath)
     {
-        var pipeline = Factory.Build();
+        VideoPipeline pipeline = Factory.Build();
         await pipeline.InitResourcesAsync();
         string key = "ingested/" + Path.GetFileName(filePath);
         byte[] data = await File.ReadAllBytesAsync(filePath);
@@ -115,7 +115,7 @@ public static class Runner
 
     private static byte[] SampleVideo()
     {
-        using var buffer = new MemoryStream();
+        using MemoryStream buffer = new();
         for (int index = 0; index < 256; index++)
         {
             byte[] frame = System.Text.Encoding.ASCII.GetBytes($"frame-{index:D4}-");

@@ -32,7 +32,7 @@ public sealed class RekognitionAnalyzer : IAnalyzer
 
     public async Task<List<string>> AnalyzeAsync(string videoKey, string name, CancellationToken ct = default)
     {
-        var start = await _client.StartLabelDetectionAsync(
+        StartLabelDetectionResponse start = await _client.StartLabelDetectionAsync(
             new StartLabelDetectionRequest
             {
                 Video = new Video
@@ -46,7 +46,7 @@ public sealed class RekognitionAnalyzer : IAnalyzer
 
         for (int attempt = 0; attempt < _maxAttempts; attempt++)
         {
-            var result = await _client.GetLabelDetectionAsync(
+            GetLabelDetectionResponse result = await _client.GetLabelDetectionAsync(
                 new GetLabelDetectionRequest { JobId = jobId },
                 ct
             );

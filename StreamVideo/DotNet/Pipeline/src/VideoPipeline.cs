@@ -65,11 +65,11 @@ public sealed class VideoPipeline
             byte[] data = await _storage.GetAsync(videoKey, ct);
             string name = videoKey.Substring(videoKey.LastIndexOf('/') + 1);
 
-            var outputs = await _transcoder.TranscodeAsync(videoKey, name, data, ct);
-            var labels = await _analyzer.AnalyzeAsync(videoKey, name, ct);
+            Dictionary<string, string> outputs = await _transcoder.TranscodeAsync(videoKey, name, data, ct);
+            List<string> labels = await _analyzer.AnalyzeAsync(videoKey, name, ct);
 
-            var urls = outputs.ToDictionary(pair => pair.Key, pair => _storage.PublicUrl(pair.Value));
-            var metadata = EstimateMetadata(videoKey, size);
+            Dictionary<string, string> urls = outputs.ToDictionary(pair => pair.Key, pair => _storage.PublicUrl(pair.Value));
+            Dictionary<string, object?> metadata = EstimateMetadata(videoKey, size);
 
             await _repository.UpdateJobAsync(
                 videoKey,
@@ -83,7 +83,7 @@ public sealed class VideoPipeline
                 ct
             );
 
-            var eventData = new Dictionary<string, object?>
+            Dictionary<string, object?> eventData = new()
             {
                 ["video_key"] = videoKey,
                 ["status"] = JobStatus.Completed,

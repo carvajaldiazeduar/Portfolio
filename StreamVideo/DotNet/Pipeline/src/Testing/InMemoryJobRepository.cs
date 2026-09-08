@@ -24,7 +24,7 @@ public sealed class InMemoryJobRepository : IJobRepository
         CancellationToken ct = default
     )
     {
-        if (!_jobs.TryGetValue(videoKey, out var job))
+        if (!_jobs.TryGetValue(videoKey, out Dictionary<string, object?> job))
         {
             job = _jobs[videoKey] = new Dictionary<string, object?>();
         }
@@ -38,6 +38,6 @@ public sealed class InMemoryJobRepository : IJobRepository
 
     public Task<Dictionary<string, object?>?> GetJobAsync(string videoKey, CancellationToken ct = default) =>
         Task.FromResult(
-            _jobs.TryGetValue(videoKey, out var job) ? new Dictionary<string, object?>(job) : null
+            _jobs.TryGetValue(videoKey, out Dictionary<string, object?> job) ? new Dictionary<string, object?>(job) : null
         );
 }

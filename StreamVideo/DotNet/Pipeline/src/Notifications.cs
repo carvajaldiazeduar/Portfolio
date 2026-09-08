@@ -63,7 +63,7 @@ public sealed class SqsSnsNotifier : INotifier
             throw new InvalidOperationException("Notifier resources not initialized");
         }
 
-        var response = await _sqs.ReceiveMessageAsync(
+        ReceiveMessageResponse response = await _sqs.ReceiveMessageAsync(
             new ReceiveMessageRequest
             {
                 QueueUrl = QueueUrl,
@@ -79,7 +79,7 @@ public sealed class SqsSnsNotifier : INotifier
         {
             try
             {
-                var eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(message.Body) ?? new();
+                Dictionary<string, object?> eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(message.Body) ?? new();
                 await publish(eventData);
                 Delivered++;
             }

@@ -101,18 +101,18 @@ public sealed class S3VideoStorage : IVideoStorage
 
     public async Task<byte[]> GetAsync(string key, CancellationToken ct = default)
     {
-        using var response = await _client.GetObjectAsync(
+        using GetObjectResponse response = await _client.GetObjectAsync(
             new GetObjectRequest { BucketName = _inputBucket, Key = key },
             ct
         );
-        using var buffer = new MemoryStream();
+        using MemoryStream buffer = new();
         await response.ResponseStream.CopyToAsync(buffer, ct);
         return buffer.ToArray();
     }
 
     public async Task<long> SizeOfAsync(string key, CancellationToken ct = default)
     {
-        var response = await _client.GetObjectMetadataAsync(_inputBucket, key, ct);
+        GetObjectMetadataResponse response = await _client.GetObjectMetadataAsync(_inputBucket, key, ct);
         return response.ContentLength;
     }
 

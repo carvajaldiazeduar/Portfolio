@@ -29,7 +29,7 @@ public sealed class StubTranscoder : ITranscoder
         CancellationToken ct = default
     )
     {
-        var outputs = new Dictionary<string, string>();
+        Dictionary<string, string> outputs = new();
         foreach (string resolution in Resolutions)
         {
             string destination = $"transcoded/{resolution}/{name}";

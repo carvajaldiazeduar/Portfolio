@@ -5,8 +5,8 @@ public static class Factory
 {
     public static VideoPipeline Build()
     {
-        var storage = new S3VideoStorage(AwsClientFactory.S3(), Config.InputBucket(), Config.OutputBucket());
-        var repository = new DynamoDbJobRepository(AwsClientFactory.DynamoDb(), Config.JobsTable());
+        S3VideoStorage storage = new(AwsClientFactory.S3(), Config.InputBucket(), Config.OutputBucket());
+        DynamoDbJobRepository repository = new(AwsClientFactory.DynamoDb(), Config.JobsTable());
 
         string transcoderDriver = Config.TranscoderDriver();
         if (transcoderDriver != "stub")
@@ -22,7 +22,7 @@ public static class Factory
             string driver => throw new InvalidOperationException($"Unsupported ANALYZER driver: {driver}"),
         };
 
-        var notifier = new SqsSnsNotifier(
+        SqsSnsNotifier notifier = new(
             AwsClientFactory.Sqs(),
             AwsClientFactory.Sns(),
             Config.NotifyQueue(),

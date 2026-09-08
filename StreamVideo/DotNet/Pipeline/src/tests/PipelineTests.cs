@@ -9,7 +9,7 @@ public class PipelineTests
 {
     private static byte[] SampleVideo()
     {
-        var buffer = new MemoryStream();
+        MemoryStream buffer = new();
         for (int index = 0; index < 32; index++)
         {
             byte[] frame = System.Text.Encoding.ASCII.GetBytes($"frame-{index:D4}-");
@@ -23,10 +23,10 @@ public class PipelineTests
 
     private static async Task<VideoPipeline> BuildPipelineAsync()
     {
-        var storage = new InMemoryVideoStorage();
-        var repository = new InMemoryJobRepository();
-        var notifier = new InMemoryNotifier();
-        var pipeline = new VideoPipeline(
+        InMemoryVideoStorage storage = new();
+        InMemoryJobRepository repository = new();
+        InMemoryNotifier notifier = new();
+        VideoPipeline pipeline = new VideoPipeline(
             storage,
             repository,
             new StubTranscoder(storage),
@@ -41,19 +41,19 @@ public class PipelineTests
     public async Task Demo_Job_Reaches_Completed()
     {
         const string key = "raw/launch-demo.mp4";
-        var pipeline = await BuildPipelineAsync();
+        VideoPipeline pipeline = await BuildPipelineAsync();
         await pipeline.Storage.PutAsync(key, SampleVideo());
 
-        var job = await pipeline.ProcessAsync(key);
+        Dictionary<string, object?>? job = await pipeline.ProcessAsync(key);
 
         Assert.NotNull(job);
         Assert.Equal(JobStatus.Completed, job!["status"]);
         Assert.Equal(new[] { "person", "vehicle", "outdoor" }, job["labels"]);
 
-        var outputs = Assert.IsType<Dictionary<string, string>>(job["outputs"]);
+        Dictionary<string, string> outputs = Assert.IsType<Dictionary<string, string>>(job["outputs"]);
         Assert.Equal(StubTranscoder.Resolutions, outputs.Keys);
 
-        var metadata = Assert.IsType<Dictionary<string, object?>>(job["metadata"]);
+        Dictionary<string, object?> metadata = Assert.IsType<Dictionary<string, object?>>(job["metadata"]);
         Assert.Equal(key, metadata["key"]);
     }
 
@@ -61,9 +61,9 @@ public class PipelineTests
     public async Task Failed_Job_Is_Recorded()
     {
         const string key = "raw/broken.mp4";
-        var storage = new InMemoryVideoStorage();
-        var repository = new InMemoryJobRepository();
-        var pipeline = new VideoPipeline(
+        InMemoryVideoStorage storage = new();
+        InMemoryJobRepository repository = new();
+        VideoPipeline pipeline = new VideoPipeline(
             storage,
             repository,
             new FailingTranscoder(),
@@ -74,7 +74,7 @@ public class PipelineTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => pipeline.ProcessAsync(key));
 
-        var job = await repository.GetJobAsync(key);
+        Dictionary<string, object?>? job = await repository.GetJobAsync(key);
         Assert.NotNull(job);
         Assert.Equal(JobStatus.Failed, job!["status"]);
     }
@@ -82,7 +82,7 @@ public class PipelineTests
     [Fact]
     public async Task Missing_Video_Raises()
     {
-        var pipeline = await BuildPipelineAsync();
+        VideoPipeline pipeline = await BuildPipelineAsync();
 
         await Assert.ThrowsAsync<FileNotFoundException>(() => pipeline.ProcessAsync("does/not/exist.mp4"));
     }
@@ -91,11 +91,11 @@ public class PipelineTests
     public async Task Completion_Event_Is_Buffered_And_Delivered()
     {
         const string key = "raw/event.mp4";
-        var pipeline = await BuildPipelineAsync();
+        VideoPipeline pipeline = await BuildPipelineAsync();
         await pipeline.Storage.PutAsync(key, SampleVideo());
         await pipeline.ProcessAsync(key);
 
-        var notifier = Assert.IsType<InMemoryNotifier>(pipeline.Notifier);
+        InMemoryNotifier notifier = Assert.IsType<InMemoryNotifier>(pipeline.Notifier);
         int handled = await notifier.ConsumeOnceAsync(_ => Task.CompletedTask);
 
         Assert.Equal(1, handled);
@@ -106,14 +106,14 @@ public class PipelineTests
     public async Task Event_Has_Completion_Payload()
     {
         const string key = "raw/event.mp4";
-        var pipeline = await BuildPipelineAsync();
+        VideoPipeline pipeline = await BuildPipelineAsync();
         await pipeline.Storage.PutAsync(key, SampleVideo());
         await pipeline.ProcessAsync(key);
 
-        var notifier = Assert.IsType<InMemoryNotifier>(pipeline.Notifier);
+        InMemoryNotifier notifier = Assert.IsType<InMemoryNotifier>(pipeline.Notifier);
         Assert.Single(notifier.Messages);
 
-        var eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(notifier.Messages[0]);
+        Dictionary<string, object?>? eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(notifier.Messages[0]);
         Assert.NotNull(eventData);
         Assert.Equal(JobStatus.Completed, eventData!["status"]?.ToString());
         Assert.Equal(key, eventData["video_key"]?.ToString());

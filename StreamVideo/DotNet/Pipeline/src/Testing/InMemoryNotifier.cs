@@ -27,7 +27,7 @@ public sealed class InMemoryNotifier : INotifier
         {
             string body = _messages[0];
             _messages.RemoveAt(0);
-            var eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(body) ?? new();
+            Dictionary<string, object?> eventData = JsonSerializer.Deserialize<Dictionary<string, object?>>(body) ?? new();
             publish(eventData).GetAwaiter().GetResult();
             Delivered++;
             handled++;
