@@ -18,3 +18,4 @@ package-lock.json
 bun.lock
 .oc/
 .github/upgrades
+cdk.out/

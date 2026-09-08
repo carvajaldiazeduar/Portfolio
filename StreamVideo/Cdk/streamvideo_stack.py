@@ -25,6 +25,7 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_lambda_event_sources as event_sources,
     aws_s3 as s3,
+    aws_secretsmanager as secretsmanager,
     aws_sns as sns,
     aws_sqs as sqs,
     aws_stepfunctions as sfn,
@@ -93,6 +94,30 @@ class StreamVideoStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
+        analyzer_secret = secretsmanager.Secret(
+            self,
+            "AnalyzerSecret",
+            secret_name="StreamVideo/Analyzer",
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                secret_string_template='{"analyzer_api_key": ""}',
+                generate_string_key="analyzer_api_key",
+                exclude_punctuation=True,
+            ),
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
+        notify_secret = secretsmanager.Secret(
+            self,
+            "NotifySecret",
+            secret_name="StreamVideo/Notifications",
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                secret_string_template='{"hmac_signing_key": ""}',
+                generate_string_key="hmac_signing_key",
+                exclude_punctuation=True,
+            ),
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
         topic = sns.Topic(
             self,
             "VideoNotifications",
@@ -134,6 +159,7 @@ class StreamVideoStack(Stack):
                 resources=["*"],
             ),
         )
+        analyzer_secret.grant_read(analyze_role)
         analyze_fn = lambda_.Function(
             self,
             "Analyze",
@@ -142,6 +168,7 @@ class StreamVideoStack(Stack):
             handler="analyze.handler",
             role=analyze_role,
             timeout=Duration.minutes(5),
+            environment={"ANALYZER_SECRET_ARN": analyzer_secret.secret_arn},
         )
 
         finalize_role = lambda_role(
@@ -177,6 +204,7 @@ class StreamVideoStack(Stack):
                 actions=["sns:Publish"], resources=[topic.topic_arn]
             ),
         )
+        notify_secret.grant_read(notify_role)
         notify_fn = lambda_.Function(
             self,
             "Notify",
@@ -185,7 +213,10 @@ class StreamVideoStack(Stack):
             handler="notify.handler",
             role=notify_role,
             timeout=Duration.seconds(15),
-            environment={"NOTIFY_TOPIC_ARN": topic.topic_arn},
+            environment={
+                "NOTIFY_TOPIC_ARN": topic.topic_arn,
+                "NOTIFY_SECRET_ARN": notify_secret.secret_arn,
+            },
         )
         notify_fn.add_event_source(
             event_sources.SqsEventSource(notifications_queue, batch_size=10)
@@ -412,4 +443,6 @@ class StreamVideoStack(Stack):
         CfnOutput(self, "JobsTable", value=jobs_table.table_name)
         CfnOutput(self, "NotificationQueue", value=notifications_queue.queue_name)
         CfnOutput(self, "NotificationTopic", value=topic.topic_arn)
+        CfnOutput(self, "AnalyzerSecretArn", value=analyzer_secret.secret_arn)
+        CfnOutput(self, "NotifySecretArn", value=notify_secret.secret_arn)
         CfnOutput(self, "StateMachine", value=state_machine.state_machine_arn)

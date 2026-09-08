@@ -1,6 +1,6 @@
 # 🎥 StreamVideo — Serverless video processing & analytics
 
-Real-time video ingestion, transcoding and content-moderation pipeline built on **AWS serverless** services (S3, EventBridge, Step Functions, Lambda, Batch/ECS Fargate, Rekognition, DynamoDB, SQS, SNS, IAM), implemented with **Python** and shipped as **AWS CDK** infrastructure-as-code. The full async flow is emulated locally against **LocalStack** with the same driver pattern used across the portfolio.
+Real-time video ingestion, transcoding and content-moderation pipeline built on **AWS serverless** services (S3, EventBridge, Step Functions, Lambda, Batch/ECS Fargate, Rekognition, DynamoDB, SQS, SNS, Secrets Manager, IAM), implemented with **Python** and shipped as **AWS CDK** infrastructure-as-code. The full async flow is emulated locally against **LocalStack** with the same driver pattern used across the portfolio.
 
 | Component | In the cloud (CDK) | Locally (LocalStack) |
 |---|---|---|
@@ -119,7 +119,25 @@ cdk bootstrap
 cdk deploy --context account=123456789012 --context region=us-east-1
 ```
 
-The stack creates: S3 buckets, DynamoDB, SQS, SNS, 4 Lambdas, AWS Batch compute environment + job queue + ffmpeg job definition, the Step Functions state machine, an IAM role for EventBridge → Step Functions, and an EventBridge rule that triggers on `raw/*` object creation.
+The stack creates: S3 buckets, DynamoDB, SQS, SNS, 4 Lambdas, AWS Batch compute environment + job queue + ffmpeg job definition, the Step Functions state machine, an IAM role for EventBridge → Step Functions, and an EventBridge rule that triggers on `raw/*` object creation. It also provisions two **AWS Secrets Manager** secrets and grants the corresponding Lambdas least-privilege read access.
+
+## 🔐 Secrets Manager
+
+Passwords / secrets are never hardcoded. The CDK stack creates two secrets and the Lambdas fetch them at runtime via `boto3` `secretsmanager.get_secret_value`:
+
+| Secret name | JSON layout | Read by | Used for |
+|---|---|---|---|
+| `StreamVideo/Analyzer` | `{ "analyzer_api_key": "..." }` | `analyze` Lambda | API key for the analysis provider (Rekognition + external analyzer) |
+| `StreamVideo/Notifications` | `{ "hmac_signing_key": "..." }` | `notify` Lambda | HMAC-SHA256 signing key to sign every SNS message (`x-signature` attribute) |
+
+Both secrets are created with `generate_secret_string` (random values, punctuation excluded), owned by IAM roles scoped via `secret.grant_read(lambda_role)` (least privilege: only the `analyze` and `notify` roles can read their own secret). Retrieve or inspect them with:
+
+```bash
+aws secretsmanager get-secret-value --secret-id StreamVideo/Analyzer --query SecretString --output text
+aws secretsmanager get-secret-value --secret-id StreamVideo/Notifications --query SecretString --output text
+```
+
+To set a known value (rotation / explicit key), use `aws secretsmanager put-secret-value`:
 
 Upload a video to start the flow:
 
